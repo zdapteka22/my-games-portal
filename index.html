@@ -3,19 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Портал игр</title>
-  <meta http-equiv="refresh" content="0;url=https://files.catbox.moe/ath8ah.html">
-  <script>location.replace("https://files.catbox.moe/ath8ah.html");</script>
+  <title>Портал игр — бесплатные онлайн игры в браузере</title>
+  <meta name="description" content="Портал игр: бесплатные браузерные игры онлайн — Змейка, Пакман, Марио, Смешарики. Играй без скачивания в любом браузере.">
+  <meta name="keywords" content="портал игр, онлайн игры, бесплатные игры, игры в браузере, змейка, пакман, марио, смешарики, мини игры">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="author" content="Портал игр">
+  <meta name="theme-color" content="#0f0f0f">
+  <link rel="canonical" href="https://zdapteka22.github.io/my-games-portal/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:site_name" content="Портал игр">
+  <meta property="og:title" content="Портал игр — бесплатные онлайн игры">
+  <meta property="og:description" content="Играй бесплатно в браузере: Змейка, Пакман, Марио, Смешарики. Портал игр без скачивания.">
+  <meta property="og:url" content="https://zdapteka22.github.io/my-games-portal/">
+  <meta property="og:image" content="https://files.catbox.moe/x9n0oz.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Портал игр — бесплатные онлайн игры">
+  <meta name="twitter:description" content="Бесплатные браузерные игры без скачивания.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23fc0'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-size='36' font-family='Arial' font-weight='900'%3E%D0%98%3C/text%3E%3C/svg%3E">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebSite","name":"Портал игр","alternateName":["Портал Игр","Portal Igr","игры онлайн бесплатно"],"url":"https://zdapteka22.github.io/my-games-portal/","description":"Портал игр — бесплатные браузерные игры онлайн: Змейка, Пакман, Марио, Смешарики.","inLanguage":"ru-RU"}
+  </script>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"ItemList","name":"Каталог игр на Портале игр","itemListElement":[{"@type":"ListItem","position":1,"name":"Змейка","url":"https://files.catbox.moe/p31hri.html"},{"@type":"ListItem","position":2,"name":"Пакман","url":"https://files.catbox.moe/7e3686.html"},{"@type":"ListItem","position":3,"name":"Зелёный Марио","url":"https://files.catbox.moe/il6cg6.html"},{"@type":"ListItem","position":4,"name":"Смешарики: Битва","url":"https://files.catbox.moe/ry4ozi.html"}]}
+  </script>
   <style>
-    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f0f0f;color:#fff;font-family:Arial,sans-serif;text-align:center}
-    a{color:#fc0;font-weight:800}
+    :root{--bg:#0f0f0f;--card:#242424;--y:#fc0;--m:#999;--b:#333}
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#fff;line-height:1.45}
+    a{color:inherit;text-decoration:none}
+    header{position:sticky;top:0;z-index:10;height:56px;background:#1b1b1b;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:12px;padding:0 16px}
+    .logo{display:flex;align-items:center;gap:8px;font-weight:800}.mark{width:28px;height:28px;border-radius:8px;background:var(--y);color:#000;display:grid;place-items:center;font-weight:900}
+    .logo b{color:var(--y)}
+    main{max-width:1000px;margin:0 auto;padding:20px 16px 48px}
+    .hero{background:radial-gradient(circle at 20% 30%,rgba(255,204,0,.18),transparent 45%),#1a1a1a;border:1px solid var(--b);border-radius:20px;padding:24px;margin-bottom:22px}
+    .badge{display:inline-block;background:rgba(255,204,0,.12);border:1px solid rgba(255,204,0,.4);color:var(--y);font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;margin-bottom:12px}
+    h1{margin:0 0 10px;font-size:clamp(1.5rem,3.5vw,2.1rem)}
+    .hero p{margin:0 0 16px;color:#bbb;max-width:40rem}
+    .btn{display:inline-flex;align-items:center;justify-content:center;min-width:140px;height:46px;padding:0 18px;background:var(--y);color:#000;font-weight:800;border-radius:14px;margin:0 8px 8px 0}
+    .btn2{background:#2a2a2a;color:#fff;border:1px solid #3a3a3a}
+    h2{margin:0 0 12px;font-size:22px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:28px}
+    .card{display:flex;flex-direction:column;background:var(--card);border:1px solid #333;border-radius:14px;padding:14px;transition:.15s transform,border-color}
+    .card:hover{transform:translateY(-2px);border-color:var(--y)}
+    .icon{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;font-size:28px;margin-bottom:10px}
+    .card h3{margin:0 0 6px;font-size:16px}.card p{margin:0 0 12px;color:#aaa;font-size:13px;flex:1}
+    .play{display:flex;align-items:center;justify-content:center;height:38px;border-radius:10px;background:var(--y);color:#000;font-weight:800}
+    .seo{background:#1a1a1a;border:1px solid var(--b);border-radius:16px;padding:18px;margin-bottom:20px;color:#ccc;font-size:14px}
+    .seo h2{font-size:18px;color:#fff}
+    footer{border-top:1px solid var(--b);padding-top:16px;color:var(--m);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+    footer a{color:#bbb}
   </style>
 </head>
 <body>
-  <div>
-    <h1>Портал игр</h1>
-    <p>Открываем сайт…</p>
-    <p><a href="https://files.catbox.moe/ath8ah.html">Если не открылось — нажми сюда</a></p>
-  </div>
+  <header>
+    <a class="logo" href="#"><div class="mark">И</div><span><b>Портал</b> Игр</span></a>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="badge">БЕСПЛАТНО · В БРАУЗЕРЕ</div>
+      <h1>Портал игр — играй онлайн: Змейка, Пакман, Марио и другие</h1>
+      <p>Портал мини-игр: классика и аркады. Ничего скачивать не нужно — открой карточку и играй с телефона или компьютера.</p>
+      <a class="btn" href="#games">🕹️ Все игры</a>
+      <a class="btn btn2" href="https://files.catbox.moe/o7xfif.html">☰ Меню</a>
+    </section>
+
+    <h2 id="games">🎮 Игры на Портале игр</h2>
+    <div class="grid">
+      <a class="card" href="https://files.catbox.moe/p31hri.html" target="_blank" rel="noopener">
+        <div class="icon" style="background:linear-gradient(145deg,#0a3a1a,#062a10)">🐍</div>
+        <h3>Змейка</h3>
+        <p>Ешь, расти и не врежься в стены. Классика на все времена!</p>
+        <div class="play">▶ Играть</div>
+      </a>
+      <a class="card" href="https://files.catbox.moe/7e3686.html" target="_blank" rel="noopener">
+        <div class="icon" style="background:linear-gradient(145deg,#0a0a40,#1a1a6a)">🟡</div>
+        <h3>Пакман</h3>
+        <p>Собирай точки, глотай энергетики и убегай от призраков!</p>
+        <div class="play">▶ Играть</div>
+      </a>
+      <a class="card" href="https://files.catbox.moe/il6cg6.html">
+        <div class="icon" style="background:linear-gradient(145deg,#5c94fc,#1a5a20)">🍄</div>
+        <h3>Зелёный Марио (9 уровней)</h3>
+        <p>Платформер: монеты, враги, трубы — добеги до флага!</p>
+        <div class="play">▶ Играть</div>
+      </a>
+      <a class="card" href="https://files.catbox.moe/ry4ozi.html" target="_blank" rel="noopener">
+        <div class="icon" style="background:linear-gradient(145deg,#2d1b4e,#0f3460)">🟣</div>
+        <h3>Смешарики: Битва</h3>
+        <p>Фанатская аркада со Смешариками — отдельная страница игры.</p>
+        <div class="play">▶ Играть</div>
+      </a>
+    </div>
+
+    <section class="seo">
+      <h2>Портал игр — бесплатные онлайн игры</h2>
+      <p><strong>Портал игр</strong> — сайт с бесплатными играми в браузере. Здесь можно играть в <strong>Змейку</strong>, <strong>Пакман</strong>, <strong>Марио</strong>, <strong>Смешарики</strong> и другие мини-игры. Ничего скачивать не нужно. Ищите в Google или Яндексе «портал игр» и открывайте этот сайт: <strong>zdapteka22.github.io/my-games-portal</strong>.</p>
+      <p>Ключевые запросы: портал игр, онлайн игры бесплатно, игры в браузере, мини игры онлайн.</p>
+    </section>
+
+    <footer>
+      <div>
+        <a href="https://files.catbox.moe/o7xfif.html">Меню игр</a> ·
+        <a href="https://files.catbox.moe/ath8ah.html">Полная версия</a> ·
+        <a href="https://github.com/zdapteka22/my-games-portal">GitHub</a>
+      </div>
+      <div>© Портал игр</div>
+    </footer>
+  </main>
 </body>
 </html>
