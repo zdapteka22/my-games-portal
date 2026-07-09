@@ -1,7 +1,4 @@
-САЙТ (главная — поиск и SEO):
-https://zdapteka22.github.io/my-games-portal/
-
-Зеркало (catbox):
+САЙТ (главная — открытый доступ):
 https://files.catbox.moe/ath8ah.html
 
 МЕНЮ ИГР:
@@ -13,6 +10,7 @@ https://files.catbox.moe/o7xfif.html
 Марио: https://files.catbox.moe/il6cg6.html
 Смешарики (страница): https://files.catbox.moe/ry4ozi.html
 Смешарики (игра): https://files.catbox.moe/7dpt43.html
+Переход к игре: https://files.catbox.moe/o9phzn.html
 
-Sitemap: https://zdapteka22.github.io/my-games-portal/sitemap.xml
 GitHub: https://github.com/zdapteka22/my-games-portal
+jsDelivr (после полного push): https://cdn.jsdelivr.net/gh/zdapteka22/my-games-portal@main/index.html
