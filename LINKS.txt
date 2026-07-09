@@ -1,19 +1,14 @@
-Главная (локально - открыть файл):
-https://files.catbox.moe/ath8ah.html
+ONLINE:
 
-Меню игр:
-https://files.catbox.moe/o7xfif.html
+Portal (GitHub Pages): https://zdapteka22.github.io/my-games-portal/
+Mario: https://zdapteka22.github.io/my-games-portal/games/minis/mario.html
+Snake: https://zdapteka22.github.io/my-games-portal/games/minis/snake.html
+Pacman: https://zdapteka22.github.io/my-games-portal/games/minis/pacman.html
 
-Игры:
-Змейка: https://files.catbox.moe/p31hri.html
-Пакман: https://files.catbox.moe/7e3686.html
-Марио (catbox): https://files.catbox.moe/il6cg6.html
-Смешарики (экран): https://files.catbox.moe/ry4ozi.html
-Смешарики (игра): https://files.catbox.moe/7dpt43.html
-Переход в игру: https://files.catbox.moe/o9phzn.html
+Backup catbox:
+Portal: https://files.catbox.moe/x9q1pb.html
+Mario: https://files.catbox.moe/ehenm2.html
+Snake: https://files.catbox.moe/p31hri.html
+Pacman: https://files.catbox.moe/c28d0i.html
 
 GitHub: https://github.com/zdapteka22/my-games-portal
-GitHub Pages (сайт в интернете): https://zdapteka22.github.io/my-games-portal/
-Марио онлайн: https://zdapteka22.github.io/my-games-portal/games/minis/mario.html
-Змейка онлайн: https://zdapteka22.github.io/my-games-portal/games/minis/snake.html
-Пакман онлайн: https://zdapteka22.github.io/my-games-portal/games/minis/pacman.html
