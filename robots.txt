@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zdapteka22.github.io/my-games-portal/sitemap.xml
