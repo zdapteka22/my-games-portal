@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Змейка</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: "Segoe UI", Arial, sans-serif; color: #fff;
+      background: radial-gradient(ellipse at 30% 0%, #1a4a2a, transparent 50%),
+                  linear-gradient(160deg, #0a1a10, #0f2a18 50%, #061208);
+      padding: 12px; gap: 10px;
+    }
+    .top {
+      width: min(480px, 96vw); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .top a {
+      color: #2a1200; text-decoration: none; font-weight: 800; padding: 8px 14px; border-radius: 999px;
+      background: linear-gradient(135deg, #ffcc00, #ff9f1c); font-size: 14px;
+    }
+    .top a.ghost { background: rgba(255,255,255,.1); color: #b8ffc8; border: 1px solid rgba(100,255,140,.3); }
+    h1 { font-size: 1.4rem; color: #7dff9a; text-shadow: 0 0 20px rgba(80,255,120,.4); }
+    .hud {
+      width: min(480px, 96vw); display: flex; justify-content: space-between; gap: 10px;
+      background: rgba(0,0,0,.35); border: 1px solid rgba(100,255,140,.25); border-radius: 12px; padding: 10px 14px; font-weight: 700;
+    }
+    .hud b { color: #ffcc00; }
+    canvas {
+      width: min(480px, 96vw); height: auto; aspect-ratio: 1;
+      border: 4px solid #4caf50; border-radius: 16px; background: #0d1f12;
+      box-shadow: 0 0 40px rgba(76,175,80,.35); touch-action: none; outline: none;
+    }
+    .hint { color: rgba(200,255,210,.7); font-size: 13px; text-align: center; max-width: 480px; line-height: 1.4; }
+    .pad {
+      display: none; grid-template-columns: 60px 60px 60px; gap: 6px; margin-top: 4px;
+    }
+    @media (max-width: 600px), (pointer: coarse) { .pad { display: grid; } }
+    .pad button {
+      width: 60px; height: 48px; border: none; border-radius: 12px; font-size: 20px; font-weight: 800;
+      background: rgba(100,255,140,.2); color: #fff; border: 1px solid rgba(100,255,140,.35); cursor: pointer;
+    }
+    .pad .empty { visibility: hidden; }
+    .pad .mid { grid-column: 2; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a href="../../menu.html">☰ Меню</a>
+    <h1>🐍 Змейка</h1>
+    <a class="ghost" href="../../index.html">Сайт</a>
+  </div>
+  <div class="hud">
+    <span>Счёт: <b id="score">0</b></span>
+    <span>Рекорд: <b id="best">0</b></span>
+    <span id="status">Играй!</span>
+  </div>
+  <canvas id="c" width="400" height="400" tabindex="0"></canvas>
+  <p class="hint">Стрелки / WASD — движение · Пробел — пауза · R — заново<br>Собери еду, не врежься в себя и в стены!</p>
+  <div class="pad">
+    <span class="empty"></span>
+    <button type="button" data-d="0,-1">▲</button>
+    <span class="empty"></span>
+    <button type="button" data-d="-1,0">◀</button>
+    <button type="button" data-d="0,1">▼</button>
+    <button type="button" data-d="1,0">▶</button>
+  </div>
+<script>
+(() => {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const COLS = 20, ROWS = 20, CELL = canvas.width / COLS;
+  const BEST_KEY = "miniSnake_best_v1";
+
+  let snake, dir, nextDir, food, score, best, alive, paused, tickMs, acc, last;
+  best = Number(localStorage.getItem(BEST_KEY) || 0);
+  document.getElementById("best").textContent = best;
+
+  function reset() {
+    snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
+    dir = { x: 1, y: 0 };
+    nextDir = { ...dir };
+    score = 0;
+    alive = true;
+    paused = false;
+    tickMs = 140;
+    placeFood();
+    document.getElementById("score").textContent = "0";
+    document.getElementById("status").textContent = "Играй!";
+  }
+
+  function placeFood() {
+    for (let i = 0; i < 200; i++) {
+      const x = Math.floor(Math.random() * COLS);
+      const y = Math.floor(Math.random() * ROWS);
+      if (!snake.some(s => s.x === x && s.y === y)) {
+        food = { x, y };
+        return;
+      }
+    }
+    food = { x: 0, y: 0 };
+  }
+
+  function setDir(x, y) {
+    if (!alive) return;
+    if (x === -dir.x && y === -dir.y) return;
+    nextDir = { x, y };
+  }
+
+  function step() {
+    if (!alive || paused) return;
+    dir = nextDir;
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (head.x < 0 || head.y < 0 || head.x >= COLS || head.y >= ROWS ||
+        snake.some(s => s.x === head.x && s.y === head.y)) {
+      alive = false;
+      document.getElementById("status").textContent = "Конец! R — заново";
+      return;
+    }
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+      score++;
+      document.getElementById("score").textContent = score;
+      if (score > best) {
+        best = score;
+        localStorage.setItem(BEST_KEY, String(best));
+        document.getElementById("best").textContent = best;
+      }
+      tickMs = Math.max(70, 140 - score * 3);
+      placeFood();
+    } else {
+      snake.pop();
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = "#0d1f12";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "rgba(80,160,100,.12)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= COLS; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * CELL, 0);
+      ctx.lineTo(i * CELL, canvas.height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i * CELL);
+      ctx.lineTo(canvas.width, i * CELL);
+      ctx.stroke();
+    }
+    // food
+    const fx = food.x * CELL + CELL / 2;
+    const fy = food.y * CELL + CELL / 2;
+    ctx.beginPath();
+    ctx.fillStyle = "#ff4d6d";
+    ctx.arc(fx, fy, CELL * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#2ecc71";
+    ctx.fillRect(fx - 2, fy - CELL * 0.45, 4, 6);
+
+    snake.forEach((s, i) => {
+      const t = i / Math.max(1, snake.length - 1);
+      const g = Math.floor(180 + (1 - t) * 75);
+      ctx.fillStyle = i === 0 ? "#b8ff6a" : `rgb(40,${g},70)`;
+      const pad = i === 0 ? 1 : 2;
+      roundRect(s.x * CELL + pad, s.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
+      ctx.fill();
+      if (i === 0) {
+        ctx.fillStyle = "#111";
+        const ex = dir.x !== 0 ? dir.x * 4 : 0;
+        const ey = dir.y !== 0 ? dir.y * 4 : 0;
+        ctx.beginPath();
+        ctx.arc(s.x * CELL + CELL * 0.35 + ex, s.y * CELL + CELL * 0.35 + ey, 2.2, 0, Math.PI * 2);
+        ctx.arc(s.x * CELL + CELL * 0.65 + ex, s.y * CELL + CELL * 0.35 + ey, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    if (paused) overlay("ПАУЗА");
+    if (!alive) overlay("ИГРА ОКОНЧЕНА");
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function overlay(text) {
+    ctx.fillStyle = "rgba(0,0,0,.55)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffcc00";
+    ctx.font = "bold 28px Segoe UI, Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = "#fff";
+    ctx.font = "16px Segoe UI, Arial";
+    ctx.fillText("R — начать заново", canvas.width / 2, canvas.height / 2 + 32);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (k === "arrowup" || k === "w") { e.preventDefault(); setDir(0, -1); }
+    else if (k === "arrowdown" || k === "s") { e.preventDefault(); setDir(0, 1); }
+    else if (k === "arrowleft" || k === "a") { e.preventDefault(); setDir(-1, 0); }
+    else if (k === "arrowright" || k === "d") { e.preventDefault(); setDir(1, 0); }
+    else if (k === " " || k === "escape") {
+      e.preventDefault();
+      if (alive) {
+        paused = !paused;
+        document.getElementById("status").textContent = paused ? "Пауза" : "Играй!";
+      }
+    } else if (k === "r") reset();
+  });
+
+  document.querySelectorAll(".pad button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const [x, y] = btn.dataset.d.split(",").map(Number);
+      setDir(x, y);
+    });
+  });
+
+  reset();
+  acc = 0;
+  last = performance.now();
+  function loop(now) {
+    acc += now - last;
+    last = now;
+    while (acc >= tickMs) {
+      step();
+      acc -= tickMs;
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  canvas.focus();
+})();
+</script>
+</body>
+</html>
