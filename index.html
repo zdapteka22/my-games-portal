@@ -273,6 +273,10 @@
       border: 0;
     }
 
+    .video-modal[hidden] {
+      display: none !important;
+    }
+
     .page { max-width: 1180px; margin: 0 auto; padding: 20px 16px 60px; }
 
     .brand-banner {
@@ -380,6 +384,7 @@
       gap: 12px;
     }
     .review-card-static[hidden] { display: none !important; }
+    .rev-filter { cursor: pointer; user-select: none; }
     .review-card-static {
       background: var(--yg-card);
       border: 1px solid var(--yg-border);
@@ -607,7 +612,7 @@
       <input type="search" id="searchInput" placeholder="Поиск игр" aria-label="Поиск" data-i18n-placeholder="searchPh" data-i18n-aria="searchAria">
     </div>
     <nav class="nav-cats">
-      <a href="menu.html" class="play-link" data-i18n="navAll">☰ Все игры</a>
+      <a href="#menu" class="play-link" data-i18n="navAll">☰ Все игры</a>
       <a href="#classics" data-i18n="navClassics">Классика</a>
       <a href="#videos" data-i18n="navVideos">Видео</a>
       <a href="#reviews" data-i18n="navReviews">Отзывы</a>
@@ -647,15 +652,15 @@
         <a class="btn-play" href="#classics" data-i18n="btnClassics">🕹️ Классика</a>
         <a class="btn-secondary" href="#videos" data-i18n="btnVideos">▶ Смотреть видео</a>
         <a class="btn-secondary" href="#menu" data-i18n="btnAll">Все игры</a>
-        <a class="btn-secondary" href="menu.html" data-i18n="btnMenu">☰ Меню</a>
+        <a class="btn-secondary" href="#menu" data-i18n="btnMenu">☰ Меню</a>
       </div>
     </section>
 
     <section class="classics-block" id="classics">
       <h2 data-i18n="classicsTitle">🕹️ Классика — играй сейчас</h2>
-      <p class="menu-sub" data-i18n="classicsSub">Нажми «Играть» — откроется в новой вкладке</p>
+      <p class="menu-sub" data-i18n="classicsSub">Нажми «Играть» — игра откроется</p>
       <div class="classics-grid">
-        <a class="classic-card" href="games/minis/snake.html" target="_blank" rel="noopener">
+        <a class="classic-card" href="games/minis/snake.html">
           <div class="cc-art" style="background:linear-gradient(145deg,#0a3a1a,#062a10)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>🐍
           </div>
@@ -665,7 +670,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/minis/pacman.html" target="_blank" rel="noopener">
+        <a class="classic-card" href="games/minis/pacman.html">
           <div class="cc-art" style="background:linear-gradient(145deg,#0a0a40,#1a1a6a)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>
             <img src="images/pacman.png" alt="Пакман"
@@ -689,7 +694,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/smeshariki/index.html" target="_blank" rel="noopener">
+        <a class="classic-card" href="games/smeshariki/index.html">
           <div class="cc-art" style="background:linear-gradient(145deg,#2d1b4e,#0f3460)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>
             <img src="games/smeshariki/images/smeshariki_kruglaya_kompaniya-square.jpg" alt="Смешарики"
@@ -702,7 +707,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/minis/tanks.html" target="_blank" rel="noopener">
+        <a class="classic-card" href="games/minis/tanks.html">
           <div class="cc-art" style="background:linear-gradient(145deg,#3a4a20,#1a2010)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>
             <span style="font-size:3.2rem">🪖</span>
@@ -713,7 +718,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/minis/labyrinth.html" target="_blank" rel="noopener">
+        <a class="classic-card" href="games/minis/labyrinth.html">
           <div class="cc-art" style="background:linear-gradient(145deg,#0a3a1a,#1a4a30)">
             <span class="cc-badge" data-i18n="hit">NEW</span>
             <span style="font-size:3.2rem">🌀</span>
@@ -1029,7 +1034,7 @@
 
     <footer>
       <div>
-        <a href="menu.html" data-i18n="footerMenu">Меню игр</a> ·
+        <a href="#menu" data-i18n="footerMenu">Меню игр</a> ·
         <a href="#classics" data-i18n="footerClassics">Классика</a> ·
         <a href="#videos" data-i18n="footerVideos">Видео</a> ·
         <a href="games/smeshariki/index.html" data-i18n="footerSmeshariki">Смешарики</a> ·
@@ -1082,7 +1087,8 @@
         heroText: "Играй онлайн: Змейка, Пакман, Марио, Смешарики, Танчики. Портал любимых игр Blue Cat — ничего скачивать не нужно!",
         btnClassics: "🕹️ Классика", btnVideos: "▶ Смотреть видео", btnAll: "Все игры", btnMenu: "☰ Меню",
         classicsTitle: "🕹️ Классика — играй сейчас",
-        classicsSub: "Нажми «Играть» — откроется в новой вкладке",
+        classicsSub: "Одна ссылка на весь портал — игра откроется здесь же",
+        closeGame: "✕ Закрыть", reloadGame: "↻ Заново",
         hit: "ХИТ", play: "▶ Играть",
         snakeTitle: "Змейка", snakeDesc: "Ешь, расти и не врежься в стены. Классика на все времена!",
         pacmanTitle: "Пакман", pacmanDesc: "Классика: жёлтый Пакман, лабиринт, точки и 4 призрака!",
@@ -1137,7 +1143,8 @@
         heroText: "Play online: Snake, Pac-Man, Mario, Smeshariki, Tanks. Favorite Games Portal Blue Cat — no downloads!",
         btnClassics: "🕹️ Classics", btnVideos: "▶ Watch videos", btnAll: "All games", btnMenu: "☰ Menu",
         classicsTitle: "🕹️ Classics — play now",
-        classicsSub: "Click Play — opens in a new tab",
+        classicsSub: "One link for the whole portal — games open right here",
+        closeGame: "✕ Close", reloadGame: "↻ Restart",
         hit: "HIT", play: "▶ Play",
         snakeTitle: "Snake", snakeDesc: "Eat, grow, don't hit the walls. A timeless classic!",
         pacmanTitle: "Pac-Man", pacmanDesc: "Collect dots, chomp power pellets, run from ghosts!",
@@ -1191,7 +1198,8 @@
         heroText: "Грай онлайн: Змійка, Пакман, Маріо, Смішарики, Танчики. Портал улюблених ігор Blue Cat!",
         btnClassics: "🕹️ Класика", btnVideos: "▶ Дивитись відео", btnAll: "Усі ігри", btnMenu: "☰ Меню",
         classicsTitle: "🕹️ Класика — грай зараз",
-        classicsSub: "Натисни «Грати» — відкриється у новій вкладці",
+        classicsSub: "Одне посилання на весь портал — гра відкриється тут",
+        closeGame: "✕ Закрити", reloadGame: "↻ Заново",
         hit: "ХІТ", play: "▶ Грати",
         snakeTitle: "Змійка", snakeDesc: "Їж, рости й не врізайся в стіни. Класика на всі часи!",
         pacmanTitle: "Пакман", pacmanDesc: "Збирай крапки, ковтай енергетики й тікай від привидів!",
@@ -1239,7 +1247,10 @@
       uk: { flag: "🇺🇦", label: "UA" }
     };
 
-    let currentLang = localStorage.getItem(STORAGE_LANG) || "ru";
+    let currentLang = "ru";
+    try {
+      currentLang = localStorage.getItem(STORAGE_LANG) || "ru";
+    } catch (_) { currentLang = "ru"; }
     if (!I18N[currentLang]) currentLang = "ru";
 
     function t(key) {
@@ -1266,21 +1277,24 @@
         const key = el.getAttribute("data-i18n-aria");
         if (key) el.setAttribute("aria-label", t(key));
       });
-      const meta = LANG_META[currentLang];
-      document.getElementById("langFlag").textContent = meta.flag;
-      document.getElementById("langLabel").textContent = meta.label;
+      const meta = LANG_META[currentLang] || LANG_META.ru;
+      const flagEl = document.getElementById("langFlag");
+      const labelEl = document.getElementById("langLabel");
+      if (flagEl) flagEl.textContent = meta.flag;
+      if (labelEl) labelEl.textContent = meta.label;
       document.querySelectorAll("#langMenu [data-lang]").forEach(btn => {
         btn.classList.toggle("active", btn.getAttribute("data-lang") === currentLang);
       });
       document.title = t("seoTitle");
-      renderAll(document.getElementById("searchInput")?.value || "");
+      var si = document.getElementById("searchInput");
+      renderAll(si ? si.value : "");
       renderVideos();
     }
 
     function setLang(lang) {
       if (!I18N[lang]) return;
       currentLang = lang;
-      localStorage.setItem(STORAGE_LANG, lang);
+      try { localStorage.setItem(STORAGE_LANG, lang); } catch (_) {}
       applyI18n();
       toast(lang === "en" ? "Language: English" : lang === "uk" ? "Мова: Українська" : "Язык: Русский");
     }
@@ -1350,8 +1364,8 @@
       const modal = document.getElementById("videoModal");
       const frame = document.getElementById("videoFrame");
       const titleEl = document.getElementById("videoModalTitle");
-      titleEl.textContent = title || t("videoWatch");
-      // autoplay muted-friendly: youtube autoplay with mute=0 may be blocked; use autoplay=1
+      if (!modal || !frame) return;
+      if (titleEl) titleEl.textContent = title || t("videoWatch");
       frame.innerHTML = `<iframe
         src="https://www.youtube.com/embed/${encodeURIComponent(ytId)}?autoplay=1&rel=0"
         title="${esc(title || "video")}"
@@ -1365,8 +1379,8 @@
     function closeVideo() {
       const modal = document.getElementById("videoModal");
       const frame = document.getElementById("videoFrame");
-      frame.innerHTML = "";
-      modal.hidden = true;
+      if (frame) frame.innerHTML = "";
+      if (modal) modal.hidden = true;
       document.body.style.overflow = "";
     }
 
@@ -1445,7 +1459,7 @@
       } catch { return []; }
     }
     function saveCustom(list) {
-      localStorage.setItem(STORAGE_GAMES, JSON.stringify(list));
+      try { localStorage.setItem(STORAGE_GAMES, JSON.stringify(list)); } catch (_) {}
     }
 
     function allGamesList() {
@@ -1464,6 +1478,7 @@
 
     function toast(msg) {
       const el = document.getElementById("toast");
+      if (!el) return;
       el.hidden = false;
       el.textContent = msg;
       clearTimeout(toast._t);
@@ -1482,41 +1497,49 @@
       }
 
       const menuGrid = document.getElementById("menuGrid");
-      menuGrid.innerHTML = games.map(g => {
-        const icon = g.img
-          ? `<img src="${esc(g.img)}" alt="" onerror="this.parentElement.textContent='${esc(g.emoji || "🎮")}'">`
-          : `<span>${esc(g.emoji || "🎮")}</span>`;
-        const sameTab = /mario\.html/i.test(g.url) ? "" : ` target="_blank" rel="noopener"`;
-        return `<a class="menu-item" href="${esc(g.url)}"${sameTab}>
-          <div class="mi-top">
-            <div class="mi-icon" style="background:${esc(g.bg || "#222")}">${icon}</div>
-            <div>
-              <div class="mi-title">${esc(g.title)}</div>
-              <div class="mi-genre">${esc(g.genre)}${g.builtin ? " · ★ " + esc(g.rating) : " · " + t("mine")}</div>
+      if (menuGrid) {
+        menuGrid.innerHTML = games.map(g => {
+          const icon = g.img
+            ? `<img src="${esc(g.img)}" alt="" onerror="this.parentElement.textContent='${esc(g.emoji || "🎮")}'">`
+            : `<span>${esc(g.emoji || "🎮")}</span>`;
+          return `<a class="menu-item" href="${esc(g.url)}">
+            <div class="mi-top">
+              <div class="mi-icon" style="background:${esc(g.bg || "#222")}">${icon}</div>
+              <div>
+                <div class="mi-title">${esc(g.title)}</div>
+                <div class="mi-genre">${esc(g.genre)}${g.builtin ? " · ★ " + esc(g.rating) : " · " + t("mine")}</div>
+              </div>
             </div>
-          </div>
-          <div class="mi-play">${esc(t("play"))}</div>
-        </a>`;
-      }).join("") || `<p style="color:#999">${esc(t("notFound"))}</p>`;
+            <div class="mi-play">${esc(t("play"))}</div>
+          </a>`;
+        }).join("") || `<p style="color:#999">${esc(t("notFound"))}</p>`;
+      }
 
       const catalogGrid = document.getElementById("catalogGrid");
-      catalogGrid.innerHTML = games.map(g => {
-        const thumb = g.img
-          ? `<img src="${esc(g.img)}" alt="" onerror="this.outerHTML='<span>🎮</span>'">`
-          : `<span>${esc(g.emoji || "🎮")}</span>`;
-        const del = g.builtin ? "" : `<button type="button" class="del" data-delete="${esc(g.id)}">${esc(t("del"))}</button>`;
-        const sameTab = /mario\.html/i.test(g.url) ? "" : ` target="_blank" rel="noopener"`;
-        return `<div>
-          <a class="game-card" href="${esc(g.url)}"${sameTab}>
-            <div class="thumb" style="background:${esc(g.bg || "#222")}">${thumb}</div>
-            <div class="body">
-              <div class="title">${esc(g.title)}</div>
-              <div class="meta"><span>${esc(g.genre)}</span><span class="r">${g.builtin ? "★ " + esc(g.rating) : t("mine")}</span></div>
-            </div>
-          </a>
-          ${del}
-        </div>`;
-      }).join("");
+      if (catalogGrid) {
+        catalogGrid.innerHTML = games.map(g => {
+          const thumb = g.img
+            ? `<img src="${esc(g.img)}" alt="" onerror="this.outerHTML='<span>🎮</span>'">`
+            : `<span>${esc(g.emoji || "🎮")}</span>`;
+          const del = g.builtin ? "" : `<button type="button" class="del" data-delete="${esc(g.id)}">${esc(t("del"))}</button>`;
+          return `<div>
+            <a class="game-card" href="${esc(g.url)}">
+              <div class="thumb" style="background:${esc(g.bg || "#222")}">${thumb}</div>
+              <div class="body">
+                <div class="title">${esc(g.title)}</div>
+                <div class="meta"><span>${esc(g.genre)}</span><span class="r">${g.builtin ? "★ " + esc(g.rating) : t("mine")}</span></div>
+              </div>
+            </a>
+            ${del}
+          </div>`;
+        }).join("");
+      }
+    }
+
+    function on(id, event, handler) {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener(event, handler);
+      return el;
     }
 
     /* ========== Events ========== */
@@ -1525,59 +1548,67 @@
         document.querySelectorAll(".tab").forEach(tEl => tEl.classList.remove("active"));
         document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
         tab.classList.add("active");
-        document.getElementById("panel-" + tab.dataset.tab)?.classList.add("active");
+        var panel = document.getElementById("panel-" + tab.dataset.tab);
+        if (panel) panel.classList.add("active");
       });
     });
 
-    document.getElementById("goAddBtn").addEventListener("click", () => {
-      document.querySelector('.tab[data-tab="add"]').click();
-      document.getElementById("add").scrollIntoView({ behavior: "smooth" });
+    on("goAddBtn", "click", () => {
+      var tab = document.querySelector('.tab[data-tab="add"]');
+      if (tab) tab.click();
+      var add = document.getElementById("add");
+      if (add) add.scrollIntoView({ behavior: "smooth" });
     });
 
     // Language switcher
     const langBtn = document.getElementById("langBtn");
     const langMenu = document.getElementById("langMenu");
-    langBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const open = langMenu.hidden;
-      langMenu.hidden = !open;
-      langBtn.setAttribute("aria-expanded", open ? "true" : "false");
-    });
-    langMenu.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-lang]");
-      if (!btn) return;
-      setLang(btn.getAttribute("data-lang"));
-      langMenu.hidden = true;
-      langBtn.setAttribute("aria-expanded", "false");
-    });
-    document.addEventListener("click", () => {
-      langMenu.hidden = true;
-      langBtn.setAttribute("aria-expanded", "false");
-    });
+    if (langBtn && langMenu) {
+      langBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = langMenu.hidden;
+        langMenu.hidden = !open;
+        langBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      langMenu.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-lang]");
+        if (!btn) return;
+        setLang(btn.getAttribute("data-lang"));
+        langMenu.hidden = true;
+        langBtn.setAttribute("aria-expanded", "false");
+      });
+      document.addEventListener("click", () => {
+        langMenu.hidden = true;
+        langBtn.setAttribute("aria-expanded", "false");
+      });
+    }
 
     // Videos
-    document.getElementById("videosGrid").addEventListener("click", (e) => {
+    on("videosGrid", "click", (e) => {
       const card = e.target.closest("[data-video-yt]");
       if (!card) return;
       openVideo(card.getAttribute("data-video-yt"), card.getAttribute("data-video-title"));
     });
-    document.getElementById("videoModalClose").addEventListener("click", closeVideo);
-    document.getElementById("videoModal").addEventListener("click", (e) => {
+    on("videoModalClose", "click", closeVideo);
+    on("videoModal", "click", (e) => {
       if (e.target.id === "videoModal") closeVideo();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeVideo();
     });
 
+    // Удаление своих игр
     document.addEventListener("click", (e) => {
       const del = e.target.closest("[data-delete]");
       if (!del) return;
+      e.preventDefault();
       saveCustom(loadCustom().filter(g => g.id !== del.getAttribute("data-delete")));
-      renderAll(document.getElementById("searchInput").value);
+      var si = document.getElementById("searchInput");
+      renderAll(si ? si.value : "");
       toast(t("toastDeleted"));
     });
 
-    document.getElementById("addGameForm").addEventListener("submit", (e) => {
+    on("addGameForm", "submit", (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const game = {
@@ -1592,14 +1623,16 @@
       list.unshift(game);
       saveCustom(list);
       e.target.reset();
-      e.target.elements.emoji.value = "🎮";
-      document.getElementById("formNote").textContent = t("addedNote").replace("{t}", game.title);
+      if (e.target.elements.emoji) e.target.elements.emoji.value = "🎮";
+      const note = document.getElementById("formNote");
+      if (note) note.textContent = t("addedNote").replace("{t}", game.title);
       renderAll();
       toast(t("toastAdded"));
-      document.getElementById("menu").scrollIntoView({ behavior: "smooth" });
+      var menu = document.getElementById("menu");
+      if (menu) menu.scrollIntoView({ behavior: "smooth" });
     });
 
-    document.getElementById("clearCustomBtn").addEventListener("click", () => {
+    on("clearCustomBtn", "click", () => {
       if (!loadCustom().length) return toast(t("toastNoCustom"));
       if (!confirm(t("confirmClear"))) return;
       saveCustom([]);
@@ -1607,27 +1640,38 @@
       toast(t("toastCleared"));
     });
 
-    document.getElementById("searchInput").addEventListener("input", (e) => {
+    on("searchInput", "input", (e) => {
       renderAll(e.target.value);
     });
 
-    /* ========== Reviews filter by game / bad ========== */
-    document.querySelectorAll(".rev-filter").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".rev-filter").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        const id = btn.getAttribute("data-rev") || "all";
-        document.querySelectorAll("#reviewsGridStatic .review-card-static").forEach(card => {
-          const g = card.getAttribute("data-game") || "";
-          const isBad = card.classList.contains("bad") || card.getAttribute("data-tone") === "bad";
-          if (id === "all") card.hidden = false;
-          else if (id === "bad") card.hidden = !isBad;
-          else card.hidden = g !== id;
-        });
+    /* ========== Reviews filter ========== */
+    function applyReviewFilter(id) {
+      document.querySelectorAll(".rev-filter").forEach(function (b) {
+        b.classList.toggle("active", (b.getAttribute("data-rev") || "all") === id);
+      });
+      document.querySelectorAll("#reviewsGridStatic .review-card-static").forEach(function (card) {
+        var g = card.getAttribute("data-game") || "";
+        var isBad = card.classList.contains("bad") || card.getAttribute("data-tone") === "bad";
+        if (id === "all") card.hidden = false;
+        else if (id === "bad") card.hidden = !isBad;
+        else card.hidden = g !== id;
+      });
+    }
+    document.querySelectorAll(".rev-filter").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        applyReviewFilter(btn.getAttribute("data-rev") || "all");
       });
     });
+    applyReviewFilter("all");
 
-    applyI18n();
+    try {
+      applyI18n();
+    } catch (err) {
+      console.error("portal init:", err);
+      try { renderAll(); } catch (e2) {}
+      try { renderVideos(); } catch (e3) {}
+    }
   </script>
 </body>
 </html>
