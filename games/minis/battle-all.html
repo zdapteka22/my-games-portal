@@ -252,6 +252,12 @@
     barbie: "../../images/barbie.png",
     peppa: "../../images/peppa.png",
     shrek: "../../images/shrek.png",
+    amy: "../../images/amy.png",
+    vanya: "../../images/vanya.png",
+    vanya_photo: "../../images/vanya_photo.jpg",
+    domer: "../../images/domer.png",
+    derzko: "../../images/derzko.png",
+    pennywise: "../../images/pennywise.png",
     mario_art: "mario_art.png",
     mario: "sprites/smb3_mario.png",
     mario_walk: "sprites/smb3_mario_walk.png",
@@ -483,7 +489,24 @@
       desc:"Оригинальный арт в стиле мультфильма.", abilityDesc:"Волна «хрю» оглушает рядом. 7 с." },
     { id:"shrek", name:"Шрек", from:"Гости", group:"guests", emoji:"🟢", img:IMG.shrek, color:"#3d8b40", accent:"#a8e6a0",
       hp:155, speed:2.2, atk:18, rate:1.05, style:"boss", attackName:"Кулак", abilityName:"Болото",
-      desc:"Оригинальный арт большого огра.", abilityDesc:"Болото: урон и замедление всем рядом. 8 с." }
+      desc:"Оригинальный арт большого огра.", abilityDesc:"Болото: урон и замедление всем рядом. 8 с." },
+
+    // —— Эми, блогеры, Пеннивайз ——
+    { id:"amy", name:"Эми Роуз", from:"Sonic", group:"sonic", emoji:"💗", img:IMG.amy, color:"#ff69b4", accent:"#ffb6d9",
+      hp:100, speed:3.4, atk:16, rate:0.8, style:"melee", attackName:"Молот", abilityName:"Пико-Пико",
+      desc:"Розовая ежиха с огромным молотом!", abilityDesc:"Удар молотом по всем рядом. 6.5 с." },
+    { id:"vanya", name:"Ваня Дмитренко", from:"Гости", group:"guests", emoji:"🎤", img:IMG.vanya, imgFallbacks:[IMG.vanya_photo], color:"#9b59b6", accent:"#e0b0ff",
+      hp:105, speed:3.1, atk:14, rate:0.85, style:"shoot", attackName:"Хит", abilityName:"Венера-Юпитер",
+      desc:"Певец. Фото/арт по реальному облику.", abilityDesc:"Музыкальная волна урона. 7 с." },
+    { id:"domer", name:"Домера", from:"Гости", group:"guests", emoji:"🟩", img:IMG.domer, color:"#27ae60", accent:"#a8ffc8",
+      hp:110, speed:2.9, atk:15, rate:0.9, style:"charge", attackName:"Грифер", abilityName:"Троллинг",
+      desc:"Майнкрафт-блогер. Арт-аватар.", abilityDesc:"Натиск + стан. 7 с." },
+    { id:"derzko", name:"Дерзко", from:"Гости", group:"guests", emoji:"🔊", img:IMG.derzko, color:"#3498db", accent:"#85c1e9",
+      hp:115, speed:3.0, atk:16, rate:0.88, style:"boss", attackName:"Крик", abilityName:"Громкий стрим",
+      desc:"Стример. Арт-аватар.", abilityDesc:"Оглушающий крик вокруг. 7.5 с." },
+    { id:"pennywise", name:"Пеннивайз", from:"Гости", group:"guests", emoji:"🎈", img:IMG.pennywise, color:"#e74c3c", accent:"#ff8a80",
+      hp:130, speed:2.7, atk:17, rate:0.95, style:"phase", attackName:"Улыбка", abilityName:"Красный шар",
+      desc:"Страшный клоун с шариком.", abilityDesc:"Фаза + страх (стан). 8 с." }
   ];
 
   const GROUPS = [
@@ -1121,6 +1144,68 @@
         }
       }
       burst(f.x, f.y, "#3d8b40", 20);
+      return;
+    }
+    if (id==="amy"){
+      f.abilCd = 6.5;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 85) {
+          damage(o, f.def.atk * 1.7, f);
+          o.vx += (o.x - f.x) * 2;
+          o.vy += (o.y - f.y) * 2;
+        }
+      }
+      burst(f.x, f.y, "#ff69b4", 18);
+      return;
+    }
+    if (id==="vanya"){
+      f.abilCd = 7;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 130) {
+          damage(o, f.def.atk * 1.25, f);
+        }
+      }
+      shoot(f, f.x, f.y, face * 260, -30, f.def.atk, "#e0b0ff", 6, 1.1);
+      shoot(f, f.x, f.y, face * 280, 0, f.def.atk * 1.1, "#9b59b6", 7, 1.1);
+      shoot(f, f.x, f.y, face * 260, 30, f.def.atk, "#e0b0ff", 6, 1.1);
+      burst(f.x, f.y, "#c39bd3", 14);
+      return;
+    }
+    if (id==="domer"){
+      f.abilCd = 7;
+      f.vx = face * 500;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 70) {
+          damage(o, f.def.atk * 1.5, f);
+          o.stunT = Math.max(o.stunT, 0.75);
+        }
+      }
+      burst(f.x, f.y, "#27ae60", 14);
+      return;
+    }
+    if (id==="derzko"){
+      f.abilCd = 7.5;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 120) {
+          damage(o, f.def.atk * 1.35, f);
+          o.stunT = Math.max(o.stunT, 1.0);
+        }
+      }
+      burst(f.x, f.y, "#3498db", 22);
+      return;
+    }
+    if (id==="pennywise"){
+      f.abilCd = 8;
+      f.phaseT = 2.2;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 100) {
+          damage(o, f.def.atk * 1.3, f);
+          o.stunT = Math.max(o.stunT, 1.1);
+        }
+      }
+      // red balloon projectile
+      shoot(f, f.x + face * 10, f.y - 20, face * 180, -40, f.def.atk * 1.2, "#e74c3c", 9, 1.4);
+      burst(f.x, f.y, "#e74c3c", 16);
       return;
     }
     // default
