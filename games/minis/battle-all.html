@@ -27,6 +27,14 @@
     .top a.ghost {
       background: rgba(255,255,255,.08); color: #ddd; border: 1px solid rgba(255,255,255,.18);
     }
+    .top .music-btn {
+      color: #111; font-weight: 800; padding: 8px 14px; border-radius: 999px;
+      background: linear-gradient(135deg, #7bed9f, #2ed573); font-size: 13px;
+      border: none; cursor: pointer; font-family: inherit;
+    }
+    .top .music-btn.off {
+      background: rgba(255,255,255,.1); color: #bbb; border: 1px solid #444;
+    }
     h1 {
       font-size: clamp(1.05rem, 3vw, 1.4rem); color: #ffcc00;
       text-shadow: 0 0 18px rgba(255,204,0,.35);
@@ -178,8 +186,12 @@
   <div class="top">
     <a href="../../index.html">⬅ На сайт</a>
     <h1>⚔️ Битва всех игр</h1>
-    <a class="ghost" href="../../index.html">Все игры</a>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button type="button" class="music-btn" id="musicBtn" title="Музыка: Смешарики · Погоня (M)">🎵 Погоня</button>
+      <a class="ghost" href="../../index.html">Все игры</a>
+    </div>
   </div>
+  <audio id="bgMusic" loop preload="auto" playsinline></audio>
 
   <section class="screen" id="selectScreen">
     <h2 style="font-size:1.15rem;margin-bottom:4px">Выбери героя</h2>
@@ -219,8 +231,8 @@
       </div>
     </div>
     <p class="hint">
-      WASD / стрелки — ходить · <b>J / Пробел</b> — атака · <b>K / E</b> — способность · R — рестарт<br>
-      На телефоне: стрелки + ⚔️ + ✨
+      WASD / стрелки — ходить · <b>J / Пробел</b> — атака · <b>K / E</b> — способность · R — рестарт · <b>M</b> — музыка<br>
+      🎵 Музыка: <b>Смешарики · Погоня</b> · На телефоне: стрелки + ⚔️ + ✨
     </p>
     <div class="pad">
       <button type="button" data-k="up">↑</button>
@@ -234,6 +246,97 @@
 
 <script>
 (() => {
+  /* ========== Music: Смешарики · Погоня ========== */
+  const MUSIC_TRACKS = [
+    { file: "music/smeshariki_pogonya.mp3", name: "Смешарики · Погоня" },
+    { file: "music/smeshariki_pogonya3.mp3", name: "Смешарики · Догонялки" },
+    { file: "music/smeshariki_pogonya2.mp3", name: "Смешарики · Погоня (кор.)" }
+  ];
+  const bgMusic = document.getElementById("bgMusic");
+  const musicBtn = document.getElementById("musicBtn");
+  let musicIndex = 0;
+  let musicMuted = false;
+  let musicStarted = false;
+
+  function setMusicUi() {
+    if (!musicBtn) return;
+    if (musicMuted || !musicStarted) {
+      musicBtn.textContent = "🔇 Музыка";
+      musicBtn.classList.add("off");
+    } else {
+      musicBtn.textContent = "🎵 " + (MUSIC_TRACKS[musicIndex] && MUSIC_TRACKS[musicIndex].name || "Погоня");
+      musicBtn.classList.remove("off");
+    }
+  }
+
+  function playBattleMusic() {
+    if (!bgMusic || !MUSIC_TRACKS.length) return;
+    const t = MUSIC_TRACKS[musicIndex] || MUSIC_TRACKS[0];
+    try {
+      if (!bgMusic.src || !bgMusic.src.includes(t.file.replace(/\//g, ""))) {
+        // set relative src once per track
+      }
+      const want = t.file;
+      if (!bgMusic.getAttribute("data-track") || bgMusic.getAttribute("data-track") !== want) {
+        bgMusic.src = want;
+        bgMusic.setAttribute("data-track", want);
+      }
+      bgMusic.loop = true;
+      bgMusic.volume = 0.38;
+      musicMuted = false;
+      musicStarted = true;
+      const p = bgMusic.play();
+      if (p && p.catch) p.catch(function () { musicStarted = false; setMusicUi(); });
+      setMusicUi();
+    } catch (e) {
+      musicStarted = false;
+      setMusicUi();
+    }
+  }
+
+  function stopBattleMusic() {
+    if (!bgMusic) return;
+    try { bgMusic.pause(); } catch (e) {}
+  }
+
+  function toggleMusic() {
+    if (!bgMusic) return;
+    if (!musicStarted || musicMuted || bgMusic.paused) {
+      playBattleMusic();
+    } else {
+      musicMuted = true;
+      stopBattleMusic();
+      setMusicUi();
+    }
+  }
+
+  function nextMusicTrack() {
+    musicIndex = (musicIndex + 1) % MUSIC_TRACKS.length;
+    bgMusic.removeAttribute("data-track");
+    playBattleMusic();
+  }
+
+  if (musicBtn) musicBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    toggleMusic();
+  });
+  // unlock audio on first gesture
+  function unlockOnce() {
+    if (!musicStarted && !musicMuted) {
+      /* wait until battle starts */
+    }
+  }
+  document.addEventListener("click", unlockOnce, { passive: true });
+  document.addEventListener("keydown", function (e) {
+    if (e.code === "KeyM") { e.preventDefault(); toggleMusic(); }
+    if (e.code === "KeyN" && !e.ctrlKey && !e.metaKey) {
+      // next track only if music area focus not typing
+      if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+      nextMusicTrack();
+    }
+  });
+  setMusicUi();
+
   /* ========== Paths relative to games/minis/ ========== */
   const IMG = {
     krosh: "../../images/krosh.png",
@@ -744,6 +847,8 @@
     running = true;
     lastT = performance.now();
     updateBars();
+    // 🎵 Смешарики · Погоня (нужен жест пользователя — клик «В бой» уже есть)
+    playBattleMusic();
     canvas.focus();
     requestAnimationFrame(loop);
   }
