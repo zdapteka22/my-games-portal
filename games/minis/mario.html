@@ -2140,6 +2140,75 @@
     }
   }
 
+  function applyEnemyGrownSize(e) {
+    if (!e) return;
+    if (e._baseW == null) {
+      e._baseW = e.w;
+      e._baseH = e.h;
+    }
+    const feet = e.y + e.h;
+    if (e.megaTimer > 0) {
+      e.w = e._baseW * 2.15;
+      e.h = e._baseH * 2.15;
+    } else if (e.big) {
+      e.w = e._baseW * 1.5;
+      e.h = e._baseH * 1.5;
+    } else {
+      e.w = e._baseW;
+      e.h = e._baseH;
+    }
+    e.y = feet - e.h;
+  }
+
+  function enemyCanEatPowerup(e) {
+    if (!e || !e.alive) return false;
+    const k = e.kind || "goomba";
+    return k !== "fireball" && k !== "piranha" && k !== "bullet";
+  }
+
+  /** Гумба/купа/и т.д. съели гриб или мега — растут */
+  function collectPowerupEnemy(e, p) {
+    if (!p || p.taken || !enemyCanEatPowerup(e)) return false;
+    if (!rects(e, p)) return false;
+    const kind = p.kind || "mushroom";
+    if (kind === "mega") {
+      p.taken = true;
+      if (e._baseW == null) { e._baseW = e.w; e._baseH = e.h; }
+      e.megaTimer = 720; // ~12 сек мега
+      e.big = true;
+      applyEnemyGrownSize(e);
+      // чуть быстрее и страшнее
+      if (e.vx) e.vx = Math.sign(e.vx) * Math.max(Math.abs(e.vx) * 1.2, 1.5);
+      document.getElementById("status").textContent =
+        "🟣 " + ((e.kind || "goomba") === "koopa" ? "КУПА" : "ВРАГ") + " СЪЕЛ МЕГА-ГРИБ!";
+      try { sfx.mega(); } catch (err) {}
+      return true;
+    }
+    if (kind === "mushroom") {
+      p.taken = true;
+      if (e._baseW == null) { e._baseW = e.w; e._baseH = e.h; }
+      if (e.megaTimer > 0) {
+        // уже мега — просто бонус
+        coinCount += 2;
+        document.getElementById("coins").textContent = coinCount;
+      } else {
+        e.big = true;
+        applyEnemyGrownSize(e);
+      }
+      document.getElementById("status").textContent = "🍄 Враг вырос!";
+      try { sfx.powerup(); } catch (err) {}
+      return true;
+    }
+    if (kind === "star") {
+      p.taken = true;
+      e.starTimer = 420;
+      document.getElementById("status").textContent = "⭐ Враг со звездой!";
+      try { sfx.star(); } catch (err) {}
+      return true;
+    }
+    return false;
+  }
+
   function collectPowerup(p) {
     if (p.taken) return;
     p.taken = true;
@@ -2816,6 +2885,12 @@
       if (p.x > levelW - p.w) { p.x = levelW - p.w; p.vx = -Math.abs(p.vx); }
       if (p.y > H + 40) p.taken = true;
       if (!playerDown && rects(player, p)) collectPowerup(p);
+      // враги тоже могут съесть гриб / мега / звезду
+      if (!p.taken) {
+        for (const e of enemies) {
+          if (collectPowerupEnemy(e, p)) break;
+        }
+      }
     }
 
     if (!playerDown && megaTimer > 0) {
@@ -2847,6 +2922,18 @@
     for (const e of enemies) {
       if (!e.alive) continue;
       const kind = e.kind || "goomba";
+
+      // таймер меги у врага
+      if (e.megaTimer > 0) {
+        e.megaTimer--;
+        if (e.megaTimer === 0) {
+          e.big = true; // остаётся большим, как Марио после меги
+          applyEnemyGrownSize(e);
+        } else {
+          applyEnemyGrownSize(e);
+        }
+      }
+      if (e.starTimer > 0) e.starTimer--;
 
       if (kind === "piranha") {
         e.phase = (e.phase || 0) + 0.03;
@@ -3193,6 +3280,21 @@
   function drawEnemy(e) {
     const kind = e.kind || "goomba";
     const bob = Math.sin(anim * 0.2 + e.x * 0.05) * 1;
+    const enemyMega = (e.megaTimer || 0) > 0;
+    const enemyStar = (e.starTimer || 0) > 0;
+
+    // аура мега/звезды у врага
+    if (enemyMega || enemyStar) {
+      ctx.save();
+      ctx.strokeStyle = enemyMega
+        ? ("rgba(180,80,255," + (0.4 + Math.sin(anim * 0.25) * 0.25) + ")")
+        : ("hsla(" + ((anim * 12) % 360) + ",100%,60%,0.7)");
+      ctx.lineWidth = enemyMega ? 4 : 3;
+      ctx.beginPath();
+      ctx.ellipse(e.x + e.w / 2, e.y + e.h / 2 + bob, e.w / 2 + 6, e.h / 2 + 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     if (kind === "goomba") {
       const flip = e.vx > 0;
