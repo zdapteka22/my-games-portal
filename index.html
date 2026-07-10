@@ -24,6 +24,18 @@
   <meta name="twitter:title" content="Портал любимых игр · Blue Cat">
   <meta name="twitter:description" content="Бесплатные браузерные игры. Blue Cat — портал любимых игр.">
   <link rel="icon" href="images/blue-cat.svg" type="image/svg+xml">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("portal_ui_theme_v1") || "blue";
+        var ok = { blue:1, purple:1, green:1, red:1, orange:1, pink:1, gold:1, cyan:1 };
+        if (!ok[t]) t = "blue";
+        document.documentElement.setAttribute("data-ui-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-ui-theme", "blue");
+      }
+    })();
+  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -50,7 +62,7 @@
   }
   </script>
   <style>
-    :root {
+    :root, html[data-ui-theme="blue"] {
       --yg-bg: #0c1220;
       --yg-surface: #141e32;
       --yg-card: #1c2a44;
@@ -64,6 +76,79 @@
       --yg-radius: 16px;
       --yg-header: 56px;
       --yg-accent: #ffcc00;
+      --yg-grad-a: #12203a;
+      --yg-grad-b: #1a2f52;
+      --yg-banner-a: #1a4a8a;
+      --yg-banner-b: #2d6fd4;
+      --yg-banner-c: #5eb0ff;
+      --yg-btn-a: #5eb0ff;
+      --yg-btn-b: #3a8eef;
+      --yg-btn-shadow: #2563a8;
+      --yg-logo-a: #5eb0ff;
+      --yg-logo-b: #3a7fd4;
+    }
+    html[data-ui-theme="purple"] {
+      --yg-bg: #120a1c; --yg-surface: #1c1230; --yg-card: #2a1a44; --yg-card-hover: #352255;
+      --yg-yellow: #c084fc; --yg-yellow-hover: #e9d5ff; --yg-muted: #b8a0d0; --yg-border: #4a3468;
+      --yg-link: #d8b4fe; --yg-accent: #f0abfc;
+      --yg-grad-a: #1a0f2e; --yg-grad-b: #2d1b4e;
+      --yg-banner-a: #4a1d8a; --yg-banner-b: #7c3aed; --yg-banner-c: #c084fc;
+      --yg-btn-a: #c084fc; --yg-btn-b: #9333ea; --yg-btn-shadow: #6b21a8;
+      --yg-logo-a: #c084fc; --yg-logo-b: #7c3aed;
+    }
+    html[data-ui-theme="green"] {
+      --yg-bg: #0a1410; --yg-surface: #102018; --yg-card: #163024; --yg-card-hover: #1e3d2e;
+      --yg-yellow: #4ade80; --yg-yellow-hover: #86efac; --yg-muted: #9ab8a4; --yg-border: #2a4a38;
+      --yg-link: #6ee7b7; --yg-accent: #facc15;
+      --yg-grad-a: #0d1f16; --yg-grad-b: #163828;
+      --yg-banner-a: #14532d; --yg-banner-b: #16a34a; --yg-banner-c: #4ade80;
+      --yg-btn-a: #4ade80; --yg-btn-b: #16a34a; --yg-btn-shadow: #166534;
+      --yg-logo-a: #4ade80; --yg-logo-b: #16a34a;
+    }
+    html[data-ui-theme="red"] {
+      --yg-bg: #140a0c; --yg-surface: #221014; --yg-card: #321820; --yg-card-hover: #3f1e28;
+      --yg-yellow: #f87171; --yg-yellow-hover: #fca5a5; --yg-muted: #c4a0a8; --yg-border: #5a3038;
+      --yg-link: #fda4af; --yg-accent: #fbbf24;
+      --yg-grad-a: #1f1014; --yg-grad-b: #3b1520;
+      --yg-banner-a: #7f1d1d; --yg-banner-b: #dc2626; --yg-banner-c: #f87171;
+      --yg-btn-a: #f87171; --yg-btn-b: #dc2626; --yg-btn-shadow: #991b1b;
+      --yg-logo-a: #f87171; --yg-logo-b: #dc2626;
+    }
+    html[data-ui-theme="orange"] {
+      --yg-bg: #140e08; --yg-surface: #22180e; --yg-card: #322414; --yg-card-hover: #3f2e1a;
+      --yg-yellow: #fb923c; --yg-yellow-hover: #fdba74; --yg-muted: #c4b0a0; --yg-border: #5a4030;
+      --yg-link: #fdba74; --yg-accent: #fde047;
+      --yg-grad-a: #1f160c; --yg-grad-b: #3b2814;
+      --yg-banner-a: #9a3412; --yg-banner-b: #ea580c; --yg-banner-c: #fb923c;
+      --yg-btn-a: #fb923c; --yg-btn-b: #ea580c; --yg-btn-shadow: #9a3412;
+      --yg-logo-a: #fb923c; --yg-logo-b: #ea580c;
+    }
+    html[data-ui-theme="pink"] {
+      --yg-bg: #140a12; --yg-surface: #22101c; --yg-card: #321a2a; --yg-card-hover: #3f2236;
+      --yg-yellow: #f472b6; --yg-yellow-hover: #f9a8d4; --yg-muted: #c4a0b8; --yg-border: #5a3048;
+      --yg-link: #f9a8d4; --yg-accent: #fde68a;
+      --yg-grad-a: #1f0f1a; --yg-grad-b: #3b1830;
+      --yg-banner-a: #9d174d; --yg-banner-b: #db2777; --yg-banner-c: #f472b6;
+      --yg-btn-a: #f472b6; --yg-btn-b: #db2777; --yg-btn-shadow: #9d174d;
+      --yg-logo-a: #f472b6; --yg-logo-b: #db2777;
+    }
+    html[data-ui-theme="gold"] {
+      --yg-bg: #100e08; --yg-surface: #1c1a10; --yg-card: #2a2618; --yg-card-hover: #38321e;
+      --yg-yellow: #fbbf24; --yg-yellow-hover: #fde68a; --yg-muted: #c4b890; --yg-border: #5a5030;
+      --yg-link: #fcd34d; --yg-accent: #fef08a;
+      --yg-grad-a: #1a180c; --yg-grad-b: #2e2814;
+      --yg-banner-a: #854d0e; --yg-banner-b: #ca8a04; --yg-banner-c: #fbbf24;
+      --yg-btn-a: #fbbf24; --yg-btn-b: #ca8a04; --yg-btn-shadow: #854d0e;
+      --yg-logo-a: #fbbf24; --yg-logo-b: #ca8a04;
+    }
+    html[data-ui-theme="cyan"] {
+      --yg-bg: #061416; --yg-surface: #0c2024; --yg-card: #123038; --yg-card-hover: #183c46;
+      --yg-yellow: #22d3ee; --yg-yellow-hover: #67e8f9; --yg-muted: #90b8c0; --yg-border: #285058;
+      --yg-link: #67e8f9; --yg-accent: #a3e635;
+      --yg-grad-a: #0a1c20; --yg-grad-b: #123840;
+      --yg-banner-a: #155e75; --yg-banner-b: #0891b2; --yg-banner-c: #22d3ee;
+      --yg-btn-a: #22d3ee; --yg-btn-b: #0891b2; --yg-btn-shadow: #155e75;
+      --yg-logo-a: #22d3ee; --yg-logo-b: #0891b2;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -81,7 +166,7 @@
     .header {
       position: sticky; top: 0; z-index: 100;
       height: var(--yg-header);
-      background: linear-gradient(90deg, #12203a, #1a2f52 50%, #12203a);
+      background: linear-gradient(90deg, var(--yg-grad-a), var(--yg-grad-b) 50%, var(--yg-grad-a));
       border-bottom: 1px solid var(--yg-border);
       display: flex; align-items: center; gap: 16px;
       padding: 0 20px;
@@ -92,10 +177,10 @@
     }
     .logo-mark {
       width: 34px; height: 34px; border-radius: 12px;
-      background: linear-gradient(145deg, #5eb0ff, #3a7fd4);
+      background: linear-gradient(145deg, var(--yg-logo-a), var(--yg-logo-b));
       color: #fff;
       display: grid; place-items: center; font-weight: 900; font-size: 18px;
-      box-shadow: 0 0 16px rgba(94,176,255,.45);
+      box-shadow: 0 0 16px color-mix(in srgb, var(--yg-yellow) 45%, transparent);
       overflow: hidden;
     }
     .logo-mark img, .brand-banner-cat img {
@@ -105,9 +190,9 @@
       width: 56px; height: 56px; border-radius: 16px; overflow: hidden;
       flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,.3);
     }
-    .logo span b { color: #5eb0ff; font-weight: 800; }
+    .logo span b { color: var(--yg-yellow); font-weight: 800; }
     .logo .brand-sub {
-      display: block; font-size: 10px; font-weight: 700; color: #ffcc00;
+      display: block; font-size: 10px; font-weight: 700; color: var(--yg-accent);
       letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px;
     }
     .search { flex: 1; max-width: 420px; position: relative; }
@@ -128,14 +213,48 @@
     .nav-cats a:hover { background: #2a2a2a; color: #fff; }
     .nav-cats a.active { background: #2a2a2a; color: var(--yg-yellow); }
     .nav-cats .play-link {
-      background: linear-gradient(135deg, #5eb0ff, #3a8eef); color: #fff !important; font-weight: 800;
+      background: linear-gradient(135deg, var(--yg-btn-a), var(--yg-btn-b)); color: #fff !important; font-weight: 800;
     }
     .nav-cats .play-link:hover { filter: brightness(1.08); color: #fff !important; }
     .cc-play {
-      background: linear-gradient(135deg, #5eb0ff, #3a8eef) !important;
+      background: linear-gradient(135deg, var(--yg-btn-a), var(--yg-btn-b)) !important;
       color: #fff !important;
     }
-    .cc-badge { background: #ffcc00 !important; color: #111 !important; }
+    .cc-badge { background: var(--yg-accent) !important; color: #111 !important; }
+
+    /* Color theme switcher */
+    .theme-switch { position: relative; display: flex; align-items: center; }
+    .theme-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 36px; padding: 0 12px; border-radius: 10px;
+      background: var(--yg-card); color: #fff; border: 1px solid var(--yg-border);
+      font-size: 13px; font-weight: 800;
+    }
+    .theme-btn:hover { filter: brightness(1.1); }
+    .theme-btn .swatch {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--yg-yellow); box-shadow: 0 0 0 2px rgba(255,255,255,.25);
+    }
+    .theme-menu {
+      position: absolute; top: calc(100% + 6px); right: 0;
+      min-width: 200px; background: var(--yg-surface);
+      border: 1px solid var(--yg-border); border-radius: 12px;
+      padding: 8px; z-index: 120;
+      box-shadow: 0 12px 32px rgba(0,0,0,.5);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    }
+    .theme-menu[hidden] { display: none; }
+    .theme-menu button {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      padding: 10px 10px; border-radius: 10px; background: var(--yg-card);
+      color: #fff; font-size: 13px; font-weight: 700; border: 1px solid transparent;
+    }
+    .theme-menu button:hover { border-color: var(--yg-yellow); }
+    .theme-menu button.active { border-color: var(--yg-yellow); background: color-mix(in srgb, var(--yg-yellow) 18%, var(--yg-card)); }
+    .theme-menu .dot {
+      width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+    }
 
     /* Language switcher */
     .lang-switch {
@@ -285,12 +404,12 @@
 
     .brand-banner {
       display: flex; align-items: center; gap: 16px;
-      background: linear-gradient(135deg, #1a4a8a, #2d6fd4 45%, #5eb0ff);
-      border: 2px solid #8cc8ff;
+      background: linear-gradient(135deg, var(--yg-banner-a), var(--yg-banner-b) 45%, var(--yg-banner-c));
+      border: 2px solid var(--yg-yellow-hover);
       border-radius: 20px;
       padding: 18px 22px;
       margin-bottom: 18px;
-      box-shadow: 0 10px 30px rgba(46,120,220,.35);
+      box-shadow: 0 10px 30px color-mix(in srgb, var(--yg-banner-b) 40%, transparent);
     }
 
     .brand-banner-title {
@@ -304,14 +423,14 @@
       margin-top: 4px;
       font-size: 1rem;
       font-weight: 800;
-      color: #ffcc00;
+      color: var(--yg-accent);
       text-transform: uppercase;
       letter-spacing: 0.12em;
     }
     .portal-hero {
       background:
-        radial-gradient(circle at 20% 30%, rgba(94,176,255,.22), transparent 45%),
-        radial-gradient(circle at 80% 20%, rgba(255,204,0,.12), transparent 40%),
+        radial-gradient(circle at 20% 30%, color-mix(in srgb, var(--yg-yellow) 22%, transparent), transparent 45%),
+        radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--yg-accent) 14%, transparent), transparent 40%),
         var(--yg-surface);
       border: 1px solid var(--yg-border);
       border-radius: 20px;
@@ -320,8 +439,8 @@
     }
     .portal-hero .badge {
       display: inline-block;
-      background: rgba(255,204,0,.12);
-      border: 1px solid rgba(255,204,0,.4);
+      background: color-mix(in srgb, var(--yg-accent) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--yg-accent) 45%, transparent);
       color: var(--yg-yellow);
       font-size: 12px; font-weight: 800;
       padding: 5px 12px; border-radius: 999px; margin-bottom: 12px;
@@ -334,11 +453,11 @@
     .btn-play {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       min-width: 160px; height: 48px; padding: 0 22px;
-      background: linear-gradient(135deg, #5eb0ff, #3a8eef); color: #fff;
+      background: linear-gradient(135deg, var(--yg-btn-a), var(--yg-btn-b)); color: #fff;
       font-size: 16px; font-weight: 800; border-radius: 14px;
-      box-shadow: 0 4px 0 #2563a8;
+      box-shadow: 0 4px 0 var(--yg-btn-shadow);
     }
-    .btn-play:hover { background: linear-gradient(135deg, #8cc8ff, #5eb0ff); color: #0a1628; }
+    .btn-play:hover { background: linear-gradient(135deg, var(--yg-yellow-hover), var(--yg-btn-a)); color: var(--yg-bg); filter: brightness(1.05); }
     .btn-secondary {
       height: 48px; padding: 0 18px; border-radius: 12px;
       background: #2a2a2a; color: #fff; font-weight: 700; font-size: 14px;
@@ -422,7 +541,10 @@
       .classics-grid { grid-template-columns: 1fr; gap: 12px; }
       .nav-cats a { display: none; }
       .nav-cats .play-link { display: inline-flex !important; }
-      .nav-cats .lang-switch { display: flex; }
+      .nav-cats .lang-switch, .nav-cats .theme-switch { display: flex; }
+      .theme-btn { padding: 0 10px; }
+      .theme-btn #themeLabel { display: none; }
+      .theme-menu { right: 0; left: auto; min-width: 180px; }
       .search { display: none; }
       .header { gap: 8px; padding: 0 10px; height: 52px; }
       .logo { font-size: 14px; }
@@ -644,6 +766,23 @@
       <a href="#reviews" data-i18n="navReviews">Отзывы</a>
       <a href="#menu" data-i18n="navCatalog">Каталог</a>
       <a href="#add" data-i18n="navAdd">Добавить</a>
+      <div class="theme-switch">
+        <button type="button" class="theme-btn" id="themeBtn" aria-haspopup="listbox" aria-expanded="false" title="Цвет интерфейса" data-i18n-aria="themeAria">
+          <span class="swatch" aria-hidden="true"></span>
+          <span id="themeLabel" data-i18n="themeBtn">Цвет</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="theme-menu" id="themeMenu" hidden role="listbox" aria-label="Цвет интерфейса">
+          <button type="button" data-theme="blue" class="active" role="option"><span class="dot" style="background:#5eb0ff"></span><span data-i18n="themeBlue">Синий</span></button>
+          <button type="button" data-theme="purple" role="option"><span class="dot" style="background:#c084fc"></span><span data-i18n="themePurple">Фиолет</span></button>
+          <button type="button" data-theme="green" role="option"><span class="dot" style="background:#4ade80"></span><span data-i18n="themeGreen">Зелёный</span></button>
+          <button type="button" data-theme="red" role="option"><span class="dot" style="background:#f87171"></span><span data-i18n="themeRed">Красный</span></button>
+          <button type="button" data-theme="orange" role="option"><span class="dot" style="background:#fb923c"></span><span data-i18n="themeOrange">Оранж</span></button>
+          <button type="button" data-theme="pink" role="option"><span class="dot" style="background:#f472b6"></span><span data-i18n="themePink">Розовый</span></button>
+          <button type="button" data-theme="gold" role="option"><span class="dot" style="background:#fbbf24"></span><span data-i18n="themeGold">Золото</span></button>
+          <button type="button" data-theme="cyan" role="option"><span class="dot" style="background:#22d3ee"></span><span data-i18n="themeCyan">Бирюза</span></button>
+        </div>
+      </div>
       <div class="lang-switch">
         <button type="button" class="lang-btn" id="langBtn" aria-haspopup="listbox" aria-expanded="false" title="Language">
           <span class="flag" id="langFlag">🇷🇺</span>
@@ -1096,6 +1235,16 @@
   <script>
     const STORAGE_GAMES = "portal_customGames_v1";
     const STORAGE_LANG = "portal_lang_v1";
+    const STORAGE_THEME = "portal_ui_theme_v1";
+    const THEME_IDS = ["blue", "purple", "green", "red", "orange", "pink", "gold", "cyan"];
+    const THEME_META = {
+      blue: "#5eb0ff", purple: "#c084fc", green: "#4ade80", red: "#f87171",
+      orange: "#fb923c", pink: "#f472b6", gold: "#fbbf24", cyan: "#22d3ee"
+    };
+    const THEME_I18N_KEY = {
+      blue: "themeBlue", purple: "themePurple", green: "themeGreen", red: "themeRed",
+      orange: "themeOrange", pink: "themePink", gold: "themeGold", cyan: "themeCyan"
+    };
 
     /* ========== i18n ========== */
     const I18N = {
@@ -1104,6 +1253,10 @@
         searchPh: "Поиск игр", searchAria: "Поиск",
         navAll: "☰ Все игры", navClassics: "Классика", navVideos: "Видео", navReviews: "Отзывы",
         navCatalog: "Каталог", navAdd: "Добавить",
+        themeBtn: "Цвет", themeAria: "Цвет интерфейса",
+        themeBlue: "Синий", themePurple: "Фиолет", themeGreen: "Зелёный", themeRed: "Красный",
+        themeOrange: "Оранж", themePink: "Розовый", themeGold: "Золото", themeCyan: "Бирюза",
+        themeToast: "Цвет: {n}",
         smeshTitle: "Смешарики — Битва и Догонялки", smeshDesc: "Битва, догонялки, голя и гонки! Отзывы детей и блогеров.",
         tanksTitle: "Танчики", tanksDesc: "Классические танчики: езжай, стреляй, прячься за укрытиями!",
         reviewsTitle: "💬 Отзывы — дети, блогеры и ИИ", reviewsSub: "Отзывы по каждой игре портала",
@@ -1164,6 +1317,10 @@
         reviewsTitle: "💬 Reviews — kids, bloggers & AI", reviewsSub: "Reviews for every game",
         gTanks: "Tanks",
         navCatalog: "Catalog", navAdd: "Add",
+        themeBtn: "Color", themeAria: "Interface color",
+        themeBlue: "Blue", themePurple: "Purple", themeGreen: "Green", themeRed: "Red",
+        themeOrange: "Orange", themePink: "Pink", themeGold: "Gold", themeCyan: "Cyan",
+        themeToast: "Color: {n}",
         heroBadge: "🐱 BLUE CAT · FREE · IN BROWSER",
         heroTitle: "Favorite Games Portal — Blue Cat",
         heroText: "Play online: Snake, Pac-Man, Mario, Smeshariki, Tanks. Favorite Games Portal Blue Cat — no downloads!",
@@ -1219,6 +1376,10 @@
         reviewsTitle: "💬 Відгуки — діти, блогери та ШІ", reviewsSub: "Відгуки до кожної гри",
         gTanks: "Танчики",
         navCatalog: "Каталог", navAdd: "Додати",
+        themeBtn: "Колір", themeAria: "Колір інтерфейсу",
+        themeBlue: "Синій", themePurple: "Фіолет", themeGreen: "Зелений", themeRed: "Червоний",
+        themeOrange: "Помаранч", themePink: "Рожевий", themeGold: "Золото", themeCyan: "Бірюза",
+        themeToast: "Колір: {n}",
         heroBadge: "🐱 BLUE CAT · БЕЗКОШТОВНО · У БРАУЗЕРІ",
         heroTitle: "Портал улюблених ігор — Blue Cat",
         heroText: "Грай онлайн: Змійка, Пакман, Маріо, Смішарики, Танчики. Портал улюблених ігор Blue Cat!",
@@ -1323,6 +1484,36 @@
       try { localStorage.setItem(STORAGE_LANG, lang); } catch (_) {}
       applyI18n();
       toast(lang === "en" ? "Language: English" : lang === "uk" ? "Мова: Українська" : "Язык: Русский");
+    }
+
+    /* ========== UI color theme ========== */
+    let currentTheme = "blue";
+    try {
+      currentTheme = localStorage.getItem(STORAGE_THEME) || "blue";
+    } catch (_) { currentTheme = "blue"; }
+    if (THEME_IDS.indexOf(currentTheme) < 0) currentTheme = "blue";
+
+    function applyTheme(theme, silent) {
+      if (THEME_IDS.indexOf(theme) < 0) theme = "blue";
+      currentTheme = theme;
+      document.documentElement.setAttribute("data-ui-theme", theme);
+      try { localStorage.setItem(STORAGE_THEME, theme); } catch (_) {}
+      var metaColor = {
+        blue: "#1a2a4a", purple: "#2d1b4e", green: "#163828", red: "#3b1520",
+        orange: "#3b2814", pink: "#3b1830", gold: "#2e2814", cyan: "#123840"
+      };
+      document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+        m.setAttribute("content", metaColor[theme] || metaColor.blue);
+      });
+      document.querySelectorAll("#themeMenu [data-theme]").forEach(function (btn) {
+        btn.classList.toggle("active", btn.getAttribute("data-theme") === theme);
+      });
+      var key = THEME_I18N_KEY[theme];
+      var name = key ? t(key) : theme;
+      if (!silent) {
+        var msg = t("themeToast").replace("{n}", name);
+        toast(msg);
+      }
     }
 
     /* ========== Videos ========== */
@@ -1595,6 +1786,7 @@
         const open = langMenu.hidden;
         langMenu.hidden = !open;
         langBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        if (themeMenu) { themeMenu.hidden = true; if (themeBtn) themeBtn.setAttribute("aria-expanded", "false"); }
       });
       langMenu.addEventListener("click", (e) => {
         const btn = e.target.closest("[data-lang]");
@@ -1603,11 +1795,34 @@
         langMenu.hidden = true;
         langBtn.setAttribute("aria-expanded", "false");
       });
-      document.addEventListener("click", () => {
-        langMenu.hidden = true;
-        langBtn.setAttribute("aria-expanded", "false");
+    }
+
+    // Color theme switcher
+    const themeBtn = document.getElementById("themeBtn");
+    const themeMenu = document.getElementById("themeMenu");
+    if (themeBtn && themeMenu) {
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = themeMenu.hidden;
+        themeMenu.hidden = !open;
+        themeBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        if (langMenu) { langMenu.hidden = true; if (langBtn) langBtn.setAttribute("aria-expanded", "false"); }
+      });
+      themeMenu.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-theme]");
+        if (!btn) return;
+        applyTheme(btn.getAttribute("data-theme"));
+        themeMenu.hidden = true;
+        themeBtn.setAttribute("aria-expanded", "false");
       });
     }
+
+    document.addEventListener("click", () => {
+      if (langMenu) { langMenu.hidden = true; if (langBtn) langBtn.setAttribute("aria-expanded", "false"); }
+      if (themeMenu) { themeMenu.hidden = true; if (themeBtn) themeBtn.setAttribute("aria-expanded", "false"); }
+    });
+
+    applyTheme(currentTheme, true);
 
     // Videos
     on("videosGrid", "click", (e) => {
