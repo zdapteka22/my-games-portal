@@ -183,7 +183,7 @@
 
   <section class="screen" id="selectScreen">
     <h2 style="font-size:1.15rem;margin-bottom:4px">Выбери героя</h2>
-    <p class="sub">В бою выходят <b>все <span id="heroCountLabel">27</span> героев сразу</b> (не 5–6). Ты — выбранный герой, остальные — ИИ. Смешарики, Марио, Пакман, Змейка, Танчики, Лунтик, враги — весь список.</p>
+    <p class="sub">Режим <b>все против всех</b>: на арене сразу все <span id="heroCountLabel">27</span> героев. Нет команд — каждый бьёт каждого. Ты — выбранный герой, остальные дерутся между собой и с тобой. Последний выживший побеждает.</p>
     <div class="filter-row" id="filterRow"></div>
     <div class="heroes" id="heroGrid"></div>
     <div class="detail" id="heroDetail">
@@ -549,7 +549,8 @@
       hp, maxHp: hp, facing:1, dead:false,
       atkCd:0, abilCd:0, powerT:0, phaseT:0, megaT:0, growT:0,
       stunT:0, shieldT:0, poisonT:0, spinT:0, shellSlide:0,
-      aiTimer: Math.random() * 0.5, aiTarget:null, flash:0, scale:1
+      aiTimer: Math.random() * 0.5, aiTarget:null, flash:0, scale:1,
+      kills: 0, bumpCd: 0
     };
   }
 
@@ -671,18 +672,39 @@
     for (const o of arenaObstacles) circleRectPush(f,o);
   }
   function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
-  function nearestEnemy(f){
-    let best=null,bd=1e9;
-    for (const o of fighters){
-      if (o===f||o.dead) continue;
-      const d=dist(f,o);
-      if (d<bd){bd=d;best=o;}
+
+  /** Все живые, кроме себя — враги в free-for-all (нет команд) */
+  function livingEnemies(f) {
+    const list = [];
+    for (const o of fighters) {
+      if (o !== f && !o.dead) list.push(o);
+    }
+    return list;
+  }
+
+  function nearestEnemy(f) {
+    let best = null, bd = 1e9;
+    for (const o of livingEnemies(f)) {
+      const d = dist(f, o);
+      if (d < bd) { bd = d; best = o; }
     }
     return best;
   }
 
+  /** Все против всех: случайная цель (не только игрок), иногда ближайшая */
+  function pickFfaTarget(f) {
+    const enemies = livingEnemies(f);
+    if (!enemies.length) return null;
+    // 55% — случайный враг (чтобы ИИ дрались друг с другом, а не все на игрока)
+    // 45% — ближайший
+    if (Math.random() < 0.55) {
+      return enemies[Math.floor(Math.random() * enemies.length)];
+    }
+    return nearestEnemy(f);
+  }
+
   function damage(target, amount, from){
-    if (target.dead || target.phaseT>0) return;
+    if (target.dead || target.phaseT>0) return false;
     let dmg=amount;
     if (from && from.powerT>0) dmg*=1.45;
     if (target.megaT>0) dmg*=0.7;
@@ -693,7 +715,10 @@
     if (target.hp<=0){
       target.hp=0; target.dead=true;
       burst(target.x,target.y,"#fff",16);
+      if (from && from !== target && !from.dead) from.kills = (from.kills || 0) + 1;
+      return true;
     }
+    return false;
   }
   function burst(x,y,color,n){
     for(let i=0;i<n;i++){
@@ -706,14 +731,15 @@
   }
   function melee(f, range, dmg){
     const face=f.facing||1;
+    // Free-for-all: бьёт ВСЕХ в радиусе (не только «вперёд»)
     for (const o of fighters){
       if (o===f||o.dead) continue;
       const dx=o.x-f.x, dy=o.y-f.y, d=Math.hypot(dx,dy);
       if (d<range+o.r*o.scale){
-        if (face>0 && dx<-12) continue;
-        if (face<0 && dx>12) continue;
         damage(o,dmg,f);
-        o.vx+=face*110; o.vy+=(Math.random()-0.5)*40;
+        const nx = d > 0.1 ? dx/d : face;
+        const ny = d > 0.1 ? dy/d : 0;
+        o.vx += nx * 100; o.vy += ny * 60 + (Math.random()-0.5)*30;
       }
     }
     burst(f.x+face*22,f.y,f.def.accent,5);
@@ -880,34 +906,56 @@
   }
 
   function aiStep(f,dt){
-    f.aiTimer-=dt;
-    if (f.aiTimer<=0 || !f.aiTarget || f.aiTarget.dead){
-      f.aiTarget=nearestEnemy(f);
-      f.aiTimer=0.25+Math.random()*0.4;
+    f.aiTimer -= dt;
+    // Меняем цель часто — free-for-all, не «все на игрока»
+    if (f.aiTimer <= 0 || !f.aiTarget || f.aiTarget.dead) {
+      f.aiTarget = pickFfaTarget(f);
+      f.aiTimer = 0.35 + Math.random() * 0.7;
     }
-    const t=f.aiTarget; if(!t) return;
-    let dx=t.x-f.x, dy=t.y-f.y;
-    const d=Math.hypot(dx,dy)||1;
-    let prefer=50;
-    if (["tank","shoot","fire","dualfire","heal","boss"].includes(f.def.style) || f.def.id==="bullet" || f.def.id==="losyash") prefer=120;
-    if (f.def.ghost && f.phaseT<=0 && d<90){ dx=-dx; dy=-dy; }
-    let mx=0,my=0;
-    if (d>prefer+20){ mx=dx/d; my=dy/d; }
-    else if (d<prefer-25){ mx=-dx/d; my=-dy/d; }
-    else { mx=(Math.random()-0.5)*0.5; my=(Math.random()-0.5)*0.5; }
-    let spd=f.def.speed*60;
-    if (f.powerT>0) spd*=1.35;
-    if (f.megaT>0) spd*=0.85;
-    if (f.shellSlide>0){ /* keep slide vel */ }
-    else { f.vx=mx*spd; f.vy=my*spd; }
-    if (Math.abs(mx)>0.1) f.facing=mx>0?1:-1;
-    if (d<55 || (prefer>80 && d<160 && Math.random()<0.03)){
-      if (Math.random()<0.55) doAttack(f);
+    const t = f.aiTarget;
+    if (!t) return;
+
+    let dx = t.x - f.x, dy = t.y - f.y;
+    const d = Math.hypot(dx, dy) || 1;
+    let prefer = 48;
+    if (["tank","shoot","fire","dualfire","heal","boss"].includes(f.def.style) || f.def.id==="bullet" || f.def.id==="losyash") prefer = 115;
+    if (f.def.ghost && f.phaseT <= 0 && d < 85) { dx = -dx; dy = -dy; }
+
+    // Если рядом другой враг (не цель) — иногда переключиться и бить его (хаос FFA)
+    const near = nearestEnemy(f);
+    if (near && near !== t && dist(f, near) < 55 && Math.random() < 0.08) {
+      f.aiTarget = near;
     }
-    // Чуть реже способности, когда на арене толпа (чтобы не лагало)
-    const abilChance = fighters.length > 20 ? 0.008 : 0.015;
-    if (f.abilCd<=0 && d<150 && Math.random()<abilChance) doAbility(f);
-    if (f.hp<f.maxHp*0.35 && f.abilCd<=0 && Math.random()<0.015) doAbility(f);
+
+    let mx = 0, my = 0;
+    if (d > prefer + 18) { mx = dx / d; my = dy / d; }
+    else if (d < prefer - 22) { mx = -dx / d; my = -dy / d; }
+    else {
+      // кружить и бить
+      mx = -dy / d * 0.7 + (Math.random() - 0.5) * 0.4;
+      my = dx / d * 0.7 + (Math.random() - 0.5) * 0.4;
+    }
+
+    let spd = f.def.speed * 60;
+    if (f.powerT > 0) spd *= 1.35;
+    if (f.megaT > 0) spd *= 0.85;
+    if (f.shellSlide <= 0) {
+      f.vx = mx * spd;
+      f.vy = my * spd;
+    }
+    if (Math.abs(mx) > 0.1) f.facing = mx > 0 ? 1 : -1;
+
+    // Бить любого в радиусе, не только «свою» цель
+    let anyoneClose = false;
+    for (const o of livingEnemies(f)) {
+      if (dist(f, o) < 58) { anyoneClose = true; break; }
+    }
+    if (anyoneClose || d < 60 || (prefer > 80 && d < 170 && Math.random() < 0.04)) {
+      if (Math.random() < 0.65) doAttack(f);
+    }
+    const abilChance = fighters.length > 20 ? 0.01 : 0.018;
+    if (f.abilCd <= 0 && (anyoneClose || d < 160) && Math.random() < abilChance) doAbility(f);
+    if (f.hp < f.maxHp * 0.35 && f.abilCd <= 0 && Math.random() < 0.02) doAbility(f);
   }
 
   function loop(now){
@@ -1002,6 +1050,7 @@
       }
 
       clampFighter(f);
+      f.bumpCd = Math.max(0, (f.bumpCd || 0) - dt);
       for (const o of fighters){
         if (o===f||o.dead) continue;
         const d=dist(f,o);
@@ -1011,6 +1060,11 @@
           const nx=(f.x-o.x)/d, ny=(f.y-o.y)/d;
           f.x+=nx*push; f.y+=ny*push;
           o.x-=nx*push; o.y-=ny*push;
+          // Контактный урон: любой vs любой (все против всех)
+          if (f.bumpCd <= 0 && f.phaseT <= 0 && o.phaseT <= 0) {
+            damage(o, 3.5 + f.def.atk * 0.08, f);
+            f.bumpCd = 0.28;
+          }
         }
       }
     }
@@ -1042,16 +1096,21 @@
       running=false;
       const winner=alive[0];
       const pAlive=fighters.find(f=>f.isPlayer&&!f.dead);
+      // Топ по киллам (все против всех)
+      const byKills = [...fighters].sort((a, b) => (b.kills || 0) - (a.kills || 0)).slice(0, 3);
+      const killLine = byKills.map((f, i) => (i + 1) + ". " + f.def.emoji + " " + f.def.name + " — " + (f.kills || 0)).join(" · ");
       endOverlay.hidden=false;
       if (pAlive){
-        document.getElementById("endTitle").textContent="🏆 Победа!";
-        document.getElementById("endText").textContent=pAlive.def.emoji+" "+pAlive.def.name+" победил в Битве всех игр!";
+        document.getElementById("endTitle").textContent="🏆 Победа! Все против всех";
+        document.getElementById("endText").textContent=
+          pAlive.def.emoji+" "+pAlive.def.name+" — последний выживший! Киллы: "+(pAlive.kills||0)+". Топ: "+killLine;
       } else if (winner){
         document.getElementById("endTitle").textContent="💀 Поражение";
-        document.getElementById("endText").textContent="Победил "+winner.def.emoji+" "+winner.def.name+". Попробуй ещё!";
+        document.getElementById("endText").textContent=
+          "Победил "+winner.def.emoji+" "+winner.def.name+" (киллы: "+(winner.kills||0)+"). Топ: "+killLine;
       } else {
         document.getElementById("endTitle").textContent="Ничья";
-        document.getElementById("endText").textContent="Все выбыли!";
+        document.getElementById("endText").textContent="Все выбыли! "+killLine;
       }
     }
   }
@@ -1221,16 +1280,18 @@
       ctx.strokeRect(W/2 - 210, 40, 420, 70);
       ctx.fillStyle = "#ffcc00";
       ctx.font = "bold 22px Segoe UI, Arial";
-      ctx.fillText("ВСЕ " + totalHeroes + " ГЕРОЕВ НА АРЕНЕ", W/2, 68);
-      ctx.font = "bold 16px Segoe UI, Arial";
+      ctx.fillText("ВСЕ ПРОТИВ ВСЕХ · " + totalHeroes + " героев", W/2, 68);
+      ctx.font = "bold 15px Segoe UI, Arial";
       ctx.fillStyle = "#fff";
-      ctx.fillText("Бой через " + Math.ceil(spawnFreeze) + "… смотри весь состав!", W/2, 94);
+      ctx.fillText("Бой через " + Math.ceil(spawnFreeze) + "… нет команд, каждый сам!", W/2, 94);
     }
     ctx.fillStyle = "rgba(0,0,0,.5)";
-    ctx.fillRect(W/2 - 150, 6, 300, 28);
+    ctx.fillRect(W/2 - 170, 6, 340, 28);
     ctx.fillStyle = "#ffcc00";
-    ctx.font = "bold 14px Segoe UI, Arial";
-    ctx.fillText("⚔️ На арене: " + aliveN + " из " + totalHeroes + " (все)", W/2, 20);
+    ctx.font = "bold 13px Segoe UI, Arial";
+    const me = fighters.find(f => f.isPlayer);
+    const myK = me ? (me.kills || 0) : 0;
+    ctx.fillText("⚔️ FFA " + aliveN + "/" + totalHeroes + " · твои киллы: " + myK, W/2, 20);
   }
 
   // init
