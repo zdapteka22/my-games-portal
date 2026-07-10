@@ -17,7 +17,7 @@
       padding: 10px 10px 20px; gap: 8px;
     }
     .top {
-      width: min(920px, 100%); display: flex; justify-content: space-between;
+      width: min(960px, 100%); display: flex; justify-content: space-between;
       align-items: center; gap: 8px; flex-wrap: wrap;
     }
     .top a {
@@ -28,26 +28,38 @@
       background: rgba(255,255,255,.08); color: #ddd; border: 1px solid rgba(255,255,255,.18);
     }
     h1 {
-      font-size: clamp(1.1rem, 3vw, 1.45rem); color: #ffcc00;
+      font-size: clamp(1.05rem, 3vw, 1.4rem); color: #ffcc00;
       text-shadow: 0 0 18px rgba(255,204,0,.35);
     }
     .screen {
-      width: min(920px, 100%);
+      width: min(960px, 100%);
       background: rgba(0,0,0,.45);
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 18px;
-      padding: 16px;
+      padding: 14px;
     }
     .screen[hidden] { display: none !important; }
-    .sub { color: #aaa; font-size: 14px; margin: 4px 0 14px; line-height: 1.4; }
+    .sub { color: #aaa; font-size: 13px; margin: 4px 0 12px; line-height: 1.4; }
+    .filter-row {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+    }
+    .filter-row button {
+      border: 1px solid #444; background: #1a1a1a; color: #ddd;
+      border-radius: 999px; padding: 7px 12px; font-weight: 700; font-size: 12px;
+      cursor: pointer; font-family: inherit;
+    }
+    .filter-row button.active { border-color: #ffcc00; color: #ffcc00; background: #221e10; }
 
     .heroes {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
       gap: 10px;
+      max-height: min(52vh, 480px);
+      overflow: auto;
+      padding-right: 4px;
     }
     .hero-card {
-      border: 2px solid #333; border-radius: 14px; padding: 12px 10px;
+      border: 2px solid #333; border-radius: 14px; padding: 10px 8px;
       background: #161616; cursor: pointer; text-align: center;
       transition: .15s transform, .15s border-color, .15s box-shadow;
       color: inherit; font: inherit;
@@ -58,21 +70,37 @@
       box-shadow: 0 0 0 2px rgba(255,204,0,.25), 0 10px 24px rgba(0,0,0,.4);
       background: #1c1a10;
     }
-    .hero-emoji { font-size: 2.4rem; line-height: 1.1; margin-bottom: 6px; }
-    .hero-name { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
-    .hero-from { font-size: 11px; color: #888; margin-bottom: 6px; }
-    .hero-stats { font-size: 11px; color: #bbb; line-height: 1.35; }
+    .hero-pic {
+      width: 72px; height: 72px; margin: 0 auto 6px; border-radius: 14px;
+      display: grid; place-items: center; overflow: hidden;
+      background: #0d0d0d; border: 1px solid #333;
+    }
+    .hero-pic img {
+      width: 100%; height: 100%; object-fit: contain; image-rendering: auto;
+      display: block;
+    }
+    .hero-pic .fallback { font-size: 2.2rem; line-height: 1; }
+    .hero-name { font-weight: 800; font-size: 13px; margin-bottom: 2px; }
+    .hero-from { font-size: 10px; color: #888; margin-bottom: 4px; }
+    .hero-stats { font-size: 10px; color: #bbb; line-height: 1.3; }
     .hero-abil {
-      margin-top: 8px; font-size: 11px; font-weight: 700; color: #ffcc00;
-      background: rgba(255,204,0,.1); border-radius: 8px; padding: 5px 6px;
+      margin-top: 6px; font-size: 10px; font-weight: 700; color: #ffcc00;
+      background: rgba(255,204,0,.1); border-radius: 8px; padding: 4px 5px;
     }
 
     .detail {
-      margin-top: 14px; padding: 12px 14px; border-radius: 12px;
-      background: #121212; border: 1px solid #333; min-height: 72px;
+      margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+      background: #121212; border: 1px solid #333; min-height: 64px;
+      display: flex; gap: 12px; align-items: center;
     }
+    .detail-pic {
+      width: 64px; height: 64px; border-radius: 12px; overflow: hidden;
+      background: #0d0d0d; border: 1px solid #333; flex-shrink: 0;
+      display: grid; place-items: center;
+    }
+    .detail-pic img { width: 100%; height: 100%; object-fit: contain; }
     .detail strong { color: #ffcc00; }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
     .btn {
       min-height: 48px; padding: 0 20px; border: none; border-radius: 12px;
       font-weight: 800; font-size: 15px; cursor: pointer; font-family: inherit;
@@ -82,11 +110,9 @@
       box-shadow: 0 4px 0 #9a7a00;
     }
     .btn-go:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
-    .btn-sec {
-      background: #2a2a2a; color: #fff; border: 1px solid #444;
-    }
+    .btn-sec { background: #2a2a2a; color: #fff; border: 1px solid #444; }
 
-    #gameWrap { display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(920px, 100%); }
+    #gameWrap { display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(960px, 100%); }
     #gameWrap[hidden] { display: none !important; }
     .hud {
       width: 100%; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;
@@ -96,23 +122,27 @@
     .hud b { color: #ffcc00; }
     .bars { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
     .bar-item {
-      flex: 1 1 120px; background: #111; border: 1px solid #333; border-radius: 10px;
-      padding: 6px 8px; font-size: 11px; min-width: 100px;
+      flex: 1 1 110px; background: #111; border: 1px solid #333; border-radius: 10px;
+      padding: 5px 7px; font-size: 11px; min-width: 96px;
     }
     .bar-item.me { border-color: #ffcc00; }
     .bar-item.dead { opacity: .4; }
-    .bar-name { font-weight: 800; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .bar-hp {
-      height: 8px; background: #222; border-radius: 999px; overflow: hidden;
+    .bar-name {
+      font-weight: 800; margin-bottom: 4px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+      display: flex; align-items: center; gap: 4px;
     }
+    .bar-name img { width: 16px; height: 16px; object-fit: contain; }
+    .bar-hp { height: 8px; background: #222; border-radius: 999px; overflow: hidden; }
     .bar-hp > i { display: block; height: 100%; background: linear-gradient(90deg, #ef4444, #fbbf24); width: 100%; }
+    .canvas-wrap { position: relative; width: 100%; max-width: 920px; }
     canvas {
-      width: 100%; max-width: 900px; height: auto; aspect-ratio: 900 / 520;
+      width: 100%; max-width: 920px; height: auto; aspect-ratio: 920 / 540;
       border: 3px solid #333; border-radius: 14px; background: #1a2030;
       box-shadow: 0 0 40px rgba(0,0,0,.45); touch-action: none; outline: none;
       display: block;
     }
-    .hint { color: #999; font-size: 12px; text-align: center; line-height: 1.4; max-width: 900px; }
+    .hint { color: #999; font-size: 12px; text-align: center; line-height: 1.4; max-width: 920px; }
     .pad {
       display: none; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; touch-action: none;
     }
@@ -135,7 +165,10 @@
       border-radius: 16px; max-width: 90%;
     }
     .overlay-box h2 { color: #ffcc00; margin-bottom: 8px; }
-    .canvas-wrap { position: relative; width: 100%; max-width: 900px; }
+    .load-bar {
+      width: min(420px, 90vw); height: 10px; background: #222; border-radius: 999px; overflow: hidden; margin: 8px auto 0;
+    }
+    .load-bar > i { display: block; height: 100%; width: 0%; background: #ffcc00; transition: width .15s; }
   </style>
 </head>
 <body>
@@ -146,14 +179,20 @@
   </div>
 
   <section class="screen" id="selectScreen">
-    <h2 style="font-size:1.2rem;margin-bottom:4px">Выбери героя</h2>
-    <p class="sub">Персонажи из Танчиков, Смешариков, Пакмана, Змейки, Марио и Лунтика. У каждого своя атака и супер-способность.</p>
+    <h2 style="font-size:1.15rem;margin-bottom:4px">Выбери героя</h2>
+    <p class="sub">Все герои и картинки из твоих игр: Смешарики, Марио, Пакман, Змейка, Танчики, Лунтик и враги. У каждого — атака и супер-способность.</p>
+    <div class="filter-row" id="filterRow"></div>
     <div class="heroes" id="heroGrid"></div>
-    <div class="detail" id="heroDetail">Нажми на карточку героя.</div>
+    <div class="detail" id="heroDetail">
+      <div class="detail-pic"><span class="fallback">⚔️</span></div>
+      <div>Нажми на карточку героя. Картинки грузятся из твоих игр.</div>
+    </div>
     <div class="actions">
       <button type="button" class="btn btn-go" id="startBtn" disabled>▶ В бой!</button>
       <button type="button" class="btn btn-sec" id="randBtn">🎲 Случайный</button>
     </div>
+    <div class="load-bar" id="loadBar" title="Загрузка картинок"><i id="loadFill"></i></div>
+    <p class="sub" id="loadText" style="margin-top:8px;margin-bottom:0;text-align:center">Загрузка картинок…</p>
   </section>
 
   <div id="gameWrap" hidden>
@@ -164,7 +203,7 @@
     </div>
     <div class="bars" id="hpBars"></div>
     <div class="canvas-wrap">
-      <canvas id="c" width="900" height="520" tabindex="0"></canvas>
+      <canvas id="c" width="920" height="540" tabindex="0"></canvas>
       <div class="overlay" id="endOverlay" hidden>
         <div class="overlay-box">
           <h2 id="endTitle">Победа!</h2>
@@ -192,88 +231,145 @@
 
 <script>
 (() => {
+  /* ========== Paths relative to games/minis/ ========== */
+  const IMG = {
+    // portal / smeshariki
+    krosh: "../../images/krosh.png",
+    yozhik: "../../images/yozhik.png",
+    barash: "../../images/barash.png",
+    losyash: "../../images/losyash.png",
+    pin: "../../images/pin.png",
+    kopatych: "../../images/kopatych.png",
+    luntik: "../../images/luntik.webp",
+    robonanny: "../../images/robonanny.png",
+    pacman: "../../images/pacman.png",
+    cat: "../../images/blue-cat.svg",
+    // mario heroes / enemies (sprites + art)
+    mario: "sprites/smb3_mario.png",
+    mario2: "sprites/smw_mario.png",
+    mario3: "sprites/sm64_mario.png",
+    luigi: "sprites/smb3_luigi.png",
+    luigi2: "sprites/smw_luigi.png",
+    luigi3: "sprites/sm64_luigi.png",
+    goomba: "sprites/smb3_goomba.png",
+    goomba2: "art_goomba2.png",
+    goomba3: "sprites/smw_goomba.png",
+    koopa: "sprites/smb3_koopa.png",
+    koopa2: "art_koopa.png",
+    bowser: "sprites/smw_bowser.png",
+    bowser2: "sprites/smb3_bowser.png",
+    bowser3: "art_bowser_try.png",
+    piranha: "art_piranha.png",
+    spiny: "art_spiny.png",
+    shell: "art_shell.png",
+    bullet: "art_bullet.png",
+    star: "art_star.png",
+    mush: "art_mushroom.png",
+    coin: "sprites/smb3_coin.png"
+  };
+
+  /**
+   * style:
+   *  melee, shoot, dash, tank, bite, phase, snake, fire, dualfire,
+   *  mega, heal, spike, shell, bomb, charge, boss
+   */
   const HEROES = [
-    {
-      id: "tank", name: "Танчик", from: "Танчики", emoji: "🪖",
-      color: "#6b8f3a", accent: "#c8ff6a",
-      hp: 130, speed: 2.2, atk: 16, range: 0.82,
-      attackName: "Выстрел",
-      abilityName: "Тройной залп",
-      desc: "Медленный, но бронированный. Стреляет снарядами.",
-      abilityDesc: "Три снаряда веером. Перезарядка 7 с."
-    },
-    {
-      id: "krosh", name: "Крош", from: "Смешарики", emoji: "🐰",
-      color: "#3aa0ff", accent: "#9ad4ff",
-      hp: 100, speed: 3.4, atk: 14, range: 0.9,
-      attackName: "Удар",
-      abilityName: "Рывок",
-      desc: "Быстрый и прыгучий. Бьёт в ближнем бою.",
-      abilityDesc: "Молниеносный рывок вперёд с уроном. 6 с."
-    },
-    {
-      id: "pacman", name: "Пакман", from: "Пакман", emoji: "🟡",
-      color: "#f6d32d", accent: "#fff3a0",
-      hp: 105, speed: 2.9, atk: 15, range: 0.88,
-      attackName: "Укус",
-      abilityName: "Энергетик",
-      desc: "Классический жёлтый охотник. Кусает врагов.",
-      abilityDesc: "5 сек. супер-скорость и +урон. 9 с."
-    },
-    {
-      id: "ghost", name: "Призрак", from: "Пакман", emoji: "👻",
-      color: "#ff5a7a", accent: "#ffb0c0",
-      hp: 90, speed: 3.1, atk: 13, range: 0.95,
-      attackName: "Пугание",
-      abilityName: "Фаза",
-      desc: "Ловкий. Пугает и проходит сквозь удары.",
-      abilityDesc: "2.5 сек. неуязвимости. 8 с."
-    },
-    {
-      id: "snake", name: "Змейка", from: "Змейка", emoji: "🐍",
-      color: "#2ecc71", accent: "#8ef0b0",
-      hp: 95, speed: 2.7, atk: 12, range: 0.9,
-      attackName: "Хвост",
-      abilityName: "Рост",
-      desc: "Длинный хвост бьёт по площади.",
-      abilityDesc: "Удлиняется и душит ближайших. 8 с."
-    },
-    {
-      id: "mario", name: "Марио", from: "Марио", emoji: "🍄",
-      color: "#e74c3c", accent: "#ff9a90",
-      hp: 110, speed: 3.0, atk: 15, range: 0.9,
-      attackName: "Удар ногой",
-      abilityName: "Огненный шар",
-      desc: "Платформер-чемпион. Сильный прыжок-удар.",
-      abilityDesc: "Шар огня летит вперёд. 6.5 с."
-    },
-    {
-      id: "luigi", name: "Луиджи", from: "Марио", emoji: "🟩",
-      color: "#27ae60", accent: "#8dffb5",
-      hp: 100, speed: 3.2, atk: 14, range: 0.92,
-      attackName: "Удар",
-      abilityName: "Зелёный огонь",
-      desc: "Выше и шустрее брата. Точные атаки.",
-      abilityDesc: "Двойной зелёный шар. 7 с."
-    },
-    {
-      id: "goomba", name: "Враг", from: "Марио · враги", emoji: "🟤",
-      color: "#8b5a2b", accent: "#d4a574",
-      hp: 115, speed: 2.4, atk: 17, range: 0.85,
-      attackName: "Таран",
-      abilityName: "Мега-рост",
-      desc: "Грозный враг с сильным тараном.",
-      abilityDesc: "Растёт и давит всех рядом 4 сек. 10 с."
-    },
-    {
-      id: "luntik", name: "Лунтик", from: "Лунтик", emoji: "🟣",
-      color: "#9b59b6", accent: "#e0b0ff",
-      hp: 120, speed: 2.6, atk: 11, range: 0.88,
-      attackName: "Пузырь",
-      abilityName: "Лунный луч",
-      desc: "Добрый, но сильный. Пузыри и лечение.",
-      abilityDesc: "Луч урона + самолечение. 8 с."
-    }
+    // —— Смешарики ——
+    { id:"krosh", name:"Крош", from:"Смешарики", group:"smesh", emoji:"🐰", img:IMG.krosh, color:"#3aa0ff", accent:"#9ad4ff",
+      hp:100, speed:3.5, atk:14, rate:0.85, style:"dash", attackName:"Удар", abilityName:"Рывок",
+      desc:"Быстрый и ловкий. Бьёт в ближнем бою.", abilityDesc:"Молниеносный рывок с уроном. 6 с." },
+    { id:"yozhik", name:"Ёжик", from:"Смешарики", group:"smesh", emoji:"🦔", img:IMG.yozhik, color:"#9b7ed9", accent:"#d4c0ff",
+      hp:95, speed:3.0, atk:17, rate:0.95, style:"spike", attackName:"Иглы", abilityName:"Шипы",
+      desc:"Сильный удар иглами.", abilityDesc:"Шипы вокруг на 3 сек. 7 с." },
+    { id:"barash", name:"Бараш", from:"Смешарики", group:"smesh", emoji:"🐑", img:IMG.barash, color:"#f48fb1", accent:"#ffd0e0",
+      hp:105, speed:2.9, atk:13, rate:0.9, style:"melee", attackName:"Стих", abilityName:"Вдохновение",
+      desc:"Средний боец-поэт.", abilityDesc:"Ускорение и +урон 4 сек. 8 с." },
+    { id:"losyash", name:"Лосяш", from:"Смешарики", group:"smesh", emoji:"🦌", img:IMG.losyash, color:"#ffb74d", accent:"#ffe0a8",
+      hp:120, speed:2.6, atk:12, rate:1.0, style:"shoot", attackName:"Формула", abilityName:"Эксперимент",
+      desc:"Умный, много HP. Стреляет «формулами».", abilityDesc:"3 снаряда + лечение. 8 с." },
+    { id:"pin", name:"Пин", from:"Смешарики", group:"smesh", emoji:"🐧", img:IMG.pin, color:"#90a4ae", accent:"#d0dce4",
+      hp:115, speed:2.7, atk:14, rate:0.9, style:"tank", attackName:"Гаечный ключ", abilityName:"Щит",
+      desc:"Броня и баланс.", abilityDesc:"Щит 3 сек. (мало урона). 9 с." },
+    { id:"kopatych", name:"Копатыч", from:"Смешарики", group:"smesh", emoji:"🐻", img:IMG.kopatych, color:"#8d6e63", accent:"#d4b8a0",
+      hp:135, speed:2.3, atk:16, rate:1.05, style:"charge", attackName:"Лопата", abilityName:"Мед-сила",
+      desc:"Силач: много HP.", abilityDesc:"Таран вперёд + огромный урон. 7 с." },
+    { id:"robonanny", name:"Железная няня", from:"Смешарики", group:"smesh", emoji:"🤖", img:IMG.robonanny, color:"#ef5350", accent:"#ffb0a8",
+      hp:140, speed:2.4, atk:15, rate:0.95, style:"boss", attackName:"Захват", abilityName:"Лазер",
+      desc:"Босс-няня: очень крепкая.", abilityDesc:"Лазерный луч. 8 с." },
+    { id:"luntik", name:"Лунтик", from:"Лунтик", group:"smesh", emoji:"🟣", img:IMG.luntik, color:"#9b59b6", accent:"#e0b0ff",
+      hp:120, speed:2.8, atk:12, rate:0.9, style:"heal", attackName:"Пузырь", abilityName:"Лунный луч",
+      desc:"Добрый, но сильный. Лечится.", abilityDesc:"Луч урона + лечение. 8 с." },
+
+    // —— Пакман ——
+    { id:"pacman", name:"Пакман", from:"Пакман", group:"pac", emoji:"🟡", img:IMG.pacman, color:"#f6d32d", accent:"#fff3a0",
+      hp:105, speed:3.1, atk:15, rate:0.8, style:"bite", attackName:"Укус", abilityName:"Энергетик",
+      desc:"Кусает врагов. Быстрый.", abilityDesc:"5 сек. супер-скорость и +урон. 9 с." },
+    { id:"ghost_red", name:"Призрак Блинки", from:"Пакман", group:"pac", emoji:"🔴", img:null, color:"#ff3b4a", accent:"#ffb0b8",
+      hp:90, speed:3.2, atk:13, rate:0.85, style:"phase", attackName:"Пугание", abilityName:"Фаза",
+      desc:"Красный призрак. Ловкий.", abilityDesc:"2.5 сек. неуязвимости. 8 с.", ghost:true },
+    { id:"ghost_pink", name:"Призрак Пинки", from:"Пакман", group:"pac", emoji:"🩷", img:null, color:"#ff7ab8", accent:"#ffd0e8",
+      hp:88, speed:3.3, atk:12, rate:0.85, style:"phase", attackName:"Засада", abilityName:"Телепорт",
+      desc:"Розовый призрак. Хитрый.", abilityDesc:"Телепорт к врагу + удар. 7 с.", ghost:true },
+    { id:"ghost_cyan", name:"Призрак Инки", from:"Пакман", group:"pac", emoji:"🩵", img:null, color:"#40e0ff", accent:"#b8f4ff",
+      hp:92, speed:3.0, atk:13, rate:0.9, style:"phase", attackName:"Волна", abilityName:"Клон-удар",
+      desc:"Голубой призрак.", abilityDesc:"Волна урона вокруг. 7 с.", ghost:true },
+    { id:"ghost_orange", name:"Призрак Клайд", from:"Пакман", group:"pac", emoji:"🟠", img:null, color:"#ff9f40", accent:"#ffd0a0",
+      hp:100, speed:2.8, atk:14, rate:0.95, style:"charge", attackName:"Толчок", abilityName:"Ярость",
+      desc:"Оранжевый призрак. Сильный.", abilityDesc:"Ярость: +скорость и урон 4 сек. 8 с.", ghost:true },
+
+    // —— Марио / Луиджи / враги ——
+    { id:"mario", name:"Марио", from:"Марио", group:"mario", emoji:"🍄", img:IMG.mario, imgFallbacks:[IMG.mario2, IMG.mario3], color:"#e74c3c", accent:"#ff9a90",
+      hp:110, speed:3.0, atk:15, rate:0.9, style:"fire", attackName:"Удар", abilityName:"Огненный шар",
+      desc:"Герой-платформер.", abilityDesc:"Огненный шар вперёд. 6.5 с." },
+    { id:"luigi", name:"Луиджи", from:"Марио", group:"mario", emoji:"🟩", img:IMG.luigi, imgFallbacks:[IMG.luigi2, IMG.luigi3], color:"#27ae60", accent:"#8dffb5",
+      hp:100, speed:3.25, atk:14, rate:0.88, style:"dualfire", attackName:"Удар", abilityName:"Зелёный огонь",
+      desc:"Выше и шустрее брата.", abilityDesc:"Двойной зелёный шар. 7 с." },
+    { id:"goomba", name:"Гумба", from:"Марио · враги", group:"mario", emoji:"🟤", img:IMG.goomba, imgFallbacks:[IMG.goomba2, IMG.goomba3], color:"#8b5a2b", accent:"#d4a574",
+      hp:115, speed:2.5, atk:16, rate:0.95, style:"mega", attackName:"Таран", abilityName:"Мега-рост",
+      desc:"Классический враг.", abilityDesc:"Растёт и давит 4 сек. 10 с." },
+    { id:"koopa", name:"Купа", from:"Марио · враги", group:"mario", emoji:"🐢", img:IMG.koopa, imgFallbacks:[IMG.koopa2], color:"#2ecc71", accent:"#8ef0b0",
+      hp:110, speed:2.6, atk:14, rate:0.9, style:"shell", attackName:"Панцирь", abilityName:"Скольжение",
+      desc:"Черепаха с панцирем.", abilityDesc:"Скользит панцирем по арене. 7 с." },
+    { id:"bowser", name:"Боузер", from:"Марио · враги", group:"mario", emoji:"🐲", img:IMG.bowser, imgFallbacks:[IMG.bowser2, IMG.bowser3], color:"#c0392b", accent:"#ffb070",
+      hp:160, speed:2.1, atk:18, rate:1.1, style:"boss", attackName:"Коготь", abilityName:"Огненное дыхание",
+      desc:"Главный босс. Очень много HP.", abilityDesc:"3 огненных шара. 9 с." },
+    { id:"piranha", name:"Пиранья", from:"Марио · враги", group:"mario", emoji:"🌺", img:IMG.piranha, color:"#27ae60", accent:"#ff6b6b",
+      hp:95, speed:2.4, atk:17, rate:0.85, style:"bite", attackName:"Укус", abilityName:"Яд",
+      desc:"Растение-хищник.", abilityDesc:"Яд: урон со временем врагам рядом. 8 с." },
+    { id:"spiny", name:"Спайни", from:"Марио · враги", group:"mario", emoji:"🦔", img:IMG.spiny, color:"#e74c3c", accent:"#ffb0a0",
+      hp:100, speed:2.7, atk:15, rate:0.9, style:"spike", attackName:"Шипы", abilityName:"Ёж-шар",
+      desc:"Колючий враг.", abilityDesc:"Крутится и колет всех рядом. 7 с." },
+    { id:"shell", name:"Панцирь", from:"Марио · враги", group:"mario", emoji:"🟢", img:IMG.shell, color:"#16a085", accent:"#7dffe0",
+      hp:85, speed:3.4, atk:14, rate:0.75, style:"shell", attackName:"Удар", abilityName:"Турбо-панцырь",
+      desc:"Быстрый скользящий панцирь.", abilityDesc:"Макс. скорость + урон. 6 с." },
+    { id:"bullet", name:"Пуля Билл", from:"Марио · враги", group:"mario", emoji:"💣", img:IMG.bullet, color:"#2c3e50", accent:"#95a5a6",
+      hp:80, speed:3.6, atk:18, rate:1.0, style:"shoot", attackName:"Таран", abilityName:"Залп",
+      desc:"Летающая пуля. Очень быстрая.", abilityDesc:"Мощный снаряд. 6 с." },
+    { id:"star", name:"Звезда", from:"Марио · предметы", group:"mario", emoji:"⭐", img:IMG.star, color:"#f1c40f", accent:"#fff3a0",
+      hp:90, speed:3.3, atk:13, rate:0.8, style:"phase", attackName:"Луч", abilityName:"Неуязвимость",
+      desc:"Звезда-сила.", abilityDesc:"3.5 сек. неуязвимости + урон аурой. 10 с." },
+    { id:"mushroom", name:"Гриб", from:"Марио · предметы", group:"mario", emoji:"🍄", img:IMG.mush, color:"#e74c3c", accent:"#ffcccc",
+      hp:100, speed:2.5, atk:12, rate:1.0, style:"mega", attackName:"Толкание", abilityName:"Большой рост",
+      desc:"Супер-гриб.", abilityDesc:"Рост + HP. 9 с." },
+
+    // —— Змейка / Танчики / портал ——
+    { id:"snake", name:"Змейка", from:"Змейка", group:"other", emoji:"🐍", img:null, color:"#2ecc71", accent:"#8ef0b0",
+      hp:95, speed:2.8, atk:13, rate:0.85, style:"snake", attackName:"Хвост", abilityName:"Рост",
+      desc:"Длинный хвост бьёт по площади.", abilityDesc:"Удлиняется и душит. 8 с.", snakeDraw:true },
+    { id:"tank", name:"Танчик", from:"Танчики", group:"other", emoji:"🪖", img:null, color:"#6b8f3a", accent:"#c8ff6a",
+      hp:130, speed:2.2, atk:16, rate:0.9, style:"tank", attackName:"Выстрел", abilityName:"Тройной залп",
+      desc:"Броня и снаряды.", abilityDesc:"Три снаряда веером. 7 с.", tankDraw:true },
+    { id:"bluecat", name:"Blue Cat", from:"Портал", group:"other", emoji:"🐱", img:IMG.cat, color:"#5eb0ff", accent:"#ffcc00",
+      hp:110, speed:3.0, atk:14, rate:0.9, style:"heal", attackName:"Лапка", abilityName:"Мяу-волна",
+      desc:"Хозяин портала!", abilityDesc:"Волна урона + лёгкое лечение. 7 с." }
+  ];
+
+  const GROUPS = [
+    { id: "all", label: "Все" },
+    { id: "smesh", label: "Смешарики" },
+    { id: "pac", label: "Пакман" },
+    { id: "mario", label: "Марио" },
+    { id: "other", label: "Другие" }
   ];
 
   const grid = document.getElementById("heroGrid");
@@ -285,8 +381,10 @@
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
   const endOverlay = document.getElementById("endOverlay");
+  const filterRow = document.getElementById("filterRow");
 
   let selectedId = null;
+  let filterGroup = "all";
   let fighters = [];
   let projectiles = [];
   let particles = [];
@@ -294,32 +392,93 @@
   let lastT = 0;
   let arenaObstacles = [];
   const keys = {};
-  const hold = { up: false, down: false, left: false, right: false, atk: false, abil: false };
+  const hold = { up:false, down:false, left:false, right:false, atk:false, abil:false };
+  const imageCache = {}; // path -> HTMLImageElement | null (failed)
 
   function heroById(id) { return HEROES.find(h => h.id === id); }
 
+  function loadImage(src) {
+    return new Promise((resolve) => {
+      if (!src) { resolve(null); return; }
+      if (src in imageCache) { resolve(imageCache[src]); return; }
+      const im = new Image();
+      im.onload = () => { imageCache[src] = im; resolve(im); };
+      im.onerror = () => { imageCache[src] = null; resolve(null); };
+      im.src = src;
+    });
+  }
+
+  async function resolveHeroImage(h) {
+    if (h._imgEl !== undefined) return h._imgEl;
+    const paths = [h.img].concat(h.imgFallbacks || []).filter(Boolean);
+    for (const p of paths) {
+      const im = await loadImage(p);
+      if (im) { h._imgEl = im; h._imgPath = p; return im; }
+    }
+    h._imgEl = null;
+    return null;
+  }
+
+  async function preloadAll() {
+    const fill = document.getElementById("loadFill");
+    const text = document.getElementById("loadText");
+    let done = 0;
+    const total = HEROES.length;
+    await Promise.all(HEROES.map(async (h) => {
+      await resolveHeroImage(h);
+      done++;
+      fill.style.width = Math.round((done / total) * 100) + "%";
+      text.textContent = `Картинки: ${done}/${total}`;
+    }));
+    text.textContent = `Готово: ${HEROES.filter(h => h._imgEl).length} с картинками · ${HEROES.length} героев`;
+  }
+
+  function renderFilters() {
+    filterRow.innerHTML = GROUPS.map(g =>
+      `<button type="button" data-g="${g.id}" class="${filterGroup===g.id?"active":""}">${g.label}</button>`
+    ).join("");
+  }
+
+  filterRow.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-g]");
+    if (!b) return;
+    filterGroup = b.getAttribute("data-g");
+    renderFilters();
+    renderSelect();
+  });
+
+  function picHtml(h, sizeClass) {
+    if (h._imgEl) {
+      return `<img src="${h._imgPath || h.img}" alt="${h.name}" draggable="false">`;
+    }
+    return `<span class="fallback">${h.emoji}</span>`;
+  }
+
   function renderSelect() {
-    grid.innerHTML = HEROES.map(h => `
-      <button type="button" class="hero-card${selectedId === h.id ? " selected" : ""}" data-id="${h.id}">
-        <div class="hero-emoji">${h.emoji}</div>
+    const list = HEROES.filter(h => filterGroup === "all" || h.group === filterGroup);
+    grid.innerHTML = list.map(h => `
+      <button type="button" class="hero-card${selectedId===h.id?" selected":""}" data-id="${h.id}">
+        <div class="hero-pic" style="background:linear-gradient(145deg,${h.color}33,#111)">${picHtml(h)}</div>
         <div class="hero-name">${h.name}</div>
         <div class="hero-from">${h.from}</div>
-        <div class="hero-stats">❤️ ${h.hp} · ⚡ ${h.speed.toFixed(1)} · ⚔️ ${h.atk}</div>
+        <div class="hero-stats">❤️${h.hp} · ⚡${h.speed.toFixed(1)} · ⚔️${h.atk}</div>
         <div class="hero-abil">✨ ${h.abilityName}</div>
       </button>
-    `).join("");
+    `).join("") || `<p style="color:#888;grid-column:1/-1">Нет героев в этой группе</p>`;
   }
 
   function showDetail(h) {
     if (!h) {
-      detail.innerHTML = "Нажми на карточку героя.";
+      detail.innerHTML = `<div class="detail-pic"><span class="fallback">⚔️</span></div><div>Нажми на карточку героя.</div>`;
       return;
     }
     detail.innerHTML = `
-      <strong>${h.emoji} ${h.name}</strong> · ${h.from}<br>
-      ${h.desc}<br>
-      Атака: <strong>${h.attackName}</strong> · Способность: <strong>${h.abilityName}</strong> — ${h.abilityDesc}
-    `;
+      <div class="detail-pic" style="background:linear-gradient(145deg,${h.color}44,#111)">${picHtml(h)}</div>
+      <div>
+        <strong>${h.emoji} ${h.name}</strong> · ${h.from}<br>
+        ${h.desc}<br>
+        Атака: <strong>${h.attackName}</strong> · Способность: <strong>${h.abilityName}</strong> — ${h.abilityDesc}
+      </div>`;
   }
 
   grid.addEventListener("click", (e) => {
@@ -333,19 +492,15 @@
 
   document.getElementById("randBtn").addEventListener("click", () => {
     selectedId = HEROES[Math.floor(Math.random() * HEROES.length)].id;
+    filterGroup = "all";
+    renderFilters();
     renderSelect();
     showDetail(heroById(selectedId));
     startBtn.disabled = false;
   });
 
-  startBtn.addEventListener("click", () => {
-    if (!selectedId) return;
-    startMatch(selectedId);
-  });
-
-  document.getElementById("againBtn").addEventListener("click", () => {
-    if (selectedId) startMatch(selectedId);
-  });
+  startBtn.addEventListener("click", () => { if (selectedId) startMatch(selectedId); });
+  document.getElementById("againBtn").addEventListener("click", () => { if (selectedId) startMatch(selectedId); });
   document.getElementById("pickBtn").addEventListener("click", () => {
     running = false;
     endOverlay.hidden = true;
@@ -355,60 +510,50 @@
 
   function makeArena() {
     arenaObstacles = [
-      { x: W * 0.5 - 40, y: H * 0.5 - 40, w: 80, h: 80 },
-      { x: 140, y: 120, w: 70, h: 28 },
-      { x: W - 210, y: 120, w: 70, h: 28 },
-      { x: 140, y: H - 148, w: 70, h: 28 },
-      { x: W - 210, y: H - 148, w: 70, h: 28 },
-      { x: W * 0.5 - 55, y: 70, w: 110, h: 24 },
-      { x: W * 0.5 - 55, y: H - 94, w: 110, h: 24 }
+      { x: W*0.5-42, y: H*0.5-42, w: 84, h: 84 },
+      { x: 130, y: 110, w: 74, h: 28 },
+      { x: W-204, y: 110, w: 74, h: 28 },
+      { x: 130, y: H-138, w: 74, h: 28 },
+      { x: W-204, y: H-138, w: 74, h: 28 },
+      { x: W*0.5-58, y: 64, w: 116, h: 24 },
+      { x: W*0.5-58, y: H-88, w: 116, h: 24 }
     ];
   }
 
   function spawnPos(i, n) {
-    const cx = W / 2, cy = H / 2, r = 180;
-    const a = (Math.PI * 2 * i) / n - Math.PI / 2;
-    return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+    const cx = W/2, cy = H/2, r = 190;
+    const a = (Math.PI*2*i)/n - Math.PI/2;
+    return { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r };
   }
 
   function createFighter(def, isPlayer, index, total) {
     const p = spawnPos(index, total);
     return {
-      def,
-      isPlayer,
-      x: p.x, y: p.y,
-      vx: 0, vy: 0,
-      r: 22,
-      hp: def.hp,
-      maxHp: def.hp,
-      facing: 1,
-      dead: false,
-      atkCd: 0,
-      abilCd: 0,
-      powerT: 0,
-      phaseT: 0,
-      megaT: 0,
-      growT: 0,
-      stunT: 0,
-      aiTimer: 0,
-      aiTarget: null,
-      flash: 0,
-      scale: 1
+      def, isPlayer, x:p.x, y:p.y, vx:0, vy:0, r:24,
+      hp: def.hp, maxHp: def.hp, facing:1, dead:false,
+      atkCd:0, abilCd:0, powerT:0, phaseT:0, megaT:0, growT:0,
+      stunT:0, shieldT:0, poisonT:0, spinT:0, shellSlide:0,
+      aiTimer:0, aiTarget:null, flash:0, scale:1
     };
+  }
+
+  function shuffle(a) {
+    for (let i=a.length-1;i>0;i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
   }
 
   function startMatch(playerId) {
     makeArena();
-    projectiles = [];
-    particles = [];
+    projectiles = []; particles = [];
     endOverlay.hidden = true;
-
-    // Player + 4 random AI (no duplicates of player if possible, max variety)
     const pool = HEROES.filter(h => h.id !== playerId);
     shuffle(pool);
-    const picks = [heroById(playerId), ...pool.slice(0, 4)];
-    fighters = picks.map((h, i) => createFighter(h, i === 0, i, picks.length));
-
+    // 1 player + 5 AI = 6 fighters with pictures variety
+    const picks = [heroById(playerId), ...pool.slice(0, 5)];
+    fighters = picks.map((h,i) => createFighter(h, i===0, i, picks.length));
     document.getElementById("hudHero").textContent = fighters[0].def.emoji + " " + fighters[0].def.name;
     selectScreen.hidden = true;
     gameWrap.hidden = false;
@@ -419,43 +564,35 @@
     requestAnimationFrame(loop);
   }
 
-  function shuffle(a) {
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-
   function updateBars() {
     const el = document.getElementById("hpBars");
     el.innerHTML = fighters.map(f => {
-      const pct = Math.max(0, (f.hp / f.maxHp) * 100);
-      return `<div class="bar-item${f.isPlayer ? " me" : ""}${f.dead ? " dead" : ""}">
-        <div class="bar-name">${f.def.emoji} ${f.def.name}${f.isPlayer ? " (ты)" : ""}</div>
+      const pct = Math.max(0, (f.hp/f.maxHp)*100);
+      const thumb = f.def._imgPath
+        ? `<img src="${f.def._imgPath}" alt="">`
+        : `<span>${f.def.emoji}</span>`;
+      return `<div class="bar-item${f.isPlayer?" me":""}${f.dead?" dead":""}">
+        <div class="bar-name">${thumb}${f.def.name}${f.isPlayer?" (ты)":""}</div>
         <div class="bar-hp"><i style="width:${pct}%"></i></div>
       </div>`;
     }).join("");
-    const alive = fighters.filter(f => !f.dead).length;
-    document.getElementById("hudAlive").textContent = String(alive);
-    const p = fighters.find(f => f.isPlayer);
+    document.getElementById("hudAlive").textContent = String(fighters.filter(f=>!f.dead).length);
+    const p = fighters.find(f=>f.isPlayer);
     if (p) {
       const cd = Math.max(0, p.abilCd);
-      document.getElementById("hudAbil").textContent = cd > 0 ? cd.toFixed(1) + " с" : "готово ✨";
+      document.getElementById("hudAbil").textContent = cd>0 ? cd.toFixed(1)+" с" : "готово ✨";
     }
   }
 
-  // Input
   window.addEventListener("keydown", e => {
-    keys[e.code] = true;
+    keys[e.code]=true;
     if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault();
-    if (e.code === "KeyR" && running) startMatch(selectedId);
+    if (e.code==="KeyR" && (running || !endOverlay.hidden) && selectedId) startMatch(selectedId);
   });
-  window.addEventListener("keyup", e => { keys[e.code] = false; });
-
+  window.addEventListener("keyup", e => { keys[e.code]=false; });
   document.querySelectorAll(".pad button").forEach(btn => {
     const k = btn.getAttribute("data-k");
-    const on = (v) => (e) => { e.preventDefault(); hold[k] = v; };
+    const on = v => e => { e.preventDefault(); hold[k]=v; };
     btn.addEventListener("pointerdown", on(true));
     btn.addEventListener("pointerup", on(false));
     btn.addEventListener("pointerleave", on(false));
@@ -463,553 +600,575 @@
   });
 
   function inputDir() {
-    let x = 0, y = 0;
-    if (keys["KeyA"] || keys["ArrowLeft"] || hold.left) x -= 1;
-    if (keys["KeyD"] || keys["ArrowRight"] || hold.right) x += 1;
-    if (keys["KeyW"] || keys["ArrowUp"] || hold.up) y -= 1;
-    if (keys["KeyS"] || keys["ArrowDown"] || hold.down) y += 1;
-    if (x && y) { x *= 0.707; y *= 0.707; }
-    return { x, y };
+    let x=0,y=0;
+    if (keys.KeyA||keys.ArrowLeft||hold.left) x-=1;
+    if (keys.KeyD||keys.ArrowRight||hold.right) x+=1;
+    if (keys.KeyW||keys.ArrowUp||hold.up) y-=1;
+    if (keys.KeyS||keys.ArrowDown||hold.down) y+=1;
+    if (x&&y){x*=0.707;y*=0.707;}
+    return {x,y};
   }
-  function wantAtk() { return keys["Space"] || keys["KeyJ"] || hold.atk; }
-  function wantAbil() { return keys["KeyE"] || keys["KeyK"] || hold.abil; }
+  function wantAtk(){ return keys.Space||keys.KeyJ||hold.atk; }
+  function wantAbil(){ return keys.KeyE||keys.KeyK||hold.abil; }
 
-  function circleRectPush(f, o) {
-    const cx = Math.max(o.x, Math.min(f.x, o.x + o.w));
-    const cy = Math.max(o.y, Math.min(f.y, o.y + o.h));
-    let dx = f.x - cx, dy = f.y - cy;
-    const d2 = dx * dx + dy * dy;
-    const r = f.r * f.scale;
-    if (d2 >= r * r) return;
-    if (d2 < 0.0001) { f.x = o.x - r - 1; return; }
-    const d = Math.sqrt(d2);
-    const push = r - d + 0.5;
-    f.x += (dx / d) * push;
-    f.y += (dy / d) * push;
+  function circleRectPush(f,o){
+    const cx=Math.max(o.x,Math.min(f.x,o.x+o.w));
+    const cy=Math.max(o.y,Math.min(f.y,o.y+o.h));
+    let dx=f.x-cx, dy=f.y-cy;
+    const d2=dx*dx+dy*dy;
+    const r=f.r*f.scale;
+    if (d2>=r*r) return;
+    if (d2<1e-4){ f.x=o.x-r-1; return; }
+    const d=Math.sqrt(d2), push=r-d+0.5;
+    f.x+=(dx/d)*push; f.y+=(dy/d)*push;
   }
-
-  function clampFighter(f) {
-    const r = f.r * f.scale;
-    f.x = Math.max(r + 8, Math.min(W - r - 8, f.x));
-    f.y = Math.max(r + 8, Math.min(H - r - 8, f.y));
-    for (const o of arenaObstacles) circleRectPush(f, o);
+  function clampFighter(f){
+    const r=f.r*f.scale;
+    f.x=Math.max(r+8,Math.min(W-r-8,f.x));
+    f.y=Math.max(r+8,Math.min(H-r-8,f.y));
+    for (const o of arenaObstacles) circleRectPush(f,o);
   }
-
-  function dist(a, b) {
-    const dx = a.x - b.x, dy = a.y - b.y;
-    return Math.hypot(dx, dy);
-  }
-
-  function nearestEnemy(f) {
-    let best = null, bd = 1e9;
-    for (const o of fighters) {
-      if (o === f || o.dead) continue;
-      const d = dist(f, o);
-      if (d < bd) { bd = d; best = o; }
+  function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+  function nearestEnemy(f){
+    let best=null,bd=1e9;
+    for (const o of fighters){
+      if (o===f||o.dead) continue;
+      const d=dist(f,o);
+      if (d<bd){bd=d;best=o;}
     }
     return best;
   }
 
-  function damage(target, amount, from) {
-    if (target.dead || target.phaseT > 0) return;
-    let dmg = amount;
-    if (from && from.powerT > 0) dmg *= 1.45;
-    if (target.megaT > 0) dmg *= 0.7;
-    target.hp -= dmg;
-    target.flash = 0.15;
-    burst(target.x, target.y, target.def.accent, 6);
-    if (target.hp <= 0) {
-      target.hp = 0;
-      target.dead = true;
-      burst(target.x, target.y, "#fff", 18);
+  function damage(target, amount, from){
+    if (target.dead || target.phaseT>0) return;
+    let dmg=amount;
+    if (from && from.powerT>0) dmg*=1.45;
+    if (target.megaT>0) dmg*=0.7;
+    if (target.shieldT>0) dmg*=0.35;
+    target.hp-=dmg;
+    target.flash=0.12;
+    burst(target.x,target.y,target.def.accent,5);
+    if (target.hp<=0){
+      target.hp=0; target.dead=true;
+      burst(target.x,target.y,"#fff",16);
     }
   }
-
-  function burst(x, y, color, n) {
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = 40 + Math.random() * 120;
-      particles.push({
-        x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
-        life: 0.35 + Math.random() * 0.35, color, r: 2 + Math.random() * 3
-      });
+  function burst(x,y,color,n){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, s=40+Math.random()*120;
+      particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.3+Math.random()*0.35,color,r:2+Math.random()*3});
     }
   }
+  function shoot(owner,x,y,vx,vy,dmg,color,r,life){
+    projectiles.push({owner,x,y,vx,vy,dmg,color,r,life,maxLife:life});
+  }
+  function melee(f, range, dmg){
+    const face=f.facing||1;
+    for (const o of fighters){
+      if (o===f||o.dead) continue;
+      const dx=o.x-f.x, dy=o.y-f.y, d=Math.hypot(dx,dy);
+      if (d<range+o.r*o.scale){
+        if (face>0 && dx<-12) continue;
+        if (face<0 && dx>12) continue;
+        damage(o,dmg,f);
+        o.vx+=face*110; o.vy+=(Math.random()-0.5)*40;
+      }
+    }
+    burst(f.x+face*22,f.y,f.def.accent,5);
+  }
 
-  function doAttack(f) {
-    if (f.dead || f.atkCd > 0 || f.stunT > 0) return;
-    f.atkCd = f.def.rate;
-    const id = f.def.id;
-    const face = f.facing || 1;
+  function doAttack(f){
+    if (f.dead||f.atkCd>0||f.stunT>0) return;
+    f.atkCd=f.def.rate;
+    const st=f.def.style, face=f.facing||1;
 
-    if (id === "tank") {
-      shoot(f, f.x + face * 20, f.y, face * 320, 0, f.def.atk, "#c8ff6a", 5, 1.2);
-      return;
+    if (st==="tank" || st==="shoot" || f.def.id==="bullet" || f.def.id==="losyash"){
+      const col = f.def.accent;
+      shoot(f, f.x+face*18, f.y, face*300, 0, f.def.atk, col, 5, 1.15);
+      if (f.def.id==="tank") return;
     }
-    if (id === "mario") {
-      shoot(f, f.x + face * 16, f.y - 4, face * 80, -20, f.def.atk * 0.9, "#ff6b4a", 6, 0.55);
-      melee(f, 38, f.def.atk * 0.7);
-      return;
+    if (st==="fire"){
+      shoot(f, f.x+face*16, f.y-4, face*90, -15, f.def.atk*0.85, "#ff6b4a", 6, 0.5);
+      melee(f, 38, f.def.atk*0.75); return;
     }
-    if (id === "luigi") {
-      melee(f, 40, f.def.atk);
-      return;
+    if (st==="dualfire"){ melee(f, 40, f.def.atk); return; }
+    if (st==="snake"){
+      for (const o of fighters){ if(o!==f&&!o.dead&&dist(f,o)<58) damage(o,f.def.atk,f); }
+      burst(f.x,f.y,f.def.accent,8); return;
     }
-    if (id === "pacman") {
-      melee(f, 42, f.def.atk);
-      return;
-    }
-    if (id === "ghost") {
+    if (st==="phase" || f.def.ghost){
       melee(f, 36, f.def.atk);
-      for (const o of fighters) {
-        if (o === f || o.dead) continue;
-        if (dist(f, o) < 50) o.stunT = Math.max(o.stunT, 0.45);
-      }
+      for (const o of fighters){ if(o!==f&&!o.dead&&dist(f,o)<48) o.stunT=Math.max(o.stunT,0.4); }
       return;
     }
-    if (id === "snake") {
-      // tail sweep around
-      for (const o of fighters) {
-        if (o === f || o.dead) continue;
-        if (dist(f, o) < 55) damage(o, f.def.atk, f);
-      }
-      burst(f.x, f.y, f.def.accent, 8);
-      return;
+    if (st==="shell"){ f.vx=face*220; melee(f,42,f.def.atk); return; }
+    if (st==="charge"||st==="mega"){ f.vx=face*240; melee(f,44,f.def.atk*1.05); return; }
+    if (st==="heal"){ shoot(f,f.x+face*14,f.y,face*210,0,f.def.atk,f.def.accent,7,1.1); return; }
+    if (st==="boss"){ melee(f,46,f.def.atk); return; }
+    if (st==="spike"){
+      for (const o of fighters){ if(o!==f&&!o.dead&&dist(f,o)<50) damage(o,f.def.atk,f); }
+      burst(f.x,f.y,f.def.accent,7); return;
     }
-    if (id === "krosh") {
-      melee(f, 40, f.def.atk);
-      return;
-    }
-    if (id === "goomba") {
-      // charge bump
-      f.vx = face * 280;
-      melee(f, 44, f.def.atk * 1.1);
-      return;
-    }
-    if (id === "luntik") {
-      shoot(f, f.x + face * 14, f.y, face * 200, 0, f.def.atk, "#d0a0ff", 7, 1.1);
-      return;
-    }
-    melee(f, 36, f.def.atk);
+    melee(f, 40, f.def.atk);
   }
 
-  function melee(f, range, dmg) {
-    const face = f.facing || 1;
-    for (const o of fighters) {
-      if (o === f || o.dead) continue;
-      const dx = o.x - f.x, dy = o.y - f.y;
-      const d = Math.hypot(dx, dy);
-      if (d < range + o.r * o.scale) {
-        // prefer front
-        if (face > 0 && dx < -10) continue;
-        if (face < 0 && dx > 10) continue;
-        damage(o, dmg, f);
-        o.vx += face * 120;
-        o.vy += (Math.random() - 0.5) * 40;
+  function doAbility(f){
+    if (f.dead||f.abilCd>0||f.stunT>0) return;
+    const st=f.def.style, face=f.facing||1, id=f.def.id;
+
+    if (id==="tank"){
+      f.abilCd=7;
+      shoot(f,f.x,f.y,face*340,-70,f.def.atk*0.9,"#c8ff6a",5,1.2);
+      shoot(f,f.x,f.y,face*360,0,f.def.atk*1.15,"#e8ff9a",6,1.2);
+      shoot(f,f.x,f.y,face*340,70,f.def.atk*0.9,"#c8ff6a",5,1.2);
+      return;
+    }
+    if (id==="krosh" || st==="dash"){
+      f.abilCd=6; f.vx=face*520; f.vy=-30;
+      for (const o of fighters){ if(o!==f&&!o.dead&&dist(f,o)<72) damage(o,f.def.atk*1.55,f); }
+      burst(f.x,f.y,f.def.accent,12); return;
+    }
+    if (id==="pacman" || (st==="bite" && id!=="piranha")){
+      if (id==="piranha"){ /* handled below */ }
+      else {
+        f.abilCd=9; f.powerT=5; burst(f.x,f.y,"#fff59a",14); return;
       }
     }
-    burst(f.x + face * 24, f.y, f.def.accent, 5);
-  }
-
-  function shoot(owner, x, y, vx, vy, dmg, color, r, life) {
-    projectiles.push({
-      owner, x, y, vx, vy, dmg, color, r, life, maxLife: life
-    });
-  }
-
-  function doAbility(f) {
-    if (f.dead || f.abilCd > 0 || f.stunT > 0) return;
-    const id = f.def.id;
-    const face = f.facing || 1;
-
-    if (id === "tank") {
-      f.abilCd = 7;
-      shoot(f, f.x, f.y, face * 340, -70, f.def.atk * 0.9, "#c8ff6a", 5, 1.2);
-      shoot(f, f.x, f.y, face * 360, 0, f.def.atk * 1.1, "#e8ff9a", 6, 1.2);
-      shoot(f, f.x, f.y, face * 340, 70, f.def.atk * 0.9, "#c8ff6a", 5, 1.2);
-      return;
+    if (id==="ghost_red" || (st==="phase" && id==="star")){
+      f.abilCd = id==="star" ? 10 : 8;
+      f.phaseT = id==="star" ? 3.5 : 2.5;
+      if (id==="star") f.powerT=3.5;
+      burst(f.x,f.y,f.def.accent,12); return;
     }
-    if (id === "krosh") {
-      f.abilCd = 6;
-      f.vx = face * 520;
-      f.vy = -40;
-      for (const o of fighters) {
-        if (o === f || o.dead) continue;
-        if (dist(f, o) < 70) damage(o, f.def.atk * 1.6, f);
-      }
-      burst(f.x, f.y, "#9ad4ff", 12);
-      return;
+    if (id==="ghost_pink"){
+      f.abilCd=7;
+      const t=nearestEnemy(f);
+      if (t){ f.x=t.x-face*40; f.y=t.y; damage(t,f.def.atk*1.4,f); }
+      burst(f.x,f.y,f.def.accent,10); return;
     }
-    if (id === "pacman") {
-      f.abilCd = 9;
-      f.powerT = 5;
-      burst(f.x, f.y, "#fff59a", 16);
-      return;
+    if (id==="ghost_cyan"){
+      f.abilCd=7;
+      for (const o of fighters){ if(o!==f&&!o.dead&&dist(f,o)<90) damage(o,f.def.atk*1.2,f); }
+      burst(f.x,f.y,f.def.accent,16); return;
     }
-    if (id === "ghost") {
-      f.abilCd = 8;
-      f.phaseT = 2.5;
-      burst(f.x, f.y, "#ffb0c0", 10);
-      return;
+    if (id==="ghost_orange" || id==="barash"){
+      f.abilCd=8; f.powerT=4; burst(f.x,f.y,f.def.accent,10); return;
     }
-    if (id === "snake") {
-      f.abilCd = 8;
-      f.growT = 4;
-      for (const o of fighters) {
-        if (o === f || o.dead) continue;
-        if (dist(f, o) < 80) {
-          damage(o, f.def.atk * 1.3, f);
-          o.stunT = Math.max(o.stunT, 0.6);
-        }
+    if (id==="snake" || st==="snake"){
+      f.abilCd=8; f.growT=4;
+      for (const o of fighters){
+        if(o!==f&&!o.dead&&dist(f,o)<85){ damage(o,f.def.atk*1.3,f); o.stunT=Math.max(o.stunT,0.55); }
       }
       return;
     }
-    if (id === "mario") {
-      f.abilCd = 6.5;
-      shoot(f, f.x + face * 18, f.y - 6, face * 280, 0, f.def.atk * 1.4, "#ff6b4a", 8, 1.4);
+    if (id==="mario" || st==="fire"){
+      f.abilCd=6.5;
+      shoot(f,f.x+face*18,f.y-6,face*280,0,f.def.atk*1.4,"#ff6b4a",8,1.4);
       return;
     }
-    if (id === "luigi") {
-      f.abilCd = 7;
-      shoot(f, f.x + face * 16, f.y - 10, face * 260, -40, f.def.atk * 1.1, "#6dff9a", 7, 1.3);
-      shoot(f, f.x + face * 16, f.y + 6, face * 260, 40, f.def.atk * 1.1, "#6dff9a", 7, 1.3);
+    if (id==="luigi" || st==="dualfire"){
+      f.abilCd=7;
+      shoot(f,f.x+face*16,f.y-10,face*260,-40,f.def.atk*1.1,"#6dff9a",7,1.3);
+      shoot(f,f.x+face*16,f.y+6,face*260,40,f.def.atk*1.1,"#6dff9a",7,1.3);
       return;
     }
-    if (id === "goomba") {
-      f.abilCd = 10;
-      f.megaT = 4;
-      f.scale = 1.55;
+    if (id==="goomba" || id==="mushroom" || st==="mega"){
+      f.abilCd = id==="mushroom" ? 9 : 10;
+      f.megaT=4; f.scale=1.55;
+      if (id==="mushroom") f.hp=Math.min(f.maxHp, f.hp+25);
       return;
     }
-    if (id === "luntik") {
-      f.abilCd = 8;
-      f.hp = Math.min(f.maxHp, f.hp + 22);
-      // moon beam line
-      for (const o of fighters) {
-        if (o === f || o.dead) continue;
-        const dx = o.x - f.x;
-        if (Math.sign(dx) === face && Math.abs(o.y - f.y) < 40 && Math.abs(dx) < 220) {
-          damage(o, f.def.atk * 1.5, f);
-        }
+    if (id==="luntik" || id==="bluecat" || st==="heal"){
+      f.abilCd=7;
+      f.hp=Math.min(f.maxHp, f.hp+22);
+      for (const o of fighters){
+        if (o===f||o.dead) continue;
+        const dx=o.x-f.x;
+        if (Math.sign(dx)===face && Math.abs(o.y-f.y)<42 && Math.abs(dx)<230) damage(o,f.def.atk*1.45,f);
       }
-      burst(f.x + face * 80, f.y, "#e0b0ff", 14);
+      burst(f.x+face*70,f.y,f.def.accent,14); return;
+    }
+    if (id==="pin"){ f.abilCd=9; f.shieldT=3; burst(f.x,f.y,"#d0dce4",10); return; }
+    if (id==="losyash"){
+      f.abilCd=8; f.hp=Math.min(f.maxHp,f.hp+12);
+      shoot(f,f.x,f.y,face*280,-50,f.def.atk,"#ffe0a8",5,1.1);
+      shoot(f,f.x,f.y,face*300,0,f.def.atk*1.1,"#ffb74d",6,1.1);
+      shoot(f,f.x,f.y,face*280,50,f.def.atk,"#ffe0a8",5,1.1);
       return;
     }
+    if (id==="kopatych" || st==="charge"){
+      f.abilCd=7; f.vx=face*480;
+      for (const o of fighters){ if(o!==f&&!o.dead&&dist(f,o)<70) damage(o,f.def.atk*1.7,f); }
+      return;
+    }
+    if (id==="bowser" || (st==="boss" && id!=="robonanny")){
+      f.abilCd=9;
+      shoot(f,f.x+face*10,f.y-8,face*240,-30,f.def.atk*1.1,"#ff8c42",8,1.3);
+      shoot(f,f.x+face*10,f.y,face*260,0,f.def.atk*1.3,"#ff6b35",9,1.3);
+      shoot(f,f.x+face*10,f.y+8,face*240,30,f.def.atk*1.1,"#ff8c42",8,1.3);
+      return;
+    }
+    if (id==="robonanny"){
+      f.abilCd=8;
+      for (const o of fighters){
+        if (o===f||o.dead) continue;
+        if (Math.sign(o.x-f.x)===face && Math.abs(o.y-f.y)<28 && Math.abs(o.x-f.x)<260)
+          damage(o, f.def.atk*1.6, f);
+      }
+      burst(f.x+face*100,f.y,"#ff6b6b",12); return;
+    }
+    if (id==="koopa" || id==="shell" || st==="shell"){
+      f.abilCd=7; f.shellSlide=2.2; f.vx=face*420; return;
+    }
+    if (id==="yozhik" || id==="spiny" || st==="spike"){
+      f.abilCd=7; f.spinT=3; return;
+    }
+    if (id==="piranha"){
+      f.abilCd=8;
+      for (const o of fighters){ if(o!==f&&!o.dead&&dist(f,o)<100){ o.poisonT=3; damage(o,f.def.atk*0.6,f); } }
+      return;
+    }
+    if (id==="bullet"){
+      f.abilCd=6;
+      shoot(f,f.x+face*20,f.y,face*400,0,f.def.atk*1.6,"#95a5a6",7,1.0);
+      return;
+    }
+    // default
+    f.abilCd=7; f.powerT=3; burst(f.x,f.y,f.def.accent,10);
   }
 
-  function aiStep(f, dt) {
-    f.aiTimer -= dt;
-    if (f.aiTimer <= 0 || !f.aiTarget || f.aiTarget.dead) {
-      f.aiTarget = nearestEnemy(f);
-      f.aiTimer = 0.25 + Math.random() * 0.4;
+  function aiStep(f,dt){
+    f.aiTimer-=dt;
+    if (f.aiTimer<=0 || !f.aiTarget || f.aiTarget.dead){
+      f.aiTarget=nearestEnemy(f);
+      f.aiTimer=0.25+Math.random()*0.4;
     }
-    const t = f.aiTarget;
-    if (!t) return;
-    let dx = t.x - f.x, dy = t.y - f.y;
-    const d = Math.hypot(dx, dy) || 1;
-    // kite or approach depending on type
-    let prefer = 50;
-    if (f.def.id === "tank" || f.def.id === "luntik" || f.def.id === "mario" || f.def.id === "luigi") prefer = 120;
-    if (f.def.id === "ghost" && f.phaseT <= 0 && d < 90) { dx = -dx; dy = -dy; }
-    let mx = 0, my = 0;
-    if (d > prefer + 20) { mx = dx / d; my = dy / d; }
-    else if (d < prefer - 25) { mx = -dx / d; my = -dy / d; }
-    else { mx = (Math.random() - 0.5) * 0.6; my = (Math.random() - 0.5) * 0.6; }
-
-    let spd = f.def.speed * 60;
-    if (f.powerT > 0) spd *= 1.35;
-    if (f.megaT > 0) spd *= 0.85;
-    f.vx = mx * spd;
-    f.vy = my * spd;
-    if (Math.abs(mx) > 0.1) f.facing = mx > 0 ? 1 : -1;
-
-    if (d < 55 || (prefer > 80 && d < 160 && Math.random() < 0.03)) {
-      if (Math.random() < 0.55) doAttack(f);
+    const t=f.aiTarget; if(!t) return;
+    let dx=t.x-f.x, dy=t.y-f.y;
+    const d=Math.hypot(dx,dy)||1;
+    let prefer=50;
+    if (["tank","shoot","fire","dualfire","heal","boss"].includes(f.def.style) || f.def.id==="bullet" || f.def.id==="losyash") prefer=120;
+    if (f.def.ghost && f.phaseT<=0 && d<90){ dx=-dx; dy=-dy; }
+    let mx=0,my=0;
+    if (d>prefer+20){ mx=dx/d; my=dy/d; }
+    else if (d<prefer-25){ mx=-dx/d; my=-dy/d; }
+    else { mx=(Math.random()-0.5)*0.5; my=(Math.random()-0.5)*0.5; }
+    let spd=f.def.speed*60;
+    if (f.powerT>0) spd*=1.35;
+    if (f.megaT>0) spd*=0.85;
+    if (f.shellSlide>0){ /* keep slide vel */ }
+    else { f.vx=mx*spd; f.vy=my*spd; }
+    if (Math.abs(mx)>0.1) f.facing=mx>0?1:-1;
+    if (d<55 || (prefer>80 && d<160 && Math.random()<0.03)){
+      if (Math.random()<0.55) doAttack(f);
     }
-    if (f.abilCd <= 0 && d < 140 && Math.random() < 0.015) doAbility(f);
-    if (f.hp < f.maxHp * 0.35 && f.abilCd <= 0 && Math.random() < 0.02) doAbility(f);
+    if (f.abilCd<=0 && d<150 && Math.random()<0.015) doAbility(f);
+    if (f.hp<f.maxHp*0.35 && f.abilCd<=0 && Math.random()<0.02) doAbility(f);
   }
 
-  function loop(now) {
+  function loop(now){
     if (!running) return;
-    const dt = Math.min(0.033, (now - lastT) / 1000 || 0.016);
-    lastT = now;
-    update(dt);
-    draw();
+    const dt=Math.min(0.033,(now-lastT)/1000||0.016);
+    lastT=now;
+    update(dt); draw();
     requestAnimationFrame(loop);
   }
 
-  function update(dt) {
-    // player
-    const p = fighters.find(f => f.isPlayer);
-    if (p && !p.dead && p.stunT <= 0) {
-      const dir = inputDir();
-      let spd = p.def.speed * 60;
-      if (p.powerT > 0) spd *= 1.35;
-      if (p.megaT > 0) spd *= 0.85;
-      p.vx = dir.x * spd;
-      p.vy = dir.y * spd;
-      if (dir.x) p.facing = dir.x > 0 ? 1 : -1;
+  function update(dt){
+    const p=fighters.find(f=>f.isPlayer);
+    if (p && !p.dead && p.stunT<=0){
+      if (p.shellSlide<=0){
+        const dir=inputDir();
+        let spd=p.def.speed*60;
+        if (p.powerT>0) spd*=1.35;
+        if (p.megaT>0) spd*=0.85;
+        p.vx=dir.x*spd; p.vy=dir.y*spd;
+        if (dir.x) p.facing=dir.x>0?1:-1;
+      }
       if (wantAtk()) doAttack(p);
       if (wantAbil()) doAbility(p);
     }
 
-    for (const f of fighters) {
+    for (const f of fighters){
       if (f.dead) continue;
-      if (!f.isPlayer) aiStep(f, dt);
+      if (!f.isPlayer) aiStep(f,dt);
 
-      f.atkCd = Math.max(0, f.atkCd - dt);
-      f.abilCd = Math.max(0, f.abilCd - dt);
-      f.powerT = Math.max(0, f.powerT - dt);
-      f.phaseT = Math.max(0, f.phaseT - dt);
-      f.stunT = Math.max(0, f.stunT - dt);
-      f.flash = Math.max(0, f.flash - dt);
-      f.growT = Math.max(0, f.growT - dt);
+      f.atkCd=Math.max(0,f.atkCd-dt);
+      f.abilCd=Math.max(0,f.abilCd-dt);
+      f.powerT=Math.max(0,f.powerT-dt);
+      f.phaseT=Math.max(0,f.phaseT-dt);
+      f.stunT=Math.max(0,f.stunT-dt);
+      f.flash=Math.max(0,f.flash-dt);
+      f.growT=Math.max(0,f.growT-dt);
+      f.shieldT=Math.max(0,f.shieldT-dt);
+      f.poisonT=Math.max(0,f.poisonT-dt);
+      f.spinT=Math.max(0,f.spinT-dt);
+      f.shellSlide=Math.max(0,f.shellSlide-dt);
 
-      if (f.megaT > 0) {
-        f.megaT = Math.max(0, f.megaT - dt);
-        f.scale = 1.55;
-        // crush nearby
-        for (const o of fighters) {
-          if (o === f || o.dead) continue;
-          if (dist(f, o) < 50 * f.scale) damage(o, 18 * dt, f);
+      if (f.poisonT>0) damage(f, 8*dt, null);
+
+      if (f.megaT>0){
+        f.megaT=Math.max(0,f.megaT-dt);
+        f.scale=1.55;
+        for (const o of fighters){
+          if (o===f||o.dead) continue;
+          if (dist(f,o)<50*f.scale) damage(o,18*dt,f);
         }
-        if (f.megaT <= 0) f.scale = 1;
-      } else if (f.growT > 0) {
-        f.scale = 1.25;
+        if (f.megaT<=0) f.scale=1;
+      } else if (f.growT>0 || f.spinT>0){
+        f.scale = f.spinT>0 ? 1.2 : 1.25;
+        if (f.spinT>0){
+          for (const o of fighters){
+            if (o===f||o.dead) continue;
+            if (dist(f,o)<48*f.scale) damage(o,22*dt,f);
+          }
+        }
+      } else if (f.shellSlide<=0) {
+        f.scale=1;
+      }
+
+      if (f.shellSlide>0){
+        f.x+=f.vx*dt; f.y+=f.vy*dt*0.2;
+        for (const o of fighters){
+          if (o===f||o.dead) continue;
+          if (dist(f,o)<40) damage(o, f.def.atk*1.2*dt*8, f);
+        }
       } else {
-        f.scale = 1;
+        if (f.stunT>0){ f.vx*=0.2; f.vy*=0.2; }
+        f.x+=f.vx*dt; f.y+=f.vy*dt;
+        if (f.isPlayer && !inputDir().x && !inputDir().y && f.shellSlide<=0){
+          f.vx*=0.85; f.vy*=0.85;
+        }
       }
 
-      if (f.stunT > 0) { f.vx *= 0.2; f.vy *= 0.2; }
-
-      f.x += f.vx * dt;
-      f.y += f.vy * dt;
-      // soft friction for non-controlled impulses
-      if (f.isPlayer && !inputDir().x && !inputDir().y) {
-        f.vx *= 0.85; f.vy *= 0.85;
-      } else if (!f.isPlayer) {
-        // keep ai velocity from aiStep
+      // star aura
+      if (f.def.id==="star" && f.phaseT>0){
+        for (const o of fighters){
+          if (o===f||o.dead) continue;
+          if (dist(f,o)<55) damage(o, 20*dt, f);
+        }
       }
+
       clampFighter(f);
-
-      // separate fighters
-      for (const o of fighters) {
-        if (o === f || o.dead) continue;
-        const d = dist(f, o);
-        const minD = (f.r * f.scale + o.r * o.scale) * 0.95;
-        if (d > 0 && d < minD) {
-          const push = (minD - d) * 0.5;
-          const nx = (f.x - o.x) / d, ny = (f.y - o.y) / d;
-          f.x += nx * push; f.y += ny * push;
-          o.x -= nx * push; o.y -= ny * push;
+      for (const o of fighters){
+        if (o===f||o.dead) continue;
+        const d=dist(f,o);
+        const minD=(f.r*f.scale+o.r*o.scale)*0.95;
+        if (d>0 && d<minD){
+          const push=(minD-d)*0.5;
+          const nx=(f.x-o.x)/d, ny=(f.y-o.y)/d;
+          f.x+=nx*push; f.y+=ny*push;
+          o.x-=nx*push; o.y-=ny*push;
         }
       }
     }
 
-    // projectiles
-    for (let i = projectiles.length - 1; i >= 0; i--) {
-      const pr = projectiles[i];
-      pr.x += pr.vx * dt;
-      pr.y += pr.vy * dt;
-      pr.life -= dt;
-      let hit = false;
-      for (const o of fighters) {
-        if (o === pr.owner || o.dead) continue;
-        if (Math.hypot(pr.x - o.x, pr.y - o.y) < pr.r + o.r * o.scale) {
-          damage(o, pr.dmg, pr.owner);
-          hit = true;
-          break;
-        }
+    for (let i=projectiles.length-1;i>=0;i--){
+      const pr=projectiles[i];
+      pr.x+=pr.vx*dt; pr.y+=pr.vy*dt; pr.life-=dt;
+      let hit=false;
+      for (const o of fighters){
+        if (o===pr.owner||o.dead) continue;
+        if (Math.hypot(pr.x-o.x,pr.y-o.y)<pr.r+o.r*o.scale){ damage(o,pr.dmg,pr.owner); hit=true; break; }
       }
-      // walls / obstacles
-      if (pr.x < 0 || pr.x > W || pr.y < 0 || pr.y > H) hit = true;
-      for (const o of arenaObstacles) {
-        if (pr.x > o.x && pr.x < o.x + o.w && pr.y > o.y && pr.y < o.y + o.h) hit = true;
+      if (pr.x<0||pr.x>W||pr.y<0||pr.y>H) hit=true;
+      for (const o of arenaObstacles){
+        if (pr.x>o.x&&pr.x<o.x+o.w&&pr.y>o.y&&pr.y<o.y+o.h) hit=true;
       }
-      if (hit || pr.life <= 0) projectiles.splice(i, 1);
+      if (hit||pr.life<=0) projectiles.splice(i,1);
     }
 
-    // particles
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.life -= dt;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vx *= 0.96; p.vy *= 0.96;
-      if (p.life <= 0) particles.splice(i, 1);
+    for (let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.96; p.vy*=0.96;
+      if (p.life<=0) particles.splice(i,1);
     }
 
     updateBars();
-
-    // win / lose
-    const alive = fighters.filter(f => !f.dead);
-    if (alive.length <= 1) {
-      running = false;
-      const winner = alive[0];
-      const pAlive = fighters.find(f => f.isPlayer && !f.dead);
-      endOverlay.hidden = false;
-      if (pAlive) {
-        document.getElementById("endTitle").textContent = "🏆 Победа!";
-        document.getElementById("endText").textContent = pAlive.def.emoji + " " + pAlive.def.name + " победил в Битве всех игр!";
-      } else if (winner) {
-        document.getElementById("endTitle").textContent = "💀 Поражение";
-        document.getElementById("endText").textContent = "Победил " + winner.def.emoji + " " + winner.def.name + ". Попробуй ещё!";
+    const alive=fighters.filter(f=>!f.dead);
+    if (alive.length<=1){
+      running=false;
+      const winner=alive[0];
+      const pAlive=fighters.find(f=>f.isPlayer&&!f.dead);
+      endOverlay.hidden=false;
+      if (pAlive){
+        document.getElementById("endTitle").textContent="🏆 Победа!";
+        document.getElementById("endText").textContent=pAlive.def.emoji+" "+pAlive.def.name+" победил в Битве всех игр!";
+      } else if (winner){
+        document.getElementById("endTitle").textContent="💀 Поражение";
+        document.getElementById("endText").textContent="Победил "+winner.def.emoji+" "+winner.def.name+". Попробуй ещё!";
       } else {
-        document.getElementById("endTitle").textContent = "Ничья";
-        document.getElementById("endText").textContent = "Все выбыли!";
+        document.getElementById("endTitle").textContent="Ничья";
+        document.getElementById("endText").textContent="Все выбыли!";
       }
     }
   }
 
-  function drawArena() {
-    // floor
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#1a2840");
-    g.addColorStop(1, "#121820");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-
-    // grid
-    ctx.strokeStyle = "rgba(255,255,255,.04)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < W; x += 40) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    }
-    for (let y = 0; y < H; y += 40) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    }
-
-    // obstacles
-    for (const o of arenaObstacles) {
-      ctx.fillStyle = "#2a3344";
-      ctx.strokeStyle = "#4a5a70";
-      ctx.lineWidth = 2;
-      roundRect(o.x, o.y, o.w, o.h, 8);
-      ctx.fill(); ctx.stroke();
-    }
-
-    // border
-    ctx.strokeStyle = "#ffcc00";
-    ctx.globalAlpha = 0.35;
-    ctx.lineWidth = 4;
-    ctx.strokeRect(6, 6, W - 12, H - 12);
-    ctx.globalAlpha = 1;
-  }
-
-  function roundRect(x, y, w, h, r) {
+  function roundRect(x,y,w,h,r){
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
     ctx.closePath();
   }
 
-  function drawFighter(f) {
-    if (f.dead) {
-      ctx.globalAlpha = 0.25;
+  function drawArena(){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,"#1a2840"); g.addColorStop(1,"#121820");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle="rgba(255,255,255,.04)"; ctx.lineWidth=1;
+    for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    for (const o of arenaObstacles){
+      ctx.fillStyle="#2a3344"; ctx.strokeStyle="#4a5a70"; ctx.lineWidth=2;
+      roundRect(o.x,o.y,o.w,o.h,8); ctx.fill(); ctx.stroke();
     }
-    const r = f.r * f.scale;
+    ctx.strokeStyle="#ffcc00"; ctx.globalAlpha=0.3; ctx.lineWidth=4;
+    ctx.strokeRect(6,6,W-12,H-12); ctx.globalAlpha=1;
+  }
+
+  function drawGhostBody(f, r){
+    ctx.fillStyle = f.flash>0 ? "#fff" : f.def.color;
+    ctx.beginPath();
+    ctx.arc(0, -r*0.15, r*0.85, Math.PI, 0);
+    ctx.lineTo(r*0.85, r*0.7);
+    for (let i=0;i<4;i++){
+      const x = r*0.85 - (i+0.5)*(r*1.7/4);
+      ctx.lineTo(x, r*0.45);
+      ctx.lineTo(x - r*1.7/8, r*0.75);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#fff";
+    ctx.beginPath(); ctx.arc(-r*0.28,-r*0.15,r*0.22,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.28,-r*0.15,r*0.22,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#223";
+    ctx.beginPath(); ctx.arc(-r*0.22+f.facing*2,-r*0.15,r*0.1,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.34+f.facing*2,-r*0.15,r*0.1,0,Math.PI*2); ctx.fill();
+  }
+
+  function drawSnakeBody(f, r){
+    ctx.strokeStyle=f.def.color; ctx.lineWidth=r*0.9; ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(-r*1.6, 0);
+    ctx.quadraticCurveTo(-r*0.5, -r*0.8, 0, 0);
+    ctx.quadraticCurveTo(r*0.6, r*0.7, r*1.2, 0);
+    ctx.stroke();
+    ctx.fillStyle=f.flash>0?"#fff":f.def.color;
+    ctx.beginPath(); ctx.arc(r*0.6,0,r*0.7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#111";
+    ctx.beginPath(); ctx.arc(r*0.75, -r*0.15, 3,0,Math.PI*2); ctx.fill();
+  }
+
+  function drawTankBody(f, r){
+    ctx.fillStyle=f.flash>0?"#fff":f.def.color;
+    ctx.fillRect(-r*0.9, -r*0.45, r*1.8, r*0.9);
+    ctx.fillStyle=f.def.accent;
+    ctx.fillRect(f.facing>0?0:-r*1.1, -r*0.12, r*1.1, r*0.24);
+    ctx.fillStyle="#333";
+    ctx.fillRect(-r*0.7, r*0.35, r*0.4, r*0.25);
+    ctx.fillRect(r*0.3, r*0.35, r*0.4, r*0.25);
+  }
+
+  function drawFighter(f){
+    if (f.dead) ctx.globalAlpha=0.28;
+    const r=f.r*f.scale;
     ctx.save();
-    ctx.translate(f.x, f.y);
+    ctx.translate(f.x,f.y);
 
     // shadow
-    ctx.fillStyle = "rgba(0,0,0,.35)";
-    ctx.beginPath();
-    ctx.ellipse(0, r * 0.75, r * 0.85, r * 0.28, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle="rgba(0,0,0,.35)";
+    ctx.beginPath(); ctx.ellipse(0,r*0.78,r*0.9,r*0.28,0,0,Math.PI*2); ctx.fill();
 
-    // body
-    if (f.phaseT > 0) ctx.globalAlpha = 0.45 + 0.2 * Math.sin(performance.now() / 80);
-    if (f.powerT > 0) {
-      ctx.shadowColor = "#ffe066";
-      ctx.shadowBlur = 18;
-    }
-    if (f.flash > 0) ctx.fillStyle = "#fff";
-    else ctx.fillStyle = f.def.color;
-
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // face direction marker
-    ctx.fillStyle = f.def.accent;
-    ctx.beginPath();
-    ctx.arc(f.facing * r * 0.45, -2, r * 0.22, 0, Math.PI * 2);
-    ctx.fill();
-
-    // emoji
-    ctx.globalAlpha = f.dead ? 0.25 : 1;
-    ctx.font = `${Math.floor(r * 1.15)}px serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(f.def.emoji, 0, 1);
-
-    // name
-    ctx.font = "bold 11px Segoe UI, Arial";
-    ctx.fillStyle = f.isPlayer ? "#ffcc00" : "#ddd";
-    ctx.fillText(f.def.name + (f.isPlayer ? " ★" : ""), 0, -r - 12);
-
-    // mini hp
-    const bw = r * 2;
-    ctx.fillStyle = "#222";
-    ctx.fillRect(-bw / 2, -r - 6, bw, 4);
-    ctx.fillStyle = f.hp / f.maxHp > 0.35 ? "#4ade80" : "#f87171";
-    ctx.fillRect(-bw / 2, -r - 6, bw * (f.hp / f.maxHp), 4);
-
-    // ability ready ring for player
-    if (f.isPlayer && f.abilCd <= 0 && !f.dead) {
-      ctx.strokeStyle = "rgba(255,204,0,.5)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
-      ctx.stroke();
+    if (f.phaseT>0) ctx.globalAlpha = (f.dead?0.28:1)*(0.4+0.25*Math.sin(performance.now()/80));
+    if (f.powerT>0){ ctx.shadowColor="#ffe066"; ctx.shadowBlur=16; }
+    if (f.shieldT>0){
+      ctx.strokeStyle="rgba(180,220,255,.7)"; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(0,0,r+6,0,Math.PI*2); ctx.stroke();
     }
 
+    const img = f.def._imgEl;
+    if (img){
+      // soft circle clip background
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2);
+      ctx.fillStyle = f.flash>0 ? "#fff" : (f.def.color+"cc");
+      ctx.fill();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(0,0,r*0.92,0,Math.PI*2); ctx.clip();
+      if (f.facing<0) ctx.scale(-1,1);
+      const size = r*1.7;
+      ctx.drawImage(img, -size/2, -size/2, size, size);
+      ctx.restore();
+      ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+    } else if (f.def.ghost){
+      drawGhostBody(f,r);
+    } else if (f.def.snakeDraw){
+      drawSnakeBody(f,r);
+    } else if (f.def.tankDraw){
+      drawTankBody(f,r);
+    } else {
+      ctx.fillStyle=f.flash>0?"#fff":f.def.color;
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+      ctx.font=`${Math.floor(r*1.1)}px serif`;
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText(f.def.emoji,0,1);
+    }
+    ctx.shadowBlur=0;
+
+    // name + hp
+    ctx.globalAlpha = f.dead ? 0.28 : 1;
+    ctx.font="bold 11px Segoe UI, Arial";
+    ctx.textAlign="center"; ctx.textBaseline="bottom";
+    ctx.fillStyle=f.isPlayer?"#ffcc00":"#eee";
+    ctx.fillText(f.def.name+(f.isPlayer?" ★":""), 0, -r-14);
+    const bw=r*2;
+    ctx.fillStyle="#222"; ctx.fillRect(-bw/2,-r-8,bw,4);
+    ctx.fillStyle=f.hp/f.maxHp>0.35?"#4ade80":"#f87171";
+    ctx.fillRect(-bw/2,-r-8,bw*(f.hp/f.maxHp),4);
+
+    if (f.isPlayer && f.abilCd<=0 && !f.dead){
+      ctx.strokeStyle="rgba(255,204,0,.5)"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(0,0,r+5,0,Math.PI*2); ctx.stroke();
+    }
     ctx.restore();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha=1;
   }
 
-  function draw() {
+  function draw(){
     drawArena();
-
-    for (const pr of projectiles) {
-      ctx.fillStyle = pr.color;
-      ctx.beginPath();
-      ctx.arc(pr.x, pr.y, pr.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,.5)";
-      ctx.beginPath();
-      ctx.arc(pr.x - 1, pr.y - 1, pr.r * 0.4, 0, Math.PI * 2);
-      ctx.fill();
+    for (const pr of projectiles){
+      ctx.fillStyle=pr.color;
+      ctx.beginPath(); ctx.arc(pr.x,pr.y,pr.r,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,.45)";
+      ctx.beginPath(); ctx.arc(pr.x-1,pr.y-1,pr.r*0.4,0,Math.PI*2); ctx.fill();
     }
-
-    for (const p of particles) {
-      ctx.globalAlpha = Math.max(0, p.life * 2);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
+    for (const p of particles){
+      ctx.globalAlpha=Math.max(0,p.life*2);
+      ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
     }
-    ctx.globalAlpha = 1;
-
-    // draw dead first
-    const sorted = [...fighters].sort((a, b) => (a.dead === b.dead ? a.y - b.y : a.dead ? -1 : 1));
+    ctx.globalAlpha=1;
+    const sorted=[...fighters].sort((a,b)=>(a.dead===b.dead?a.y-b.y:(a.dead?-1:1)));
     for (const f of sorted) drawFighter(f);
 
-    // title ribbon
-    ctx.fillStyle = "rgba(0,0,0,.35)";
-    ctx.fillRect(W / 2 - 120, 12, 240, 26);
-    ctx.fillStyle = "#ffcc00";
-    ctx.font = "bold 14px Segoe UI, Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("⚔️ Битва всех игр", W / 2, 30);
+    ctx.fillStyle="rgba(0,0,0,.4)";
+    ctx.fillRect(W/2-130,10,260,26);
+    ctx.fillStyle="#ffcc00";
+    ctx.font="bold 14px Segoe UI, Arial";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("⚔️ Битва всех игр · "+HEROES.length+" героев", W/2, 23);
   }
 
+  // init
+  renderFilters();
   renderSelect();
+  preloadAll().then(() => {
+    renderSelect();
+    if (selectedId) showDetail(heroById(selectedId));
+  });
 })();
 </script>
 </body>
