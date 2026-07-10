@@ -2176,11 +2176,13 @@
       if (e._baseW == null) { e._baseW = e.w; e._baseH = e.h; }
       e.megaTimer = 720; // ~12 сек мега
       e.big = true;
+      e.chasePlayer = true; // бежит за тобой как «игрок»
+      e.jumpsLeft = 2;
+      e.jumpCd = 0;
       applyEnemyGrownSize(e);
-      // чуть быстрее и страшнее
-      if (e.vx) e.vx = Math.sign(e.vx) * Math.max(Math.abs(e.vx) * 1.2, 1.5);
+      e.vx = (nearestHero(e) && nearestHero(e).x < e.x) ? -MOVE * 0.95 : MOVE * 0.95;
       document.getElementById("status").textContent =
-        "🟣 " + ((e.kind || "goomba") === "koopa" ? "КУПА" : "ВРАГ") + " СЪЕЛ МЕГА-ГРИБ!";
+        "🟣 МЕГА-ВРАГ ГОНИТСЯ ЗА ТОБОЙ!";
       try { sfx.mega(); } catch (err) {}
       return true;
     }
@@ -2188,21 +2190,22 @@
       p.taken = true;
       if (e._baseW == null) { e._baseW = e.w; e._baseH = e.h; }
       if (e.megaTimer > 0) {
-        // уже мега — просто бонус
         coinCount += 2;
         document.getElementById("coins").textContent = coinCount;
       } else {
         e.big = true;
+        e.chasePlayer = true; // тоже чуть умнее гонится
         applyEnemyGrownSize(e);
       }
-      document.getElementById("status").textContent = "🍄 Враг вырос!";
+      document.getElementById("status").textContent = "🍄 Враг вырос и бежит за тобой!";
       try { sfx.powerup(); } catch (err) {}
       return true;
     }
     if (kind === "star") {
       p.taken = true;
       e.starTimer = 420;
-      document.getElementById("status").textContent = "⭐ Враг со звездой!";
+      e.chasePlayer = true;
+      document.getElementById("status").textContent = "⭐ Враг со звездой гонится!";
       try { sfx.star(); } catch (err) {}
       return true;
     }
@@ -2927,13 +2930,20 @@
       if (e.megaTimer > 0) {
         e.megaTimer--;
         if (e.megaTimer === 0) {
-          e.big = true; // остаётся большим, как Марио после меги
+          e.big = true; // остаётся большим
+          e.chasePlayer = true; // и дальше гонится за тобой
           applyEnemyGrownSize(e);
+          document.getElementById("status").textContent = "Мега врага кончилась — он всё ещё большой и злой!";
         } else {
           applyEnemyGrownSize(e);
         }
       }
-      if (e.starTimer > 0) e.starTimer--;
+      if (e.starTimer > 0) {
+        e.starTimer--;
+        if (e.starTimer === 0 && !e.big && !(e.megaTimer > 0)) {
+          // звезда кончилась, если не большой — обычное поведение
+        }
+      }
 
       if (kind === "piranha") {
         e.phase = (e.phase || 0) + 0.03;
@@ -3006,23 +3016,66 @@
         e.life = (e.life != null ? e.life : 180) - 1;
         if (e.life <= 0 || e.x < cameraX - 100 || e.x > cameraX + W + 100) e.alive = false;
       } else {
-        // goomba / koopa / spiny — ходят и ПАДАЮТ (не висят в небе)
-        if (!(kind === "koopa" && e.shell)) {
-          const target = nearestHero(e);
-          if (target && e.onGround) {
-            const dxH = target.x - e.x;
-            if (Math.abs(dxH) < 260 && Math.abs((target.y || 0) - e.y) < 90) {
+        // goomba / koopa / spiny — падают; мега/большой — гонятся как «игрок»
+        const isShell = kind === "koopa" && e.shell;
+        const megaChase = !isShell && ((e.megaTimer || 0) > 0 || e.chasePlayer || (e.starTimer || 0) > 0);
+        const target = nearestHero(e);
+
+        if (!isShell && target) {
+          const dxH = target.x - e.x;
+          const dyH = (target.y || 0) - e.y;
+          if (megaChase) {
+            // как игрок: быстро бежит к тебе, прыгает через ямы/стены
+            const spd = MOVE * ((e.megaTimer || 0) > 0 ? 1.05 : e.big ? 0.9 : 0.85)
+              * ((e.starTimer || 0) > 0 ? 1.15 : 1);
+            if (Math.abs(dxH) > 6) {
+              e.vx = dxH > 0 ? spd : -spd;
+              e.facing = e.vx >= 0 ? 1 : -1;
+            } else {
+              e.vx = 0;
+            }
+            // AI-прыжок (как Луиджи)
+            if (e.jumpCd > 0) e.jumpCd--;
+            if (e.jumpsLeft == null) e.jumpsLeft = 2;
+            if (e.onGround) e.jumpsLeft = 2;
+            const probeX = e.x + e.w * 0.5 + (e.vx >= 0 ? 22 : -22);
+            let groundAhead = false, wallAhead = false;
+            for (const p of platforms) {
+              if (!solid(p)) continue;
+              if (probeX > p.x && probeX < p.x + p.w && Math.abs(p.y - (e.y + e.h)) < 14) groundAhead = true;
+              if (
+                p.x < e.x + e.w + 24 && p.x + p.w > e.x + e.w &&
+                p.y < e.y + e.h - 6 && p.y + p.h > e.y + 8 &&
+                (p.type === "pipe" || p.type === "brick" || p.type === "question" || p.type === "used")
+              ) wallAhead = true;
+            }
+            const needJump = !groundAhead || wallAhead || (dyH < -40 && Math.abs(dxH) < 180);
+            if (e.onGround && (e.jumpCd || 0) <= 0 && needJump && e.jumpsLeft > 0) {
+              e.vy = JUMP * (wallAhead ? 1.1 : 1.0);
+              e.onGround = false;
+              e.jumpsLeft--;
+              e.jumpCd = 14;
+            } else if (!e.onGround && e.jumpsLeft > 0 && (e.jumpCd || 0) <= 0 && needJump && e.vy > -2) {
+              e.vy = JUMP * 0.92;
+              e.jumpsLeft = 0;
+              e.jumpCd = 16;
+            }
+          } else if (e.onGround) {
+            // обычный враг — слабая реакция на героя
+            if (Math.abs(dxH) < 260 && Math.abs(dyH) < 90) {
               const base = Math.abs(e.vx) > 0.3 ? Math.abs(e.vx) : 1.2;
               const want = dxH > 0 ? base : -base;
               if (Math.sign(e.vx) !== Math.sign(want) || Math.abs(e.vx) < 0.2) e.vx = want;
             }
           }
         }
+
         e.x += e.vx;
         if (e.x < 0) { e.x = 0; e.vx = Math.abs(e.vx) || 1.2; }
         if (e.x > levelW - e.w) { e.x = levelW - e.w; e.vx = -(Math.abs(e.vx) || 1.2); }
-        // у края платформы — разворот (только на земле)
-        if (e.onGround && !(kind === "koopa" && e.shell && Math.abs(e.vx) > 2)) {
+
+        // обычные враги разворачиваются у края; мега-гонщик ПРЫГАЕТ, не разворачивается
+        if (e.onGround && !megaChase && !isShell) {
           const probeX = e.vx >= 0 ? e.x + e.w + 4 : e.x - 4;
           let groundAhead = false;
           for (const p of platforms) {
@@ -3034,7 +3087,7 @@
           }
           if (!groundAhead) e.vx *= -1;
         }
-        applyEnemyGravity(e, { reverseOnWall: true });
+        applyEnemyGravity(e, { reverseOnWall: !megaChase });
       }
 
       if (playerDown) continue;
