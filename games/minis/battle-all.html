@@ -248,6 +248,10 @@
     cat: "../../images/blue-cat.svg",
     sonic: "../../images/sonic.png",
     sonic_super: "../../images/sonic_super.png",
+    sandwich: "../../images/sandwich.png",
+    barbie: "../../images/barbie.png",
+    peppa: "../../images/peppa.png",
+    shrek: "../../images/shrek.png",
     mario_art: "mario_art.png",
     mario: "sprites/smb3_mario.png",
     mario_walk: "sprites/smb3_mario_walk.png",
@@ -465,7 +469,21 @@
       desc:"Оригинальный арт. Самый быстрый!", abilityDesc:"Спин-дэш: огромная скорость и урон. 6 с.", sonicDraw:true },
     { id:"sonic_super", name:"Супер Соник", from:"Sonic", group:"sonic", emoji:"⚡", img:IMG.sonic_super, imgFallbacks:[IMG.sonic, "../../images/sonic.svg"], color:"#f1c40f", accent:"#fff59d",
       hp:120, speed:4.5, atk:17, rate:0.65, style:"spin", attackName:"Молния", abilityName:"Супер-кольца",
-      desc:"Оригинальный золотой арт.", abilityDesc:"Неуязвимость 3 сек. + урон. 10 с.", sonicDraw:true, superSonic:true }
+      desc:"Оригинальный золотой арт.", abilityDesc:"Неуязвимость 3 сек. + урон. 10 с.", sonicDraw:true, superSonic:true },
+
+    // —— Гости: бутерброд, Барби, Пеппа, Шрек ——
+    { id:"sandwich", name:"Бутерброд", from:"Гости", group:"guests", emoji:"🥪", img:IMG.sandwich, color:"#e67e22", accent:"#f5cba7",
+      hp:115, speed:2.6, atk:14, rate:0.9, style:"heal", attackName:"Укус", abilityName:"Сырный соус",
+      desc:"Смешной бутерброд-герой!", abilityDesc:"Лечение + скользкий соус (стан). 7 с." },
+    { id:"barbie", name:"Барби", from:"Гости", group:"guests", emoji:"👗", img:IMG.barbie, color:"#ff69b4", accent:"#ffd0e8",
+      hp:100, speed:3.2, atk:13, rate:0.85, style:"dash", attackName:"Поза", abilityName:"Блеск",
+      desc:"Стильная и быстрая.", abilityDesc:"Рывок + ослепляющий блеск. 6.5 с." },
+    { id:"peppa", name:"Пеппа", from:"Гости", group:"guests", emoji:"🐷", img:IMG.peppa, color:"#ff8fab", accent:"#ffc0d0",
+      hp:105, speed:2.9, atk:13, rate:0.9, style:"melee", attackName:"Прыжок в лужу", abilityName:"Хрю!",
+      desc:"Весёлая свинка.", abilityDesc:"Волна «хрю» оглушает рядом. 7 с." },
+    { id:"shrek", name:"Шрек", from:"Гости", group:"guests", emoji:"🟢", img:IMG.shrek, color:"#3d8b40", accent:"#a8e6a0",
+      hp:155, speed:2.2, atk:18, rate:1.05, style:"boss", attackName:"Кулак", abilityName:"Болото",
+      desc:"Большой зелёный силач.", abilityDesc:"Болото: урон и замедление всем рядом. 8 с." }
   ];
 
   const GROUPS = [
@@ -474,6 +492,7 @@
     { id: "pac", label: "Пакман" },
     { id: "mario", label: "Марио" },
     { id: "sonic", label: "Соник" },
+    { id: "guests", label: "Гости" },
     { id: "other", label: "Другие" }
   ];
 
@@ -1054,6 +1073,54 @@
       shoot(f,f.x,f.y,face*340,-70,f.def.atk*0.95,"#ff8a70",5,1.2);
       shoot(f,f.x,f.y,face*360,0,f.def.atk*1.2,"#ff6b4a",6,1.2);
       shoot(f,f.x,f.y,face*340,70,f.def.atk*0.95,"#ff8a70",5,1.2);
+      return;
+    }
+    if (id==="sandwich"){
+      f.abilCd = 7;
+      f.hp = Math.min(f.maxHp, f.hp + 18);
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 70) {
+          damage(o, f.def.atk * 0.9, f);
+          o.stunT = Math.max(o.stunT, 0.7);
+        }
+      }
+      burst(f.x, f.y, "#f5cba7", 14);
+      return;
+    }
+    if (id==="barbie"){
+      f.abilCd = 6.5;
+      f.vx = face * 480;
+      f.powerT = 2.5;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 65) {
+          damage(o, f.def.atk * 1.3, f);
+          o.stunT = Math.max(o.stunT, 0.45);
+        }
+      }
+      burst(f.x, f.y, "#ff69b4", 16);
+      return;
+    }
+    if (id==="peppa"){
+      f.abilCd = 7;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 95) {
+          damage(o, f.def.atk * 1.15, f);
+          o.stunT = Math.max(o.stunT, 0.8);
+        }
+      }
+      burst(f.x, f.y, "#ff8fab", 18);
+      return;
+    }
+    if (id==="shrek"){
+      f.abilCd = 8;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 110) {
+          damage(o, f.def.atk * 1.4, f);
+          o.stunT = Math.max(o.stunT, 0.9);
+          o.vx *= 0.3; o.vy *= 0.3;
+        }
+      }
+      burst(f.x, f.y, "#3d8b40", 20);
       return;
     }
     // default
