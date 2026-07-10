@@ -2865,14 +2865,7 @@
         }
       } else if (kind === "koopa" && e.shell) {
         e.x += e.vx;
-        for (const p of platforms) {
-          if (!solid(p)) continue;
-          if (rects(e, p) && p.type !== "ground") {
-            if (e.vx > 0) e.x = p.x - e.w;
-            else e.x = p.x + p.w;
-            e.vx *= -1;
-          }
-        }
+        applyEnemyGravity(e, { reverseOnWall: true });
       } else if (kind === "redmario") {
         // гонится за ближайшим: Марио или Луиджи
         const target = nearestHero(e);
