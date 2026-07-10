@@ -413,6 +413,7 @@
     domer: "../../images/domer.png",
     derzko: "../../images/derzko.png",
     pennywise: "../../images/pennywise.png",
+    knife_guy: "../../images/knife_guy.png",
     mario_art: "mario_art.png",
     mario: "sprites/smb3_mario.png",
     mario_walk: "sprites/smb3_mario_walk.png",
@@ -661,7 +662,10 @@
       desc:"Оригинальное фото стримера.", abilityDesc:"Оглушающий крик вокруг. 7.5 с." },
     { id:"pennywise", name:"Пеннивайз", from:"Гости", group:"guests", emoji:"🎈", img:IMG.pennywise, color:"#e74c3c", accent:"#ff8a80",
       hp:130, speed:2.7, atk:17, rate:0.95, style:"phase", attackName:"Улыбка", abilityName:"Красный шар",
-      desc:"Оригинальный вид как в фильме IT.", abilityDesc:"Фаза + страх (стан). 8 с." }
+      desc:"Оригинальный вид как в фильме IT.", abilityDesc:"Фаза + страх (стан). 8 с." },
+    { id:"knife_guy", name:"Ножевой", from:"Гости", group:"guests", emoji:"🗡️", img:IMG.knife_guy, color:"#1a1a1a", accent:"#c0c0c0",
+      hp:115, speed:3.3, atk:18, rate:0.75, style:"melee", attackName:"Удар ножом", abilityName:"Рывок с ножом",
+      desc:"Тёмный боец с ножом. Быстрый и опасный.", abilityDesc:"Рывок вперёд + сильный урон. 6 с." }
   ];
 
   const GROUPS = [
@@ -1448,6 +1452,19 @@
       // red balloon projectile
       shoot(f, f.x + face * 10, f.y - 20, face * 180, -40, f.def.atk * 1.2, "#e74c3c", 9, 1.4);
       burst(f.x, f.y, "#e74c3c", 16);
+      return;
+    }
+    if (id==="knife_guy"){
+      f.abilCd = 6;
+      f.vx = face * 560;
+      f.vy = 0;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 70) {
+          damage(o, f.def.atk * 1.85, f);
+          o.stunT = Math.max(o.stunT, 0.5);
+        }
+      }
+      burst(f.x + face * 30, f.y, "#c0c0c0", 14);
       return;
     }
     // default

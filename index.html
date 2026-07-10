@@ -1170,6 +1170,7 @@
           <div class="review-game">об игре: Танчики · 🤖 ИИ · плохой отзыв</div>
         </article>
       </div>
+      <div id="userReviewsMount" class="reviews-grid-static" style="margin-top:14px"></div>
     </section>
 
     <section class="menu-block" id="menu">
@@ -1186,7 +1187,9 @@
 
     <div class="tabs" role="tablist">
       <button class="tab active" data-tab="about" type="button" data-i18n="tabAbout">О портале</button>
-      <button class="tab" data-tab="add" type="button" data-i18n="tabAdd">Добавить игру</button>
+      <button class="tab" data-tab="add" type="button" data-i18n="tabAdd">Отправить игру</button>
+      <button class="tab" data-tab="review" type="button">Мой отзыв</button>
+      <button class="tab" data-tab="admin" type="button">Проверка</button>
     </div>
 
     <div id="panel-about" class="panel active">
@@ -1205,29 +1208,104 @@
 
     <div id="panel-add" class="panel">
       <div class="card" id="add">
-        <h3 data-i18n="addTitle">Добавить свою игру</h3>
-        <p style="color:#aaa;font-size:14px;margin-bottom:14px" data-i18n="addHint">
-          Игра сохранится в этом браузере и появится в каталоге.
+        <h3>📨 Отправить игру на проверку</h3>
+        <p style="color:#aaa;font-size:14px;margin-bottom:14px">
+          Ты выкладываешь игру → заполняешь форму → <b>я проверяю</b> → если ок, игра появляется в каталоге.
+          После «Отправить» скопируй заявку и пришли владельцу (Telegram / сообщение).
         </p>
         <form class="add-form" id="addGameForm">
+          <label><span>Твоё имя *</span>
+            <input type="text" name="author" required maxlength="40" placeholder="Как тебя зовут">
+          </label>
           <label><span data-i18n="fieldTitle">Название *</span>
             <input type="text" name="title" required maxlength="80" placeholder="Например: Мой платформер" data-i18n-placeholder="phTitle">
           </label>
           <label><span data-i18n="fieldDesc">Описание</span>
-            <textarea name="description" rows="2" maxlength="200" placeholder="Коротко о игре" data-i18n-placeholder="phDesc"></textarea>
+            <textarea name="description" rows="2" maxlength="300" placeholder="Коротко о игре" data-i18n-placeholder="phDesc"></textarea>
           </label>
-          <label><span data-i18n="fieldUrl">Ссылка на игру * (URL или путь к .html)</span>
+          <label><span data-i18n="fieldUrl">Ссылка на игру * (URL)</span>
             <input type="text" name="url" required placeholder="https://... или games/minis/snake.html" data-i18n-placeholder="phUrl">
           </label>
           <label><span data-i18n="fieldEmoji">Эмодзи</span>
             <input type="text" name="emoji" maxlength="8" value="🎮">
           </label>
+          <label><span>Контакт (Telegram / телефон)</span>
+            <input type="text" name="contact" maxlength="80" placeholder="@username или телефон">
+          </label>
           <div class="row">
-            <button type="submit" class="btn-play" style="height:44px;font-size:15px;min-width:180px" data-i18n="btnAdd">➕ Добавить</button>
-            <button type="button" class="btn-secondary" id="clearCustomBtn" style="height:44px" data-i18n="btnClear">Удалить мои игры</button>
+            <button type="submit" class="btn-play" style="height:44px;font-size:15px;min-width:200px">📨 На проверку</button>
+            <button type="button" class="btn-secondary" id="copyLastRequestBtn" style="height:44px">📋 Копировать заявку</button>
           </div>
           <p class="hint-mini" id="formNote"></p>
+          <textarea id="requestOut" rows="5" readonly style="width:100%;margin-top:10px;background:#111;color:#9f9;border:1px solid #333;border-radius:10px;padding:10px;font-size:12px;display:none"></textarea>
         </form>
+        <div id="myRequests" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <div id="panel-review" class="panel">
+      <div class="card" id="userReview">
+        <h3>✍️ Добавить свой отзыв</h3>
+        <p style="color:#aaa;font-size:14px;margin-bottom:14px">Напиши отзыв об игре — он появится в блоке «Отзывы» на этом устройстве.</p>
+        <form class="add-form" id="userReviewForm">
+          <label><span>Имя *</span>
+            <input type="text" name="who" required maxlength="40" placeholder="Как тебя зовут">
+          </label>
+          <label><span>Игра *</span>
+            <select name="game" required style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit">
+              <option value="snake">Змейка</option>
+              <option value="pacman">Пакман</option>
+              <option value="mario">Марио</option>
+              <option value="smeshariki">Смешарики</option>
+              <option value="tanks">Танчики</option>
+              <option value="labyrinth">Лабиринт</option>
+              <option value="battle">Битва всех игр</option>
+              <option value="other">Другая</option>
+            </select>
+          </label>
+          <label><span>Оценка *</span>
+            <select name="stars" required style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit">
+              <option value="5">★★★★★ 5</option>
+              <option value="4">★★★★☆ 4</option>
+              <option value="3">★★★☆☆ 3</option>
+              <option value="2">★★☆☆☆ 2</option>
+              <option value="1">★☆☆☆☆ 1</option>
+            </select>
+          </label>
+          <label><span>Текст отзыва *</span>
+            <textarea name="text" required rows="3" maxlength="400" placeholder="Что понравилось / не понравилось"></textarea>
+          </label>
+          <div class="row">
+            <button type="submit" class="btn-play" style="height:44px;font-size:15px;min-width:180px">💬 Опубликовать</button>
+          </div>
+          <p class="hint-mini" id="reviewNote"></p>
+        </form>
+      </div>
+    </div>
+
+    <div id="panel-admin" class="panel">
+      <div class="card">
+        <h3>🔐 Проверка игр (владелец)</h3>
+        <p style="color:#aaa;font-size:14px;margin-bottom:12px">
+          Сюда заходишь <b>ты</b>. Вставь заявку игрока или открой список. После «Одобрить» игра попадёт в каталог на этом устройстве.
+          Пароль по умолчанию: <code style="color:#fc0">bluecat</code>
+        </p>
+        <div class="row" style="margin-bottom:12px">
+          <input type="password" id="adminPass" placeholder="Пароль" style="flex:1;min-width:140px;padding:12px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff">
+          <button type="button" class="btn-secondary" id="adminLoginBtn" style="height:44px">Войти</button>
+        </div>
+        <div id="adminPanel" hidden>
+          <label style="display:block;color:#aaa;font-size:13px;margin-bottom:6px">Вставить заявку (текст от игрока)</label>
+          <textarea id="adminPaste" rows="4" placeholder="Вставь заявку BLUE_CAT_GAME_REQUEST..." style="width:100%;background:#111;color:#ddd;border:1px solid #333;border-radius:10px;padding:10px;font-size:12px"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button type="button" class="btn-play" id="adminImportBtn" style="height:40px;font-size:14px">📥 Добавить в очередь</button>
+            <button type="button" class="btn-secondary" id="adminRefreshBtn" style="height:40px">↻ Обновить</button>
+          </div>
+          <h4 style="margin:18px 0 8px">Очередь на проверку</h4>
+          <div id="adminQueue"></div>
+          <h4 style="margin:18px 0 8px">Одобренные игры</h4>
+          <div id="adminApproved"></div>
+        </div>
       </div>
     </div>
 
@@ -1275,6 +1353,12 @@
     const STORAGE_GAMES = "portal_customGames_v1";
     const STORAGE_LANG = "portal_lang_v1";
     const STORAGE_THEME = "portal_ui_theme_v1";
+    const STORAGE_PENDING = "portal_pending_games_v1";
+    const STORAGE_APPROVED = "portal_approved_games_v1";
+    const STORAGE_REVIEWS = "portal_user_reviews_v1";
+    const STORAGE_ADMIN_OK = "portal_admin_ok_v1";
+    const ADMIN_PASSWORD = "bluecat";
+    let lastRequestText = "";
     const THEME_IDS = ["black", "blue", "purple", "green", "red", "orange", "pink", "gold", "cyan"];
     const THEME_META = {
       black: "#222222", blue: "#5eb0ff", purple: "#c084fc", green: "#4ade80", red: "#f87171",
@@ -1733,6 +1817,21 @@
     function saveCustom(list) {
       try { localStorage.setItem(STORAGE_GAMES, JSON.stringify(list)); } catch (_) {}
     }
+    function loadJSON(key) {
+      try {
+        const list = JSON.parse(localStorage.getItem(key) || "[]");
+        return Array.isArray(list) ? list : [];
+      } catch { return []; }
+    }
+    function saveJSON(key, list) {
+      try { localStorage.setItem(key, JSON.stringify(list)); } catch (_) {}
+    }
+    function loadPending() { return loadJSON(STORAGE_PENDING); }
+    function savePending(list) { saveJSON(STORAGE_PENDING, list); }
+    function loadApproved() { return loadJSON(STORAGE_APPROVED); }
+    function saveApproved(list) { saveJSON(STORAGE_APPROVED, list); }
+    function loadUserReviews() { return loadJSON(STORAGE_REVIEWS); }
+    function saveUserReviews(list) { saveJSON(STORAGE_REVIEWS, list); }
 
     function allGamesList() {
       const custom = loadCustom().map(g => ({
@@ -1745,7 +1844,116 @@
         bg: "linear-gradient(145deg,#333,#111)",
         builtin: false
       }));
-      return [...builtinGames(), ...custom];
+      const approved = loadApproved().map(g => ({
+        id: g.id,
+        title: g.title,
+        genre: (g.description || "Проверено") + " · ✓",
+        rating: "★",
+        url: g.url,
+        emoji: g.emoji || "🎮",
+        bg: "linear-gradient(145deg,#1a3a20,#0a2010)",
+        builtin: false
+      }));
+      return [...builtinGames(), ...approved, ...custom];
+    }
+
+    function formatRequestText(game) {
+      return [
+        "BLUE_CAT_GAME_REQUEST",
+        "id: " + game.id,
+        "Автор: " + (game.author || "—"),
+        "Контакт: " + (game.contact || "—"),
+        "Название: " + game.title,
+        "Описание: " + (game.description || "—"),
+        "Ссылка: " + game.url,
+        "Эмодзи: " + (game.emoji || "🎮"),
+        "Статус: на проверке",
+        "Дата: " + (game.date || new Date().toISOString())
+      ].join("\n");
+    }
+
+    function parseRequestText(text) {
+      const lines = String(text || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      if (!lines.length) return null;
+      const get = (key) => {
+        const row = lines.find(l => l.toLowerCase().startsWith(key.toLowerCase()));
+        if (!row) return "";
+        return row.split(":").slice(1).join(":").trim();
+      };
+      const title = get("Название") || get("title");
+      const url = get("Ссылка") || get("url");
+      if (!title || !url) return null;
+      return {
+        id: get("id") || ("p_" + Date.now()),
+        author: get("Автор") || get("author") || "Игрок",
+        contact: get("Контакт") || get("contact") || "",
+        title,
+        description: get("Описание") || get("description") || "",
+        url,
+        emoji: get("Эмодзи") || get("emoji") || "🎮",
+        date: get("Дата") || new Date().toISOString(),
+        status: "pending"
+      };
+    }
+
+    function renderMyRequests() {
+      const box = document.getElementById("myRequests");
+      if (!box) return;
+      const list = loadPending();
+      if (!list.length) {
+        box.innerHTML = "<p style='color:#666;font-size:13px'>Твоих заявок на этом устройстве пока нет.</p>";
+        return;
+      }
+      box.innerHTML = "<h4 style='margin:0 0 8px'>Твои заявки</h4>" + list.map(g =>
+        "<div style='background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px;margin-bottom:8px'>" +
+        "<b>" + esc(g.emoji || "🎮") + " " + esc(g.title) + "</b> · <span style='color:#fc0'>" + esc(g.status || "на проверке") + "</span><br>" +
+        "<span style='color:#888;font-size:12px'>" + esc(g.url) + "</span></div>"
+      ).join("");
+    }
+
+    function renderUserReviews() {
+      const mount = document.getElementById("userReviewsMount");
+      if (!mount) return;
+      const list = loadUserReviews();
+      if (!list.length) {
+        mount.innerHTML = "";
+        return;
+      }
+      const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
+      const names = { snake: "Змейка", pacman: "Пакман", mario: "Марио", smeshariki: "Смешарики", tanks: "Танчики", labyrinth: "Лабиринт", battle: "Битва", other: "Другая" };
+      mount.innerHTML = list.map(r => {
+        const bad = Number(r.stars) <= 2 ? " bad" : "";
+        return "<article class='review-card-static" + bad + "' data-game='" + esc(r.game) + "' data-user-review='1'>" +
+          "<div class='review-top'><span class='review-who'>✍️ " + esc(r.who) + "</span><span class='stars'>" + stars(Number(r.stars) || 0) + "</span></div>" +
+          "<p>" + esc(r.text) + "</p>" +
+          "<div class='review-game'>об игре: " + esc(names[r.game] || r.game) + " · ваш отзыв</div></article>";
+      }).join("");
+    }
+
+    function renderAdminQueue() {
+      const q = document.getElementById("adminQueue");
+      const a = document.getElementById("adminApproved");
+      if (!q || !a) return;
+      const pending = loadPending().filter(g => (g.status || "pending") === "pending");
+      const approved = loadApproved();
+      if (!pending.length) q.innerHTML = "<p style='color:#666'>Очередь пуста.</p>";
+      else q.innerHTML = pending.map(g =>
+        "<div style='background:#1a1a1a;border:1px solid #444;border-radius:12px;padding:12px;margin-bottom:10px'>" +
+        "<div style='font-weight:800;margin-bottom:4px'>" + esc(g.emoji || "🎮") + " " + esc(g.title) + "</div>" +
+        "<div style='color:#aaa;font-size:13px;margin-bottom:6px'>" + esc(g.description || "") + "</div>" +
+        "<div style='font-size:12px;margin-bottom:4px'><a href='" + esc(g.url) + "' target='_blank' rel='noopener' style='color:#7ec8ff'>" + esc(g.url) + "</a></div>" +
+        "<div style='color:#888;font-size:12px;margin-bottom:8px'>от " + esc(g.author || "?") + " · " + esc(g.contact || "без контакта") + "</div>" +
+        "<div class='row'>" +
+        "<button type='button' class='btn-play' data-approve='" + esc(g.id) + "' style='height:36px;font-size:13px;min-width:120px'>✓ Одобрить</button>" +
+        "<button type='button' class='btn-secondary' data-reject='" + esc(g.id) + "' style='height:36px;font-size:13px'>✕ Отклонить</button>" +
+        "</div></div>"
+      ).join("");
+      if (!approved.length) a.innerHTML = "<p style='color:#666'>Пока нет одобренных.</p>";
+      else a.innerHTML = approved.map(g =>
+        "<div style='background:#122018;border:1px solid #2a5a38;border-radius:10px;padding:10px;margin-bottom:8px'>" +
+        "<b>✓ " + esc(g.emoji || "🎮") + " " + esc(g.title) + "</b><br><span style='color:#8c8;font-size:12px'>" + esc(g.url) + "</span>" +
+        " <button type='button' class='btn-secondary' data-unapprove='" + esc(g.id) + "' style='height:30px;font-size:12px;margin-top:6px'>Убрать</button></div>"
+      ).join("");
     }
 
     function toast(msg) {
@@ -1908,32 +2116,146 @@
       e.preventDefault();
       const fd = new FormData(e.target);
       const game = {
-        id: "c_" + Date.now(),
+        id: "p_" + Date.now(),
+        author: String(fd.get("author") || "").trim(),
+        contact: String(fd.get("contact") || "").trim(),
         title: String(fd.get("title") || "").trim(),
         description: String(fd.get("description") || "").trim(),
         url: String(fd.get("url") || "").trim(),
-        emoji: String(fd.get("emoji") || "🎮").trim() || "🎮"
+        emoji: String(fd.get("emoji") || "🎮").trim() || "🎮",
+        date: new Date().toISOString(),
+        status: "pending"
       };
-      if (!game.title || !game.url) return toast(t("toastFill"));
-      const list = loadCustom();
+      if (!game.title || !game.url || !game.author) return toast("Заполни имя, название и ссылку");
+      const list = loadPending();
       list.unshift(game);
-      saveCustom(list);
+      savePending(list);
+      lastRequestText = formatRequestText(game);
+      const out = document.getElementById("requestOut");
+      if (out) {
+        out.style.display = "block";
+        out.value = lastRequestText + "\n\n---\nСкопируй это и отправь владельцу портала на проверку.";
+      }
+      try {
+        navigator.clipboard.writeText(lastRequestText);
+        toast("Заявка создана и скопирована!");
+      } catch (_) {
+        toast("Заявка создана — скопируй текст ниже");
+      }
+      const note = document.getElementById("formNote");
+      if (note) note.textContent = "Заявка «" + game.title + "» на проверке. Пришли скопированный текст владельцу.";
       e.target.reset();
       if (e.target.elements.emoji) e.target.elements.emoji.value = "🎮";
-      const note = document.getElementById("formNote");
-      if (note) note.textContent = t("addedNote").replace("{t}", game.title);
-      renderAll();
-      toast(t("toastAdded"));
-      var menu = document.getElementById("menu");
-      if (menu) menu.scrollIntoView({ behavior: "smooth" });
+      renderMyRequests();
+      renderAdminQueue();
     });
 
-    on("clearCustomBtn", "click", () => {
-      if (!loadCustom().length) return toast(t("toastNoCustom"));
-      if (!confirm(t("confirmClear"))) return;
-      saveCustom([]);
-      renderAll();
-      toast(t("toastCleared"));
+    on("copyLastRequestBtn", "click", () => {
+      const out = document.getElementById("requestOut");
+      const text = (out && out.value) || lastRequestText;
+      if (!text) return toast("Сначала отправь заявку");
+      try {
+        navigator.clipboard.writeText(text);
+        toast("Заявка скопирована");
+      } catch (_) {
+        if (out) { out.style.display = "block"; out.select(); }
+        toast("Выдели текст и скопируй вручную");
+      }
+    });
+
+    on("userReviewForm", "submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const rev = {
+        id: "r_" + Date.now(),
+        who: String(fd.get("who") || "").trim(),
+        game: String(fd.get("game") || "other"),
+        stars: Number(fd.get("stars") || 5),
+        text: String(fd.get("text") || "").trim(),
+        date: new Date().toISOString()
+      };
+      if (!rev.who || !rev.text) return toast("Заполни имя и текст");
+      const list = loadUserReviews();
+      list.unshift(rev);
+      saveUserReviews(list.slice(0, 100));
+      e.target.reset();
+      const note = document.getElementById("reviewNote");
+      if (note) note.textContent = "Отзыв добавлен!";
+      renderUserReviews();
+      toast("Отзыв опубликован");
+      var revEl = document.getElementById("reviews");
+      if (revEl) revEl.scrollIntoView({ behavior: "smooth" });
+    });
+
+    on("adminLoginBtn", "click", () => {
+      const pass = (document.getElementById("adminPass") || {}).value || "";
+      if (pass !== ADMIN_PASSWORD) return toast("Неверный пароль");
+      try { localStorage.setItem(STORAGE_ADMIN_OK, "1"); } catch (_) {}
+      const panel = document.getElementById("adminPanel");
+      if (panel) panel.hidden = false;
+      renderAdminQueue();
+      toast("Вход выполнен");
+    });
+    if (localStorage.getItem(STORAGE_ADMIN_OK) === "1") {
+      const panel = document.getElementById("adminPanel");
+      if (panel) panel.hidden = false;
+    }
+
+    on("adminImportBtn", "click", () => {
+      const text = (document.getElementById("adminPaste") || {}).value || "";
+      const game = parseRequestText(text);
+      if (!game) return toast("Не удалось разобрать заявку");
+      const list = loadPending();
+      if (list.some(g => g.id === game.id || (g.title === game.title && g.url === game.url))) {
+        return toast("Уже в очереди");
+      }
+      game.status = "pending";
+      list.unshift(game);
+      savePending(list);
+      document.getElementById("adminPaste").value = "";
+      renderAdminQueue();
+      toast("Заявка в очереди");
+    });
+    on("adminRefreshBtn", "click", () => { renderAdminQueue(); toast("Обновлено"); });
+
+    document.addEventListener("click", (e) => {
+      const ap = e.target.closest("[data-approve]");
+      const rj = e.target.closest("[data-reject]");
+      const un = e.target.closest("[data-unapprove]");
+      if (ap) {
+        const id = ap.getAttribute("data-approve");
+        const pending = loadPending();
+        const g = pending.find(x => x.id === id);
+        if (!g) return;
+        g.status = "approved";
+        savePending(pending.filter(x => x.id !== id));
+        const approved = loadApproved();
+        approved.unshift({
+          id: g.id,
+          title: g.title,
+          description: g.description,
+          url: g.url,
+          emoji: g.emoji,
+          author: g.author
+        });
+        saveApproved(approved);
+        renderAdminQueue();
+        renderAll();
+        toast("Одобрено: " + g.title);
+      }
+      if (rj) {
+        const id = rj.getAttribute("data-reject");
+        savePending(loadPending().filter(x => x.id !== id));
+        renderAdminQueue();
+        toast("Отклонено");
+      }
+      if (un) {
+        const id = un.getAttribute("data-unapprove");
+        saveApproved(loadApproved().filter(x => x.id !== id));
+        renderAdminQueue();
+        renderAll();
+        toast("Убрано из каталога");
+      }
     });
 
     on("searchInput", "input", (e) => {
@@ -1945,7 +2267,7 @@
       document.querySelectorAll(".rev-filter").forEach(function (b) {
         b.classList.toggle("active", (b.getAttribute("data-rev") || "all") === id);
       });
-      document.querySelectorAll("#reviewsGridStatic .review-card-static").forEach(function (card) {
+      document.querySelectorAll("#reviewsGridStatic .review-card-static, #userReviewsMount .review-card-static").forEach(function (card) {
         var g = card.getAttribute("data-game") || "";
         var isBad = card.classList.contains("bad") || card.getAttribute("data-tone") === "bad";
         if (id === "all") card.hidden = false;
@@ -1960,6 +2282,9 @@
       });
     });
     applyReviewFilter("all");
+    try { renderMyRequests(); } catch (_) {}
+    try { renderUserReviews(); } catch (_) {}
+    try { renderAdminQueue(); } catch (_) {}
 
     try {
       applyI18n();
