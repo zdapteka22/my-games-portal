@@ -83,7 +83,7 @@
   let p, e, bullets, won, over, fireCd, eCd, status;
 
   function tank(x, y, ang, color, isPlayer) {
-    return { x, y, ang, color, isPlayer, hp: 3, r: 18, speed: isPlayer ? 2.1 : 1.45 };
+    return { x, y, ang, color, isPlayer, hp: 3, r: 13, speed: isPlayer ? 2.1 : 1.45 };
   }
 
   function reset() {
@@ -180,19 +180,19 @@
     ctx.rotate(t.ang);
     // body
     ctx.fillStyle = t.color;
-    ctx.fillRect(-16, -12, 32, 24);
+    ctx.fillRect(-12, -9, 24, 18);
     ctx.fillStyle = "#222";
-    ctx.fillRect(-18, -14, 8, 6);
-    ctx.fillRect(-18, 8, 8, 6);
-    ctx.fillRect(10, -14, 8, 6);
-    ctx.fillRect(10, 8, 8, 6);
+    ctx.fillRect(-13, -10, 6, 4);
+    ctx.fillRect(-13, 6, 6, 4);
+    ctx.fillRect(7, -10, 6, 4);
+    ctx.fillRect(7, 6, 6, 4);
     // barrel
     ctx.fillStyle = "#ddd";
-    ctx.fillRect(8, -3, 22, 6);
+    ctx.fillRect(6, -2, 16, 4);
     // hatch
     ctx.beginPath();
     ctx.fillStyle = "#333";
-    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }

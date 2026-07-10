@@ -96,12 +96,40 @@
     .editor .row button.danger { background: #e52521; color: #fff; }
     .editor .row button.sec { background: rgba(255,255,255,.15); color: #fff; }
     .editor .help { font-size: 12px; opacity: .9; line-height: 1.35; }
+    .theme-bar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+    .theme-bar button {
+      padding: 6px 12px; border-radius: 8px; border: 2px solid #fff; font-weight: 800;
+      cursor: pointer; font-size: 12px; background: rgba(0,0,0,.4); color: #fff;
+    }
+    .theme-bar button.active { outline: 2px solid #fff; }
+    .theme-bar button[data-theme="classic"].active { background: #e52521; }
+    .theme-bar button[data-theme="smw"].active { background: #48a030; }
+    .theme-bar button[data-theme="sm64"].active { background: #1e88e5; }
+    .theme-bar button[data-theme="smb2"].active { background: #ec407a; }
+    body.theme-smw { background: linear-gradient(180deg, #5c94fc 0%, #5c94fc 50%, #00a800 50%, #008800 100%); }
+    body.theme-sm64 { background: linear-gradient(180deg, #4fc3f7 0%, #81d4fa 45%, #66bb6a 45%, #43a047 100%); }
+    body.theme-smb2 { background: linear-gradient(180deg, #b39ddb 0%, #ce93d8 50%, #aed581 50%, #7cb342 100%); }
+    body.theme-classic { background: linear-gradient(180deg, #5c94fc 0%, #5c94fc 55%, #00a800 55%, #008800 100%); }
+    .editor.theme-smw { border-color: #7cfc00; box-shadow: 0 0 20px rgba(124,252,0,.25); }
+    .editor.theme-sm64 { border-color: #4fc3f7; box-shadow: 0 0 20px rgba(79,195,247,.3); }
+    .editor.theme-smb2 { border-color: #f48fb1; box-shadow: 0 0 20px rgba(244,143,177,.3); }
+    .char-bar {
+      width: min(900px, 98vw); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center;
+    }
+    .char-bar button {
+      display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 12px;
+      border: 3px solid #fff; background: rgba(0,0,0,.45); color: #fff; font-weight: 800;
+      cursor: pointer; font-size: 14px;
+    }
+    .char-bar button.active { background: #e52521; box-shadow: 0 0 16px rgba(229,37,33,.5); }
+    .char-bar button[data-char="luigi"].active { background: #2e7d32; box-shadow: 0 0 16px rgba(46,125,50,.5); }
+    .char-bar img { width: 36px; height: 40px; object-fit: contain; image-rendering: pixelated; }
   </style>
 </head>
-<body>
+<body class="theme-classic">
   <div class="top">
     <a href="../../menu.html">🐱 Меню</a>
-    <h1>🍄 МАРИО</h1>
+    <h1 id="gameTitle">🍄 МАРИО</h1>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="nav ghost" id="btnMusic" title="Музыка и звуки (монеты, гумбы, блоки…)">🔊 Звук</button>
       <button type="button" class="nav ghost" id="btnEditor">✏️ Редактор</button>
@@ -115,9 +143,25 @@
     <span>СИЛА <b id="power">—</b></span>
     <span id="status">ДОЙДИ ДО ФЛАГА!</span>
   </div>
+  <div class="char-bar" id="charBar">
+    <span style="font-weight:800;opacity:.9">👤 Персонаж:</span>
+    <button type="button" data-char="mario" class="active" id="btnCharMario">
+      <img id="imgPickMario" src="mario_art.png" alt=""> Марио
+    </button>
+    <button type="button" data-char="luigi" id="btnCharLuigi">
+      <img id="imgPickLuigi" src="art_luigi_ssbu.png" alt=""> Луиджи
+    </button>
+  </div>
   <div class="levels" id="levelBar"></div>
 
   <div class="editor" id="editorPanel">
+    <div class="row theme-bar" id="themeBar">
+      <span style="font-weight:800;margin-right:4px">🎨 Стиль:</span>
+      <button type="button" data-theme="classic" class="active">Классика</button>
+      <button type="button" data-theme="smw">Mario World</button>
+      <button type="button" data-theme="sm64">Mario 64</button>
+      <button type="button" data-theme="smb2">Bros 2</button>
+    </div>
     <div class="tools" id="toolBar"></div>
     <div class="row">
       <label>Слот <select id="editSlot">
@@ -137,8 +181,8 @@
       <button type="button" id="btnPanRight" class="sec">Камера ▶</button>
     </div>
     <p class="help">
-      1) Выбери инструмент → 2) Кликай по полю ниже · ЛКМ — поставить · ПКМ — стереть ·
-      Колесо / кнопки камеры — сдвиг · Esc — выход · Уровни сохраняются в браузере.
+      1) Выбери <b>стиль</b> (World / 64 / Bros 2) → 2) Инструмент → 3) Кликай по полю ·
+      ЛКМ — поставить · ПКМ — стереть · Колесо — камера · Esc — выход · Уровни в браузере.
     </p>
   </div>
   <div id="editMsg"></div>
@@ -148,7 +192,7 @@
   <p class="hint" id="hintText">
     A/D или ←/→ — бег · W / ↑ / Пробел — прыжок (двойной!) · R — заново · 1–9 — уровень (10–12 — панель)<br>
     Уровни стартуют сами после флага · при смерти рестарт · 0 жизней — Луиджи спасёт и воскресит<br>
-    Прыгай на врагов · ломай кирпичи большим Марио · 🟣 МЕГА-ГРИБ · 🍄⭐💚 · 12 уровней · Бойзер в лаве (10–12) · Луиджи (NPC) · двойной прыжок · редактор.
+    Выбери <b>Марио</b> или <b>Луиджи</b> · стиль World / 64 / Bros 2 в редакторе · 🟣 МЕГА · 🍄⭐💚 · 12 уровней · Бойзер · двойной прыжок.
   </p>
   <div class="pad">
     <div class="dirs">
@@ -196,11 +240,12 @@
   const imgBrickArt = new Image();
   const imgLuigi = new Image();
   const imgBowser = new Image();
-  imgMario.src = "mario_Big.png";
+  // Оригинальные/качественные спрайты (SSBU + mario_art), с запасными
+  imgMario.src = "mario_art.png";
   imgMarioStill.src = "mario_art.png";
   imgGoomba.src = "mario_Goomba.png";
   imgGoombaArt.src = "art_goomba2.png"; // NSMBU Goomba
-  imgGoombaPx.src = "goomba_art.png";
+  imgGoombaPx.src = "enemy_goomba.png"; // fallback pixel goomba (goomba_art.png was missing)
   imgKoopa.src = "FlappyTimeIco.gif";
   imgKoopaArt.src = "art_koopa.png"; // NSMBU Koopa Troopa
   imgKoopaPx.src = "enemy_koopa.png";
@@ -217,8 +262,176 @@
   imgCoinArt.src = "art_coin.png";
   imgQBlock.src = "art_qblock.png";
   imgBrickArt.src = "art_brick.png";
-  imgLuigi.src = "art_luigi.png";
-  imgBowser.src = "art_bowser.png";
+  // Луиджи / Боузер — крупные оригинальные арты (SSBU), fallback на мелкие
+  imgLuigi.src = "art_luigi_ssbu.png";
+  imgLuigi.onerror = function () { imgLuigi.onerror = null; imgLuigi.src = "art_luigi.png"; };
+  imgBowser.src = "art_bowser_ssbu.png";
+  imgBowser.onerror = function () { imgBowser.onerror = null; imgBowser.src = "art_bowser.png"; };
+  // pixel Mario для анимации бега (если есть)
+  const imgMarioRun = new Image();
+  imgMarioRun.src = "mario_Big.png";
+
+  // ── Темы редактора: Super Mario World / 64 / Bros 2 ──
+  const THEME_KEY = "superMarioEditorTheme_v1";
+  let editorTheme = "classic"; // classic | smw | sm64 | smb2
+  try { editorTheme = localStorage.getItem(THEME_KEY) || "classic"; } catch (e) {}
+
+  function loadImg(src) {
+    const im = new Image();
+    im.src = src;
+    return im;
+  }
+  const themeImgs = {
+    smw: {
+      ground: loadImg("sprites/smw_ground.png"),
+      brick: loadImg("sprites/smw_brick.png"),
+      question: loadImg("sprites/smw_question.png"),
+      pipe: loadImg("sprites/smw_pipe.png"),
+      coin: loadImg("sprites/smw_coin.png")
+    },
+    sm64: {
+      ground: loadImg("sprites/sm64_ground.png"),
+      brick: loadImg("sprites/sm64_brick.png"),
+      question: loadImg("sprites/sm64_question.png"),
+      pipe: loadImg("sprites/sm64_pipe.png"),
+      coin: loadImg("sprites/sm64_coin.png")
+    },
+    smb2: {
+      ground: loadImg("sprites/smb2_ground.png"),
+      brick: loadImg("sprites/smb2_brick.png"),
+      question: loadImg("sprites/smb2_question.png"),
+      pipe: loadImg("sprites/smb2_pipe.png"),
+      coin: loadImg("sprites/smb2_coin.png")
+    }
+  };
+  const THEME_META = {
+    classic: { name: "Классика", sky: "#5c94fc", hill: "#78c850", grid: "rgba(255,255,255,.12)" },
+    smw: { name: "Mario World", sky: "#6eb5ff", hill: "#3cb043", grid: "rgba(255,255,200,.15)" },
+    sm64: { name: "Mario 64", sky: "#4fc3f7", hill: "#66bb6a", grid: "rgba(200,240,255,.18)" },
+    smb2: { name: "Bros 2", sky: "#b39ddb", hill: "#aed581", grid: "rgba(255,200,230,.18)" }
+  };
+  function setEditorTheme(id) {
+    if (!THEME_META[id]) id = "classic";
+    editorTheme = id;
+    try { localStorage.setItem(THEME_KEY, id); } catch (e) {}
+    document.body.classList.remove("theme-classic", "theme-smw", "theme-sm64", "theme-smb2");
+    document.body.classList.add("theme-" + id);
+    const panel = document.getElementById("editorPanel");
+    if (panel) {
+      panel.classList.remove("theme-smw", "theme-sm64", "theme-smb2");
+      if (id !== "classic") panel.classList.add("theme-" + id);
+    }
+    document.querySelectorAll("#themeBar button").forEach(b => {
+      b.classList.toggle("active", b.dataset.theme === id);
+    });
+    editMsg("Стиль: " + THEME_META[id].name + " · тайлы, небо и спрайты героев");
+    // обновить превью выбора персонажа под стиль
+    if (typeof setPlayChar === "function") setPlayChar(playChar);
+  }
+  function themeTile(kind) {
+    const pack = themeImgs[editorTheme];
+    if (!pack) return null;
+    return pack[kind] || null;
+  }
+
+  // ── Выбор персонажа: Марио / Луиджи ──
+  const CHAR_KEY = "superMarioPlayChar_v1";
+  let playChar = "mario"; // mario | luigi
+  try { playChar = localStorage.getItem(CHAR_KEY) || "mario"; } catch (e) {}
+
+  // спрайты героев по стилям World / 64 / Bros2
+  const charThemeImgs = {
+    smw: { mario: loadImg("sprites/smw_mario.png"), luigi: loadImg("sprites/smw_luigi.png") },
+    sm64: { mario: loadImg("sprites/sm64_mario.png"), luigi: loadImg("sprites/sm64_luigi.png") },
+    smb2: { mario: loadImg("sprites/smb2_mario.png"), luigi: loadImg("sprites/smb2_luigi.png") }
+  };
+
+  // Враги под стиль World / 64 / Bros 2 (раньше всегда была «классика»)
+  const enemyThemeImgs = {
+    smw: {
+      goomba: loadImg("sprites/smw_goomba.png"),
+      koopa: loadImg("sprites/smw_koopa.png"),
+      bowser: loadImg("sprites/smw_bowser.png")
+    },
+    sm64: {
+      goomba: loadImg("sprites/sm64_goomba.png"),
+      koopa: loadImg("sprites/sm64_koopa.png"),
+      bowser: loadImg("sprites/smw_bowser.png")
+    },
+    smb2: {
+      goomba: loadImg("sprites/smb2_goomba.png"), // Shy Guy
+      koopa: loadImg("sprites/smb2_koopa.png"),
+      bowser: loadImg("sprites/smw_bowser.png")
+    }
+  };
+  function themeEnemyImg(kind) {
+    const pack = enemyThemeImgs[editorTheme];
+    if (!pack) return null;
+    const im = pack[kind];
+    return imgReady(im) ? im : null;
+  }
+
+  function playCharName() {
+    return playChar === "luigi" ? "Луиджи" : "Марио";
+  }
+  function partnerName() {
+    return playChar === "luigi" ? "Марио" : "Луиджи";
+  }
+  /** Картинка игрока (с учётом стиля World/64/Bros2) */
+  function playerHeroImg() {
+    const pack = charThemeImgs[editorTheme];
+    if (pack) {
+      const im = pack[playChar];
+      if (imgReady(im)) return im;
+    }
+    // классика / fallback
+    if (playChar === "luigi") {
+      if (imgReady(imgLuigi)) return imgLuigi;
+    }
+    if (imgReady(imgMarioStill)) return imgMarioStill;
+    if (imgReady(imgMario)) return imgMario;
+    return imgMarioStill;
+  }
+  /** Картинка напарника-NPC */
+  function partnerHeroImg() {
+    const pack = charThemeImgs[editorTheme];
+    const other = playChar === "luigi" ? "mario" : "luigi";
+    if (pack) {
+      const im = pack[other];
+      if (imgReady(im)) return im;
+    }
+    if (other === "luigi") return imgLuigi;
+    return imgMarioStill;
+  }
+  function setPlayChar(id) {
+    if (id !== "mario" && id !== "luigi") id = "mario";
+    playChar = id;
+    try { localStorage.setItem(CHAR_KEY, id); } catch (e) {}
+    document.querySelectorAll("#charBar button[data-char]").forEach(b => {
+      b.classList.toggle("active", b.dataset.char === id);
+    });
+    const title = document.getElementById("gameTitle");
+    if (title) title.textContent = id === "luigi" ? "🟢 ЛУИДЖИ" : "🍄 МАРИО";
+    // обновить превью
+    const pm = document.getElementById("imgPickMario");
+    const pl = document.getElementById("imgPickLuigi");
+    const pack = charThemeImgs[editorTheme];
+    if (pm) {
+      if (pack && pack.mario && pack.mario.src) pm.src = pack.mario.src;
+      else pm.src = "mario_art.png";
+    }
+    if (pl) {
+      if (pack && pack.luigi && pack.luigi.src) pl.src = pack.luigi.src;
+      else pl.src = "art_luigi_ssbu.png";
+    }
+    if (typeof editMsg === "function") {
+      editMsg("Играешь за: " + playCharName() + " · напарник: " + partnerName());
+    }
+    const st = document.getElementById("status");
+    if (st && !editing) {
+      st.textContent = "Играешь за " + playCharName() + "! " + partnerName() + " бежит рядом";
+    }
+  }
 
   // ── Музыка из Super Mario (theme.mp3) ───────────────────
   const bgMusic = new Audio("theme.mp3");
@@ -1261,6 +1474,8 @@
   // Луиджи — дружественный NPC, сам проходит уровень как второй игрок
   let luigi = null;
   let luigiFinishedMsg = 0;
+  let luigiInvuln = 0;     // неуязвимость после удара
+  let luigiRespawnT = 0;   // респавн после смерти
   // смерть / авто-уровни как в оригинале
   let deathTimer = 0;      // анимация смерти → авто-рестарт уровня (если есть жизни)
   let playerDown = false;  // 0 жизней: Марио выбыл, Луиджи доигрывает и воскрешает
@@ -1502,26 +1717,65 @@
     const feet = player.y + oldH;
     if (isMega()) {
       // гигант — всё крушит
-      player.w = 96;
-      player.h = 132;
+      player.w = 72;
+      player.h = 98;
     } else if (player.big) {
-      player.w = 40;
-      player.h = 56;
-    } else {
-      player.w = 34;
+      player.w = 32;
       player.h = 44;
+    } else {
+      player.w = 26;
+      player.h = 34;
     }
     player.y = feet - player.h;
   }
 
   function spawnLuigi() {
+    const px = player ? player.x : 36;
     luigi = {
-      x: 36, y: H - 160, w: 34, h: 44,
+      x: Math.max(20, px - 50), y: H - 160, w: 26, h: 34,
       vx: 0, vy: 0, onGround: false, facing: 1,
       alive: true, finished: false, jumpCd: 0, bob: 0,
       jumpsLeft: 2, big: false, starTimer: 0, megaTimer: 0
     };
     luigiFinishedMsg = 0;
+    luigiInvuln = 90;
+    luigiRespawnT = 0;
+  }
+
+  /** Урон / смерть Луиджи (раньше он не умирал — только топтал сверху) */
+  function hurtLuigi() {
+    if (!luigi || !luigi.alive || luigi.finished || editing || won) return;
+    if (luigi.starTimer > 0 || luigi.megaTimer > 0 || luigiInvuln > 0) return;
+    // большой → маленький
+    if (luigi.big) {
+      luigi.big = false;
+      luigi.megaTimer = 0;
+      applyLuigiSize();
+      luigiInvuln = 100;
+      luigi.vx = -luigi.facing * 3;
+      luigi.vy = -6;
+      document.getElementById("status").textContent = "Ой! Луиджи стал маленьким";
+      sfx.hurt();
+      return;
+    }
+    // маленький → смерть
+    luigi.alive = false;
+    luigi.vx = 0;
+    luigi.vy = -10;
+    sfx.die();
+    lives--;
+    if (lives < 0) lives = 0;
+    document.getElementById("lives").textContent = lives;
+    if (lives <= 0 && playerDown) {
+      dead = true;
+      document.getElementById("status").textContent = "GAME OVER! Марио и Луиджи выбыли · R — сначала";
+    } else if (lives <= 0 && !playerDown) {
+      document.getElementById("status").textContent = "Луиджи выбыл! Жизней: 0 · Марио один";
+      luigiRespawnT = 0; // без респавна без жизней
+    } else {
+      document.getElementById("status").textContent = "Луиджи! Жизней: " + lives + " · скоро вернётся…";
+      luigiRespawnT = 120; // ~2 сек респавн рядом с Марио
+    }
   }
 
   function applyLuigiSize() {
@@ -1529,14 +1783,14 @@
     const oldH = luigi.h || 44;
     const feet = luigi.y + oldH;
     if (luigi.megaTimer > 0) {
-      luigi.w = 72;
-      luigi.h = 96;
+      luigi.w = 54;
+      luigi.h = 72;
     } else if (luigi.big) {
-      luigi.w = 40;
-      luigi.h = 56;
-    } else {
-      luigi.w = 34;
+      luigi.w = 32;
       luigi.h = 44;
+    } else {
+      luigi.w = 26;
+      luigi.h = 34;
     }
     luigi.y = feet - luigi.h;
   }
@@ -1596,7 +1850,7 @@
       starTimer = 0;
     }
     player = {
-      x: 80, y: H - 160, w: 34, h: 44,
+      x: 80, y: H - 160, w: 26, h: 34,
       vx: 0, vy: 0, onGround: false, facing: 1, big: false,
       jumpsLeft: 2
     };
@@ -1614,11 +1868,13 @@
     anim = 0;
     document.getElementById("levelNum").textContent = String(currentLevelIndex + 1);
     if (editing) {
-      document.getElementById("status").textContent = "РЕДАКТОР";
+      document.getElementById("status").textContent = "РЕДАКТОР · " + (THEME_META[editorTheme] || {}).name;
     } else if (currentLevelIndex >= 9) {
-      document.getElementById("status").textContent = "🔥 ЛАВА · БОЙЗЕР! Топчи голову · Луиджи с тобой";
+      document.getElementById("status").textContent =
+        "🔥 ЛАВА · БОЙЗЕР! · " + playCharName() + " · " + partnerName() + " рядом";
     } else {
-      document.getElementById("status").textContent = "ДОЙДИ ДО ФЛАГА! · Луиджи бежит рядом";
+      document.getElementById("status").textContent =
+        "ДОЙДИ ДО ФЛАГА! · " + playCharName() + " · " + partnerName() + " рядом";
     }
     updatePowerHud();
     updateLevelBar();
@@ -1867,7 +2123,7 @@
       player.big = false;
       applyPlayerSize();
       invuln = 100;
-      document.getElementById("status").textContent = "Ой! Стал маленьким";
+      document.getElementById("status").textContent = "Ой! " + playCharName() + " стал маленьким";
       updatePowerHud();
       sfx.hurt();
       return;
@@ -1884,14 +2140,15 @@
     }
     sfx.die();
     if (lives <= 0) {
-      // как «game over», но игра не стопорится: Луиджи доигрывает уровень и воскрешает
+      // напарник доигрывает и воскрешает
       playerDown = true;
       dead = false;
-      document.getElementById("status").textContent = "Марио выбыл! Луиджи проходит уровень…";
+      document.getElementById("status").textContent =
+        playCharName() + " выбыл! " + partnerName() + " проходит уровень…";
     } else {
-      // как в оригинале: смерть → короткая пауза → авто-рестарт уровня
       deathTimer = 100;
-      document.getElementById("status").textContent = "Марио! Жизней: " + lives + " · рестарт…";
+      document.getElementById("status").textContent =
+        playCharName() + "! Жизней: " + lives + " · рестарт…";
     }
     updatePowerHud();
   }
@@ -1965,9 +2222,24 @@
 
   /** Луиджи-NPC: бежит к флагу, прыгает через ямы/трубы, топчет врагов */
   function updateLuigi() {
+    // респавн после смерти (если есть жизни)
+    if (luigiRespawnT > 0) {
+      luigiRespawnT--;
+      if (luigiRespawnT <= 0 && lives > 0 && !won && !editing) {
+        spawnLuigi();
+        if (player && !playerDown) {
+          luigi.x = Math.max(20, player.x - 48);
+          luigi.y = player.y;
+        }
+        document.getElementById("status").textContent = "💚 Луиджи снова в деле!";
+        sfx.oneUp();
+      }
+      return;
+    }
     // работает и когда Марио выбыл (playerDown) — Луиджи спасает уровень
     if (!luigi || !luigi.alive || editing || won || deathTimer > 0) return;
     if (luigi.finished) return;
+    if (luigiInvuln > 0) luigiInvuln--;
 
     let flagX = levelW - 4 * TILE;
     for (const p of platforms) {
@@ -2048,39 +2320,77 @@
     resolvePlatforms(luigi);
     if (luigi.onGround) luigi.jumpsLeft = 2;
 
-    // упал в пропасть — телепорт чуть назад
+    // упал в пропасть — урон / смерть (раньше телепортировался и «не умирал»)
     if (luigi.y > H + 40) {
-      luigi.x = Math.max(20, luigi.x - 140);
-      luigi.y = H - 200;
-      luigi.vy = 0;
-      luigi.vx = 0;
+      hurtLuigi();
+      if (luigi && luigi.alive) {
+        luigi.x = Math.max(20, (player && !playerDown ? player.x : luigi.x) - 80);
+        luigi.y = H - 200;
+        luigi.vy = 0;
+        luigi.vx = 0;
+        luigiInvuln = Math.max(luigiInvuln, 60);
+      }
+      return;
     }
 
-    // топчет врагов (кроме босса / шипов / пуль)
+    // враги: топот сверху ИЛИ урон сбоку (раньше урона не было — поэтому «не умирал»)
     for (const e of enemies) {
       if (!e.alive) continue;
       if (!rects(luigi, e)) continue;
       const kind = e.kind || "goomba";
-      if (kind === "piranha" || kind === "spiny" || kind === "bullet" || kind === "fireball" || kind === "bowser") {
-        if (luigi.onGround && luigi.jumpCd <= 0) {
-          luigi.vy = JUMP * 1.05;
-          luigi.onGround = false;
-          luigi.jumpCd = 20;
-        }
-        continue;
-      }
-      if (luigi.vy > 0 && luigi.y + luigi.h - e.y < 26) {
+      // звезда/мега уже обработаны ниже
+      if (luigi.starTimer > 0 || luigi.megaTimer > 0) continue;
+
+      const canStomp = kind !== "piranha" && kind !== "spiny" && kind !== "bullet" && kind !== "fireball"
+        && !(kind === "koopa" && e.shell && Math.abs(e.vx) > 2);
+      // топот сверху
+      if (canStomp && luigi.vy > 0 && luigi.y + luigi.h - e.y < (kind === "bowser" ? 32 : 26)) {
         if (kind === "koopa" && !e.shell) {
           e.shell = true;
           e.h = 28;
           e.y = GROUND_Y - 28;
           e.vx = 0;
-        } else if (!(kind === "koopa" && e.shell && Math.abs(e.vx) > 2)) {
+          luigi.vy = JUMP * 0.55;
+          sfx.stomp();
+        } else if (kind === "koopa" && e.shell) {
+          e.vx = (luigi.facing || 1) * 6;
+          luigi.vy = JUMP * 0.45;
+          sfx.kick();
+        } else if (kind === "bowser") {
+          e.hp = (e.hp || 1) - 1;
+          luigi.vy = JUMP * 0.7;
+          luigiInvuln = 25;
+          sfx.stomp();
+          if (e.hp <= 0) {
+            e.alive = false;
+            coinCount += 5;
+            document.getElementById("coins").textContent = coinCount;
+            document.getElementById("status").textContent = "Луиджи победил Бойзера!";
+            sfx.win();
+          } else {
+            document.getElementById("status").textContent = "Бойзер HP " + e.hp + "/" + (e.maxHp || e.hp);
+          }
+        } else if (kind === "redmario") {
           e.alive = false;
+          luigi.vy = JUMP * 0.6;
+          coinCount += 2;
+          document.getElementById("coins").textContent = coinCount;
+          sfx.stomp();
+        } else {
+          e.alive = false;
+          luigi.vy = JUMP * 0.55;
           coinCount += 1;
           document.getElementById("coins").textContent = coinCount;
+          sfx.stomp();
         }
-        luigi.vy = JUMP * 0.55;
+      } else {
+        // удар сбоку / шипы / пуля / огонь — Луиджи получает урон
+        if (kind === "koopa" && e.shell && Math.abs(e.vx) < 0.5) {
+          e.vx = (luigi.facing || 1) * 6;
+          sfx.kick();
+        } else {
+          hurtLuigi();
+        }
       }
     }
 
@@ -2194,6 +2504,8 @@
 
   function drawLuigi() {
     if (!luigi || !luigi.alive || editing) return;
+    // мигание при неуязвимости
+    if (luigiInvuln > 0 && Math.floor(anim / 4) % 2 === 0) return;
     const bob = Math.sin(anim * 0.2) * 1.5;
     const flip = (luigi.facing || 1) < 0;
     const mega = luigi.megaTimer > 0;
@@ -2207,9 +2519,10 @@
     } else if (luigi.starTimer > 0) {
       filter = "hue-rotate(" + ((anim * 12) % 360) + "deg) saturate(2) brightness(1.15)";
     }
-    let ok = drawFullImage(imgLuigi, dx, dy, dw, dh, flip, filter);
+    // напарник: если играешь Луиджи — NPC = Марио; иначе Луиджи
+    const partnerImg = partnerHeroImg();
+    let ok = drawFullImage(partnerImg, dx, dy, dw, dh, flip, filter);
     if (!ok) {
-      // запасной силуэт зелёного Луиджи
       ctx.save();
       if (flip) {
         ctx.translate(luigi.x + luigi.w, luigi.y + bob);
@@ -2217,12 +2530,13 @@
       } else {
         ctx.translate(luigi.x, luigi.y + bob);
       }
-      ctx.fillStyle = "#1a6b2a";
+      const isMarioPartner = playChar === "luigi";
+      ctx.fillStyle = isMarioPartner ? "#8b1a1a" : "#1a6b2a";
       ctx.fillRect(4, 38, 12, 8);
       ctx.fillRect(18, 38, 12, 8);
       ctx.fillStyle = "#1e3a8a";
       ctx.fillRect(8, 22, 18, 18);
-      ctx.fillStyle = "#22c55e";
+      ctx.fillStyle = isMarioPartner ? "#e52521" : "#22c55e";
       ctx.fillRect(6, 14, 22, 14);
       ctx.fillRect(4, 2, 26, 12);
       ctx.fillRect(4, 10, 10, 6);
@@ -2232,7 +2546,7 @@
       ctx.fillRect(20, 13, 3, 4);
       ctx.fillStyle = "#fff";
       ctx.font = "bold 10px Arial";
-      ctx.fillText("L", 12, 10);
+      ctx.fillText(isMarioPartner ? "M" : "L", 12, 10);
       ctx.restore();
     }
     if (mega) {
@@ -2240,13 +2554,14 @@
       ctx.lineWidth = 3;
       ctx.strokeRect(luigi.x - 4, luigi.y - 6, luigi.w + 8, luigi.h + 8);
     }
-    ctx.fillStyle = luigi.finished ? "#ffd700" : (mega ? "#c77dff" : luigi.starTimer > 0 ? "#ffee55" : "#7CFC00");
+    const pname = partnerName().toUpperCase();
+    ctx.fillStyle = luigi.finished ? "#ffd700" : (mega ? "#c77dff" : luigi.starTimer > 0 ? "#ffee55" : (playChar === "luigi" ? "#ff6666" : "#7CFC00"));
     ctx.font = "bold 11px Arial";
-    let tag = "ЛУИДЖИ";
+    let tag = pname;
     if (luigi.finished) tag = "ФИНИШ";
-    else if (mega) tag = "МЕГА L";
-    else if (luigi.starTimer > 0) tag = "⭐ L";
-    else if (luigi.big) tag = "L БОЛЬШОЙ";
+    else if (mega) tag = "МЕГА";
+    else if (luigi.starTimer > 0) tag = "⭐";
+    else if (luigi.big) tag = pname + " БОЛЬШОЙ";
     ctx.fillText(tag, luigi.x - 4, luigi.y - 6 + bob);
   }
 
@@ -2793,7 +3108,11 @@
 
     if (kind === "goomba") {
       const flip = e.vx > 0;
-      let ok = drawFullImage(imgGoombaArt, e.x - 2, e.y + bob - 2, e.w + 4, e.h + 4, flip);
+      // сначала спрайт текущего стиля (World / 64 / Bros 2)
+      let ok = false;
+      const themed = themeEnemyImg("goomba");
+      if (themed) ok = drawFullImage(themed, e.x - 2, e.y + bob - 2, e.w + 4, e.h + 4, flip);
+      if (!ok) ok = drawFullImage(imgGoombaArt, e.x - 2, e.y + bob - 2, e.w + 4, e.h + 4, flip);
       if (!ok) ok = drawFullImage(imgGoombaPx, e.x, e.y + bob, e.w, e.h, flip);
       if (!ok) {
         const gi = Math.floor(anim / 8 + e.x) % GOOMBA_WALK.length;
@@ -2820,7 +3139,10 @@
           ctx.fill();
         }
       } else {
-        let ok = drawFullImage(imgKoopaArt, e.x - 4, e.y + bob - 4, e.w + 8, e.h + 6, flip);
+        let ok = false;
+        const themed = themeEnemyImg("koopa");
+        if (themed) ok = drawFullImage(themed, e.x - 4, e.y + bob - 4, e.w + 8, e.h + 6, flip);
+        if (!ok) ok = drawFullImage(imgKoopaArt, e.x - 4, e.y + bob - 4, e.w + 8, e.h + 6, flip);
         if (!ok) ok = drawFullImage(imgKoopaPx, e.x, e.y + bob, e.w, e.h, flip);
         if (!ok) ok = drawFullImage(imgKoopa, e.x, e.y + bob, e.w, e.h, flip);
         if (!ok) {
@@ -2956,8 +3278,12 @@
     if (kind === "bowser") {
       const flip = (e.facing != null ? e.facing : (e.vx >= 0 ? 1 : -1)) < 0;
       const bobB = Math.sin(anim * 0.12 + e.x * 0.02) * 2;
-      // официальный арт SSBU Бойзера
-      const okArt = drawFullImage(imgBowser, e.x - 14, e.y - 18 + bobB, e.w + 28, e.h + 24, flip);
+      // спрайт стиля (World/64/Bros2) → SSBU → fallback-рисунок
+      const themedB = themeEnemyImg("bowser");
+      let okArt = themedB
+        ? drawFullImage(themedB, e.x - 14, e.y - 18 + bobB, e.w + 28, e.h + 24, flip)
+        : false;
+      if (!okArt) okArt = drawFullImage(imgBowser, e.x - 14, e.y - 18 + bobB, e.w + 28, e.h + 24, flip);
       if (!okArt) {
         ctx.save();
         if (flip) {
@@ -3038,7 +3364,8 @@
 
   function drawGrid() {
     if (!editing) return;
-    ctx.strokeStyle = "rgba(255,255,255,.12)";
+    const meta = THEME_META[editorTheme] || THEME_META.classic;
+    ctx.strokeStyle = meta.grid || "rgba(255,255,255,.12)";
     ctx.lineWidth = 1;
     const startX = Math.floor(cameraX / TILE) * TILE;
     for (let x = startX; x < cameraX + W; x += TILE) {
@@ -3101,10 +3428,28 @@
       ctx.fillStyle = glow;
       ctx.fillRect(0, H - 100, W, 100);
     } else {
-      ctx.fillStyle = "#5c94fc";
+      const meta = THEME_META[editorTheme] || THEME_META.classic;
+      // небо по теме (World / 64 / Bros 2 / классика)
+      if (editorTheme === "sm64") {
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, "#4fc3f7");
+        sky.addColorStop(0.7, "#81d4fa");
+        sky.addColorStop(1, "#b3e5fc");
+        ctx.fillStyle = sky;
+      } else if (editorTheme === "smb2") {
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, "#ce93d8");
+        sky.addColorStop(0.55, "#b39ddb");
+        sky.addColorStop(1, "#e1bee7");
+        ctx.fillStyle = sky;
+      } else if (editorTheme === "smw") {
+        ctx.fillStyle = "#6eb5ff";
+      } else {
+        ctx.fillStyle = meta.sky || "#5c94fc";
+      }
       ctx.fillRect(0, 0, W, H);
 
-      ctx.fillStyle = "#78c850";
+      ctx.fillStyle = meta.hill || "#78c850";
       for (let i = 0; i < 6; i++) {
         const hx = ((i * 280 - cameraX * 0.3) % (W + 300)) - 100;
         ctx.beginPath();
@@ -3123,6 +3468,20 @@
 
     for (const p of platforms) {
       if (p.type === "ground") {
+        // тема: tiled ground sprites
+        if (!lava && editorTheme !== "classic") {
+          const tg = themeTile("ground");
+          if (tg && imgReady(tg)) {
+            for (let xx = 0; xx < p.w; xx += TILE) {
+              for (let yy = 0; yy < p.h; yy += TILE) {
+                const tw = Math.min(TILE, p.w - xx);
+                const th = Math.min(TILE, p.h - yy);
+                ctx.drawImage(tg, 0, 0, tw, th, p.x + xx, p.y + yy, tw, th);
+              }
+            }
+            continue;
+          }
+        }
         if (lava) {
           // лавовая земля
           ctx.fillStyle = "#3a1010";
@@ -3151,7 +3510,10 @@
       } else if (p.type === "broken") {
         // сломанный кирпич — не рисуем
       } else if (p.type === "brick") {
-        if (!drawFullImage(imgBrickArt, p.x, p.y, p.w, p.h, false)) {
+        const tb = themeTile("brick");
+        if (editorTheme !== "classic" && tb && imgReady(tb)) {
+          drawFullImage(tb, p.x, p.y, p.w, p.h, false);
+        } else if (!drawFullImage(imgBrickArt, p.x, p.y, p.w, p.h, false)) {
           ctx.fillStyle = "#c84c0c";
           ctx.fillRect(p.x, p.y, p.w, p.h);
           ctx.strokeStyle = "#8b3000";
@@ -3164,7 +3526,10 @@
           ctx.stroke();
         }
       } else if (p.type === "question") {
-        if (!drawFullImage(imgQBlock, p.x, p.y, p.w, p.h, false)) {
+        const tq = themeTile("question");
+        if (editorTheme !== "classic" && tq && imgReady(tq)) {
+          drawFullImage(tq, p.x, p.y, p.w, p.h, false);
+        } else if (!drawFullImage(imgQBlock, p.x, p.y, p.w, p.h, false)) {
           ctx.fillStyle = "#f0c020";
           ctx.fillRect(p.x, p.y, p.w, p.h);
           ctx.strokeStyle = "#804000";
@@ -3184,13 +3549,24 @@
           ctx.strokeRect(p.x + 2, p.y + 2, p.w - 4, p.h - 4);
         }
       } else if (p.type === "pipe") {
-        ctx.fillStyle = "#00a800";
-        ctx.fillRect(p.x, p.y, p.w, p.h);
-        ctx.fillStyle = "#00d800";
-        ctx.fillRect(p.x - 4, p.y, p.w + 8, 24);
-        ctx.strokeStyle = "#006800";
-        ctx.strokeRect(p.x - 4, p.y, p.w + 8, 24);
-        ctx.strokeRect(p.x, p.y + 24, p.w, p.h - 24);
+        const tp = themeTile("pipe");
+        if (editorTheme !== "classic" && tp && imgReady(tp)) {
+          // cap
+          ctx.drawImage(tp, 0, 0, 40, 16, p.x - 4, p.y, p.w + 8, 16);
+          // body tiled
+          for (let yy = 16; yy < p.h; yy += 32) {
+            const th = Math.min(32, p.h - yy);
+            ctx.drawImage(tp, 4, 16, 32, th, p.x, p.y + yy, p.w, th);
+          }
+        } else {
+          ctx.fillStyle = "#00a800";
+          ctx.fillRect(p.x, p.y, p.w, p.h);
+          ctx.fillStyle = "#00d800";
+          ctx.fillRect(p.x - 4, p.y, p.w + 8, 24);
+          ctx.strokeStyle = "#006800";
+          ctx.strokeRect(p.x - 4, p.y, p.w + 8, 24);
+          ctx.strokeRect(p.x, p.y + 24, p.w, p.h - 24);
+        }
       } else if (p.type === "flagpole") {
         ctx.fillStyle = "#ddd";
         ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -3207,7 +3583,10 @@
     for (const c of coins) {
       if (c.taken) continue;
       const bob = Math.sin(anim * 0.2 + c.x * 0.05) * 2;
-      if (!drawFullImage(imgCoinArt, c.x - 2, c.y + bob - 2, 24, 28, false)) {
+      const tc = themeTile("coin");
+      if (editorTheme !== "classic" && tc && imgReady(tc)) {
+        drawFullImage(tc, c.x - 2, c.y + bob - 2, 24, 28, false);
+      } else if (!drawFullImage(imgCoinArt, c.x - 2, c.y + bob - 2, 24, 28, false)) {
         ctx.fillStyle = "#ffcc00";
         ctx.beginPath();
         ctx.ellipse(c.x + 10, c.y + 12 + bob, 8, 12, 0, 0, Math.PI * 2);
@@ -3255,6 +3634,10 @@
         let drawn = false;
         // мега — фиолетово-красный + пульс; звезда — радуга
         let filter = null;
+        // если играем Луиджи — лёгкий зелёный оттенок на классике
+        if (playChar === "luigi" && editorTheme === "classic" && !mega) {
+          filter = "hue-rotate(90deg) saturate(1.2)";
+        }
         if (mega) {
           const hue = 300 + Math.sin(anim * 0.15) * 25;
           filter = "hue-rotate(" + hue + "deg) saturate(2.4) brightness(1.1) contrast(1.15)";
@@ -3262,12 +3645,14 @@
           filter = "hue-rotate(" + ((anim * 12) % 360) + "deg) saturate(2) brightness(1.15)";
         }
         try {
-          if (filter) {
+          const heroImg = playerHeroImg();
+          drawn = drawFullImage(heroImg, dx, dy, drawW, drawH, f < 0, filter);
+          if (!drawn && playChar === "mario") {
             drawn = drawFullImage(imgMarioStill, dx, dy, drawW, drawH, f < 0, filter);
-            if (!drawn) drawn = drawFullImage(imgMario, dx, dy, drawW, drawH, f < 0, filter);
-          } else {
-            drawn = drawFullImage(imgMarioStill, dx, dy, drawW, drawH, f < 0);
             if (!drawn) drawn = drawSprite(imgMario, marioFrame(), dx, dy, drawW, drawH, f < 0);
+          }
+          if (!drawn && playChar === "luigi") {
+            drawn = drawFullImage(imgLuigi, dx, dy, drawW, drawH, f < 0, filter);
           }
         } catch (err) {
           drawn = false;
@@ -3694,6 +4079,24 @@
     toolBar.appendChild(b);
   }
 
+  // темы World / 64 / Bros 2
+  document.querySelectorAll("#themeBar button").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setEditorTheme(btn.dataset.theme || "classic");
+    });
+  });
+  setEditorTheme(editorTheme);
+  setPlayChar(playChar);
+  document.querySelectorAll("#charBar button[data-char]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setPlayChar(btn.dataset.char || "mario");
+    });
+  });
+
   document.getElementById("btnEditor").addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -3908,7 +4311,7 @@
     resetPlayer(false);
   }
   if (!player) {
-    player = { x: 80, y: H - 160, w: 34, h: 44, vx: 0, vy: 0, onGround: false, facing: 1, jumpsLeft: 2 };
+    player = { x: 80, y: H - 160, w: 26, h: 34, vx: 0, vy: 0, onGround: false, facing: 1, jumpsLeft: 2 };
     if (!luigi) spawnLuigi();
   }
   function loop() {

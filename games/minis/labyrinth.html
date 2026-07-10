@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Лабиринт — Ёжик / Пин vs Няня</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: "Segoe UI", Arial, sans-serif; color: #fff;
+      background: radial-gradient(ellipse at 40% 0%, #1a3a2a, transparent 50%),
+                  linear-gradient(160deg, #0a1410, #0d1a14 50%, #06100a);
+      padding: 12px; gap: 10px;
+    }
+    .top {
+      width: min(520px, 96vw); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .top a {
+      color: #2a1200; text-decoration: none; font-weight: 800; padding: 8px 14px; border-radius: 999px;
+      background: linear-gradient(135deg, #ffcc00, #ff9f1c); font-size: 14px;
+    }
+    .top a.ghost { background: rgba(255,255,255,.1); color: #b8ffc8; border: 1px solid rgba(100,255,140,.3); }
+    h1 { font-size: 1.25rem; color: #7dff9a; text-shadow: 0 0 16px rgba(80,255,120,.35); }
+    .hud {
+      width: min(520px, 96vw); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      background: rgba(0,0,0,.4); border: 1px solid rgba(100,255,140,.25); border-radius: 12px; padding: 10px 14px; font-weight: 700;
+    }
+    .hud b { color: #ffcc00; }
+    canvas {
+      width: min(520px, 96vw); height: auto; aspect-ratio: 1;
+      border: 4px solid #4caf50; border-radius: 14px; background: #0a1a10;
+      box-shadow: 0 0 40px rgba(76,175,80,.3); touch-action: none; outline: none;
+    }
+    .hint { color: rgba(200,255,210,.75); font-size: 13px; text-align: center; max-width: 520px; line-height: 1.4; }
+    .chars { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .chars button {
+      border: 2px solid #4caf50; border-radius: 12px; background: rgba(20,40,25,.75); color: #fff;
+      padding: 8px 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    .chars button.active { border-color: #ffcc00; background: rgba(60,50,10,.55); }
+    .chars img { width: 36px; height: 36px; object-fit: contain; }
+    .pad { display: none; grid-template-columns: 60px 60px 60px; gap: 6px; }
+    @media (max-width: 600px), (pointer: coarse) { .pad { display: grid; } }
+    .pad button {
+      width: 60px; height: 48px; border: none; border-radius: 12px; font-size: 20px; font-weight: 800;
+      background: rgba(100,255,140,.2); color: #fff; border: 1px solid rgba(100,255,140,.35); cursor: pointer;
+    }
+    .pad .empty { visibility: hidden; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a href="../../menu.html">🐱 Меню</a>
+    <h1>🌀 Лабиринт</h1>
+    <a class="ghost" href="../../index.html">Сайт</a>
+  </div>
+  <div class="chars" id="chars">
+    <button type="button" class="active" data-hero="yozhik"><img src="../smeshariki/images/yozhik.png" alt=""> Ёжик</button>
+    <button type="button" data-hero="pin"><img src="../smeshariki/images/pin.png" alt=""> Пин</button>
+  </div>
+  <div class="hud">
+    <span>Уровень: <b id="lvl">1</b></span>
+    <span>Время: <b id="time">0</b>с</span>
+    <span id="status">Найди выход ⭐ · Няня ловит!</span>
+  </div>
+  <canvas id="c" width="480" height="480" tabindex="0"></canvas>
+  <p class="hint">WASD / стрелки · R — новый лабиринт · Пробел — пауза<br>
+    <b>Ты:</b> Ёжик или Пин · <b>Враг:</b> Няня · добеги до ⭐</p>
+  <div class="pad">
+    <span class="empty"></span>
+    <button type="button" data-d="0,-1">▲</button>
+    <span class="empty"></span>
+    <button type="button" data-d="-1,0">◀</button>
+    <button type="button" data-d="0,1">▼</button>
+    <button type="button" data-d="1,0">▶</button>
+  </div>
+<script>
+(() => {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const COLS = 21, ROWS = 21;
+  const CELL = canvas.width / COLS;
+
+  const imgHero = { yozhik: new Image(), pin: new Image() };
+  imgHero.yozhik.src = "../smeshariki/images/yozhik.png";
+  imgHero.pin.src = "../smeshariki/images/pin.png";
+  const imgNanny = new Image();
+  imgNanny.src = "../smeshariki/images/robonanny.png";
+
+  let heroId = "yozhik";
+  document.querySelectorAll("#chars button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#chars button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      heroId = btn.dataset.hero;
+      document.getElementById("status").textContent =
+        "Ты — " + (heroId === "pin" ? "Пин" : "Ёжик") + " · Няня ловит! ⭐";
+    });
+  });
+
+  let grid, player, nanny, exit, level, time, alive, won, paused, keys, hold;
+
+  // 1 = wall, 0 = path
+  function genMaze() {
+    grid = Array.from({ length: ROWS }, () => Array(COLS).fill(1));
+    function carve(x, y) {
+      grid[y][x] = 0;
+      const dirs = [[0, -2], [0, 2], [-2, 0], [2, 0]];
+      for (let i = dirs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = dirs[i]; dirs[i] = dirs[j]; dirs[j] = t;
+      }
+      for (const [dx, dy] of dirs) {
+        const nx = x + dx, ny = y + dy;
+        if (nx > 0 && ny > 0 && nx < COLS - 1 && ny < ROWS - 1 && grid[ny][nx] === 1) {
+          grid[y + dy / 2][x + dx / 2] = 0;
+          carve(nx, ny);
+        }
+      }
+    }
+    carve(1, 1);
+    // a few extra openings
+    for (let i = 0; i < 18; i++) {
+      const x = 1 + Math.floor(Math.random() * (COLS - 2));
+      const y = 1 + Math.floor(Math.random() * (ROWS - 2));
+      if (grid[y][x] === 1) {
+        let n = 0;
+        if (grid[y - 1]?.[x] === 0) n++;
+        if (grid[y + 1]?.[x] === 0) n++;
+        if (grid[y][x - 1] === 0) n++;
+        if (grid[y][x + 1] === 0) n++;
+        if (n >= 1) grid[y][x] = 0;
+      }
+    }
+    grid[1][1] = 0;
+    grid[ROWS - 2][COLS - 2] = 0;
+  }
+
+  function cellCenter(cx, cy) {
+    return { x: (cx + 0.5) * CELL, y: (cy + 0.5) * CELL };
+  }
+
+  function reset(full) {
+    if (full) level = 1;
+    genMaze();
+    const start = cellCenter(1, 1);
+    const end = cellCenter(COLS - 2, ROWS - 2);
+    player = { x: start.x, y: start.y, r: CELL * 0.28, speed: 2.1 + level * 0.08 };
+    // nanny starts opposite-ish
+    const mid = cellCenter(COLS - 2, 1);
+    nanny = { x: mid.x, y: mid.y, r: CELL * 0.3, speed: 1.35 + level * 0.12 };
+    exit = end;
+    time = 0;
+    alive = true;
+    won = false;
+    paused = false;
+    keys = {};
+    hold = { up: false, down: false, left: false, right: false };
+    document.getElementById("lvl").textContent = level;
+    document.getElementById("time").textContent = "0";
+    document.getElementById("status").textContent = "Найди выход ⭐ · Няня ловит!";
+  }
+
+  function blocked(x, y, r) {
+    const pts = [
+      [x - r, y - r], [x + r, y - r], [x - r, y + r], [x + r, y + r], [x, y]
+    ];
+    for (const [px, py] of pts) {
+      const cx = Math.floor(px / CELL), cy = Math.floor(py / CELL);
+      if (cx < 0 || cy < 0 || cx >= COLS || cy >= ROWS) return true;
+      if (grid[cy][cx] === 1) return true;
+    }
+    return false;
+  }
+
+  function moveEnt(ent, dx, dy) {
+    const nx = ent.x + dx, ny = ent.y + dy;
+    if (!blocked(nx, ent.y, ent.r * 0.85)) ent.x = nx;
+    if (!blocked(ent.x, ny, ent.r * 0.85)) ent.y = ny;
+  }
+
+  function update() {
+    if (!alive || paused || won) return;
+    time += 1 / 60;
+    if (Math.floor(time * 10) % 10 === 0) document.getElementById("time").textContent = String(Math.floor(time));
+
+    let mx = 0, my = 0;
+    if (keys["ArrowUp"] || keys["w"] || keys["W"] || hold.up) my -= 1;
+    if (keys["ArrowDown"] || keys["s"] || keys["S"] || hold.down) my += 1;
+    if (keys["ArrowLeft"] || keys["a"] || keys["A"] || hold.left) mx -= 1;
+    if (keys["ArrowRight"] || keys["d"] || keys["D"] || hold.right) mx += 1;
+    if (mx || my) {
+      const len = Math.hypot(mx, my) || 1;
+      moveEnt(player, (mx / len) * player.speed, (my / len) * player.speed);
+    }
+
+    // nanny chases player with simple grid pathing
+    const dx = player.x - nanny.x, dy = player.y - nanny.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    // prefer axis with larger distance, try both
+    const tryX = (dx / dist) * nanny.speed;
+    const tryY = (dy / dist) * nanny.speed;
+    const ox = nanny.x, oy = nanny.y;
+    moveEnt(nanny, tryX, 0);
+    moveEnt(nanny, 0, tryY);
+    if (nanny.x === ox && nanny.y === oy) {
+      // stuck — random nudge
+      const opts = [[nanny.speed, 0], [-nanny.speed, 0], [0, nanny.speed], [0, -nanny.speed]];
+      const o = opts[Math.floor(Math.random() * opts.length)];
+      moveEnt(nanny, o[0], o[1]);
+    }
+
+    // catch
+    if (Math.hypot(player.x - nanny.x, player.y - nanny.y) < player.r + nanny.r - 2) {
+      alive = false;
+      document.getElementById("status").textContent = "Няня поймала! R — заново";
+    }
+    // exit
+    if (Math.hypot(player.x - exit.x, player.y - exit.y) < CELL * 0.45) {
+      won = true;
+      level++;
+      document.getElementById("status").textContent = "Выход! След. уровень…";
+      setTimeout(() => { if (won) reset(false); }, 900);
+    }
+  }
+
+  function draw() {
+    // floor
+    ctx.fillStyle = "#0a1a10";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (grid[y][x] === 1) {
+          ctx.fillStyle = "#1b5e20";
+          ctx.fillRect(x * CELL, y * CELL, CELL + 0.5, CELL + 0.5);
+          ctx.strokeStyle = "#2e7d32";
+          ctx.strokeRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2);
+        } else {
+          ctx.fillStyle = (x + y) % 2 ? "#0d2418" : "#0f2a1c";
+          ctx.fillRect(x * CELL, y * CELL, CELL + 0.5, CELL + 0.5);
+        }
+      }
+    }
+    // exit
+    ctx.fillStyle = "#ffcc00";
+    ctx.beginPath();
+    ctx.arc(exit.x, exit.y, CELL * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = "bold " + Math.floor(CELL * 0.55) + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⭐", exit.x, exit.y + 1);
+
+    // nanny
+    const ns = CELL * 0.85;
+    if (imgNanny.complete && imgNanny.naturalWidth) {
+      ctx.drawImage(imgNanny, nanny.x - ns / 2, nanny.y - ns / 2, ns, ns);
+    } else {
+      ctx.fillStyle = "#ef5350";
+      ctx.beginPath();
+      ctx.arc(nanny.x, nanny.y, nanny.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // player
+    const hs = CELL * 0.8;
+    const hero = imgHero[heroId];
+    if (hero.complete && hero.naturalWidth) {
+      ctx.drawImage(hero, player.x - hs / 2, player.y - hs / 2, hs, hs);
+    } else {
+      ctx.fillStyle = heroId === "pin" ? "#90a4ae" : "#b39ddb";
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (paused) overlay("ПАУЗА");
+    if (!alive) overlay("НЯНЯ ПОЙМАЛА!");
+    if (won) overlay("ВЫХОД!");
+  }
+
+  function overlay(text) {
+    ctx.fillStyle = "rgba(0,0,0,.55)";
+    ctx.fillRect(0, canvas.height / 2 - 40, canvas.width, 80);
+    ctx.fillStyle = "#ffcc00";
+    ctx.font = "bold 26px Segoe UI, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = "#fff";
+    ctx.font = "14px Segoe UI, Arial";
+    ctx.fillText("R — новый лабиринт", canvas.width / 2, canvas.height / 2 + 28);
+  }
+
+  document.addEventListener("keydown", e => {
+    keys[e.key] = true;
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
+    if (e.key === " " || e.key === "Escape") { if (alive && !won) paused = !paused; }
+    if (e.key === "r" || e.key === "R") reset(true);
+  });
+  document.addEventListener("keyup", e => { keys[e.key] = false; });
+  document.querySelectorAll(".pad button").forEach(btn => {
+    const map = { "0,-1": "up", "0,1": "down", "-1,0": "left", "1,0": "right" };
+    const k = map[btn.dataset.d];
+    btn.addEventListener("pointerdown", e => { e.preventDefault(); hold[k] = true; });
+    btn.addEventListener("pointerup", e => { e.preventDefault(); hold[k] = false; });
+    btn.addEventListener("pointerleave", e => { hold[k] = false; });
+  });
+
+  reset(true);
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  canvas.focus();
+  canvas.addEventListener("click", () => canvas.focus());
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

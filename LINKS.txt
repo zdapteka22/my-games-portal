@@ -1,14 +1,18 @@
-ONLINE:
+САЙТ В ИНТЕРНЕТЕ:
 
-Portal (GitHub Pages): https://zdapteka22.github.io/my-games-portal/
-Mario: https://zdapteka22.github.io/my-games-portal/games/minis/mario.html
-Snake: https://zdapteka22.github.io/my-games-portal/games/minis/snake.html
-Pacman: https://zdapteka22.github.io/my-games-portal/games/minis/pacman.html
+Портал (GitHub Pages):
+https://zdapteka22.github.io/my-games-portal/
 
-Backup catbox:
-Portal: https://files.catbox.moe/x9q1pb.html
-Mario: https://files.catbox.moe/ehenm2.html
-Snake: https://files.catbox.moe/p31hri.html
-Pacman: https://files.catbox.moe/c28d0i.html
+Марио:
+https://zdapteka22.github.io/my-games-portal/games/minis/mario.html
 
-GitHub: https://github.com/zdapteka22/my-games-portal
+Меню:
+https://zdapteka22.github.io/my-games-portal/menu.html
+
+Репозиторий:
+https://github.com/zdapteka22/my-games-portal
+
+Локально:
+запусти «Открыть_локально.bat» или:
+  python serve_nocache.py
+  http://127.0.0.1:8765/

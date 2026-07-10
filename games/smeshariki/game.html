@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Играть — Смешарики: Битва и Догонялки</title>
     <!-- Yandex Games SDK (относительный путь — для загрузки архива на сервер Яндекса) -->
-    <script src="/sdk.js"></script>
+    <!-- yandex sdk optional -->
     <style>
         html, body { margin:0; padding:0; width:100%; height:100%; background:#000; font-family:Arial, sans-serif; color:white; text-align:center; overflow:hidden; }
         #wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; box-sizing:border-box; padding:8px; }
@@ -25,7 +25,7 @@
 
     <div id="wrap">
         <canvas id="game" width="900" height="600" tabindex="0"></canvas>
-        <div id="hint">Кликни! 1 Битва · 2 Догонялки · 3 Голя · 4 Гонки · 5 Создать уровень → герой → играй! | M — музыка | Q — выйти</div>
+        <div id="hint">Кликни! 1–6 режимы | M — муз. вкл/выкл · N — след. трек · B — пред. | Q — выйти</div>
     </div>
 <script>
 const canvas = document.getElementById('game');
@@ -98,42 +98,130 @@ function initYandexSDK() {
 
 initYandexSDK();
 
-// === Фоновая музыка: плейлист (Железная няня + Город Омск) ===
+// === Фоновая музыка: плейлист (переключение N / B или ] / [ ) ===
 const musicTracks = [
-    'Smeshariki_-_ZHeleznaya_Nyanya_OST_ZHeleznaya_nyanya_78553816.mp3',
-    'Smeshariki_-_Gorod_Omsk_48225854.mp3'
+    { file: 'music/Smeshariki_Skameyka_Pervaya_melodiya.mp3', name: 'Скамейка · Самая первая мелодия (пара-пара)' },
+    { file: 'music/Smeshariki_themes_1.mp3', name: 'Скамейка · тема 1' },
+    { file: 'music/Smeshariki_-_ZHeleznaya_Nyanya_OST_ZHeleznaya_nyanya_78553816.mp3', name: 'Железная няня (OST)' },
+    { file: 'music/Smeshariki_-_Gorod_Omsk_48225854.mp3', name: 'Город Омск (OST)' },
+    { file: 'music/Smeshariki_themes_10.mp3', name: 'Тема · 10' },
+    { file: 'music/Smeshariki_themes_11.mp3', name: 'Тема · 11' },
+    { file: 'music/Smeshariki_themes_12.mp3', name: 'Тема · 12' },
+    { file: 'music/Smeshariki_themes_14.mp3', name: 'Тема · 14' },
+    { file: 'music/Smeshariki_themes_15.mp3', name: 'Тема · 15' },
+    { file: 'music/Smeshariki_themes_23.mp3', name: 'Тема · 23' },
+    { file: 'music/Smeshariki_themes_24.mp3', name: 'Тема · 24' },
+    { file: 'music/Smeshariki_themes_3.mp3', name: 'Тема · 3' },
+    { file: 'music/Smeshariki_themes_34.mp3', name: 'Тема · 34' },
+    { file: 'music/Smeshariki_themes_38.mp3', name: 'Тема · 38' },
+    { file: 'music/Smeshariki_themes_39.mp3', name: 'Тема · 39' },
+    { file: 'music/Smeshariki_themes_menu.mp3', name: 'Тема · Меню' },
+    { file: 'music/Smeshariki_themes_song0.mp3', name: 'Тема · song 0' },
+    { file: 'music/Smeshariki_themes_song1.mp3', name: 'Тема · song 1' },
+    { file: 'music/Smeshariki_themes_song2.mp3', name: 'Тема · song 2' },
+    { file: 'music/Smeshariki_themes_song3.mp3', name: 'Тема · song 3' },
+    { file: 'music/Smeshariki_themes_song4.mp3', name: 'Тема · song 4' },
+    { file: 'music/123_2007_01._Menu.mp3', name: '1-2-3 · Меню' },
+    { file: 'music/123_2007_02._Task_BGM.mp3', name: '1-2-3 · Задания' },
+    { file: 'music/123_2007_03._Extra_Game_1_2528Catch_the_Beads_2529.mp3', name: '1-2-3 · Лови бусины' },
+    { file: 'music/123_2007_04._Extra_Game_2_2528Labyrinth_2529.mp3', name: '1-2-3 · Лабиринт' },
+    { file: 'music/123_2007_05._Extra_Game_3_2528Control_Panel_2529.mp3', name: '1-2-3 · Пульт' },
+    { file: 'music/123_2007_06._Credits.mp3', name: '1-2-3 · Титры' },
+    { file: 'music/cartoon_studio_2008_01._Main_Menu.mp3', name: 'Студия · Главное меню' },
+    { file: 'music/cartoon_studio_2008_02._Director_Game.mp3', name: 'Студия · Режиссёр' },
+    { file: 'music/cartoon_studio_2008_03._Camera_Game.mp3', name: 'Студия · Камера' },
+    { file: 'music/cartoon_studio_2008_04._Cartoon_Studio.mp3', name: 'Студия · Студия' },
+    { file: 'music/cartoon_studio_2008_05._Incidental_BGM_1.mp3', name: 'Студия · Мелодия 1' },
+    { file: 'music/cartoon_studio_2008_06._Incidental_BGM_2.mp3', name: 'Студия · Мелодия 2' },
+    { file: 'music/cartoon_studio_2008_07._Incidental_BGM_3.mp3', name: 'Студия · Мелодия 3' },
+    { file: 'music/cartoon_studio_2008_08._Incidental_BGM_4.mp3', name: 'Студия · Мелодия 4' },
+    { file: 'music/cartoon_studio_2008_09._Incidental_BGM_5.mp3', name: 'Студия · Мелодия 5' },
+    { file: 'music/cartoon_studio_2008_10._Incidental_BGM_6.mp3', name: 'Студия · Мелодия 6' },
+    { file: 'music/cartoon_studio_2008_11._Incidental_BGM_7.mp3', name: 'Студия · Мелодия 7' },
+    { file: 'music/cartoon_studio_2008_12._Incidental_BGM_8.mp3', name: 'Студия · Мелодия 8' },
+    { file: 'music/cartoon_studio_2008_13._Incidental_BGM_9.mp3', name: 'Студия · Мелодия 9' },
+    { file: 'music/cartoon_studio_2008_63._Credits.mp3', name: 'Студия · Титры' },
+    { file: 'music/chikos_computer_2005_01._Audio_Sample.mp3', name: 'Комп. Ёжика · Мелодия' },
+    { file: 'music/chikos_computer_2005_02._Credits.mp3', name: 'Комп. Ёжика · Титры' },
+    { file: 'music/chikos_computer_2005_28._Menu.mp3', name: 'Комп. Ёжика · Меню' },
+    { file: 'music/holidays_2006_01._Main_Menu.mp3', name: 'Праздники · Главное меню' },
+    { file: 'music/holidays_2006_02._Dokko.mp3', name: 'Праздники · Копатыч' },
+    { file: 'music/holidays_2006_03._Carlin.mp3', name: 'Праздники · Бараш' },
+    { file: 'music/holidays_2006_04._Chiko.mp3', name: 'Праздники · Ёжик' },
+    { file: 'music/holidays_2006_05._Krash.mp3', name: 'Праздники · Крош' },
+    { file: 'music/holidays_2006_06._Wally.mp3', name: 'Праздники · Лосяш' },
+    { file: 'music/holidays_2006_07._Credits.mp3', name: 'Праздники · Титры' },
+    { file: 'music/round_company_2004_01._Background_Music.mp3', name: 'Круглая компания · Фоновая' },
+    { file: 'music/round_company_2004_02._Kruglya_Pesnia.mp3', name: 'Круглая компания · Круглая песня' },
 ];
 let musicIndex = 0;
 const bgMusic = new Audio();
 bgMusic.loop = false;
 bgMusic.volume = 0.35;
 bgMusic.preload = 'auto';
-if (musicTracks.length) { try { bgMusic.src = musicTracks[0]; } catch (e) {} }
+if (musicTracks.length) { try { bgMusic.src = musicTracks[0].file; } catch (e) {} }
 let musicStarted = false;
 let musicMuted = false;
+let musicToastT = 0;
+let musicToastText = '';
+
+function musicTrackName(i) {
+    const t = musicTracks[i];
+    if (!t) return '—';
+    return t.name || t.file || ('Трек ' + (i + 1));
+}
+function musicTrackFile(i) {
+    const t = musicTracks[i];
+    if (!t) return '';
+    return typeof t === 'string' ? t : t.file;
+}
+function showMusicToast(msg) {
+    musicToastText = msg;
+    musicToastT = 150; // ~2.5 сек
+    try {
+        const el = document.getElementById('hint');
+        if (el) el.textContent = msg;
+    } catch (e) {}
+}
 
 function playCurrentTrack() {
     if (!musicTracks.length) return;
-    bgMusic.src = musicTracks[musicIndex];
+    const src = musicTrackFile(musicIndex);
+    if (!src) return;
+    bgMusic.src = src;
     bgMusic.volume = 0.35;
     bgMusic.load();
+    musicStarted = true;
+    musicMuted = false;
     const p = bgMusic.play();
     if (p && typeof p.catch === 'function') {
         p.catch(() => { musicStarted = false; });
     }
+    showMusicToast('🎵 ' + (musicIndex + 1) + '/' + musicTracks.length + ' · ' + musicTrackName(musicIndex));
 }
 
-function nextMusicTrack() {
-    if (musicMuted || !musicTracks.length) return;
+function nextMusicTrack(fromEnded) {
+    if (!musicTracks.length) return;
     musicIndex = (musicIndex + 1) % musicTracks.length;
+    if (fromEnded && musicMuted) {
+        // авто-переход при mute — только сменить индекс/src, не играть
+        try { bgMusic.src = musicTrackFile(musicIndex); } catch (e) {}
+        return;
+    }
     playCurrentTrack();
 }
 
-bgMusic.addEventListener('ended', nextMusicTrack);
+function prevMusicTrack() {
+    if (!musicTracks.length) return;
+    musicIndex = (musicIndex - 1 + musicTracks.length) % musicTracks.length;
+    playCurrentTrack();
+}
+
+bgMusic.addEventListener('ended', function () { nextMusicTrack(true); });
 
 function startBgMusic() {
     if (musicStarted || musicMuted || !musicTracks.length) return;
-    if (!bgMusic.src && musicTracks[0]) bgMusic.src = musicTracks[0];
+    if (!bgMusic.src && musicTrackFile(0)) bgMusic.src = musicTrackFile(0);
     musicStarted = true;
     const p = bgMusic.play();
     if (p && typeof p.catch === 'function') {
@@ -146,9 +234,11 @@ function toggleMusic() {
     musicMuted = !musicMuted;
     if (musicMuted) {
         bgMusic.pause();
+        showMusicToast('🔇 Музыка выкл · M — вкл · N — след. трек');
     } else {
         musicStarted = true;
         bgMusic.play().catch(() => { musicStarted = false; });
+        showMusicToast('🔊 ' + musicTrackName(musicIndex) + ' · N — след. · B — пред.');
     }
 }
 
@@ -167,12 +257,23 @@ const FPS_EST = 60;
 const KNIFE_HOLD_FRAMES = KNIFE_HOLD_TIME * FPS_EST;
 
 // Режим 2: догонялки + морковь
-const CARROTS_TO_WIN = 10;       // цель гонки (1 место — кто первый набрал 10)
-const CARROTS_LEGEND = 90;       // легендарный счёт (если кто-то набрал 90)
+const CARROTS_TO_WIN = 100;      // цель: собрать 100 морковок
+const CARROTS_LEGEND = 150;      // легендарный счёт
 const CARROT_PICKUP_R = 32;
-const CATCH_RADIUS = 42;
-const MAX_CARROTS_ON_FIELD = 7;
-const CARROT_RESPAWN_CD = 55;
+const CATCH_RADIUS = 40;
+const MAX_CARROTS_ON_FIELD = 12; // больше морковок на поле
+const CARROT_RESPAWN_CD = 28;    // быстрее респавн
+
+// Скорости режима Пакман (лабиринт): герои быстрее няни, Shift — рывок
+const PAC_SPEED_PLAYER = 5.4;    // ты (WASD)
+const PAC_SPEED_ALLY = 5.1;      // Пин / Ёжик / Крош (AI)
+const PAC_SPEED_NANNY = 4.15;    // няня-призрак (чуть медленнее)
+const PAC_SHIFT_MULT = 1.45;     // ускорение на Shift
+const PAC_POWER_FRAMES = 420;    // ~7 сек: золотая 🥕 — няня синяя, её можно съесть
+const PAC_EAT_NANNY_SCORE = 5;   // бонус 🥕 за съеденную синюю няню
+const PAC_SPEED_NANNY_SCARED = 2.6; // синяя няня медленная
+// Догонялки: чуть другие, но тоже сбалансированы
+const CHASE_SPEED_NANNY_MULT = 0.72; // няня от скорости героя
 
 // Режим 3: голя (салки) — водящий бежит за всеми, кого коснулся — тот стал голей
 const TAG_RADIUS = 44;
@@ -198,49 +299,49 @@ const CHARACTERS = [
     {
         id: 'krosh', name: 'Крош', img: 'krosh', color: '#4fc3f7',
         desc: 'Быстрый и ловкий',
-        speed: 7.5, hp: 25, damage: 3, hitRadius: 40, attackCooldown: 15, size: 92
+        speed: 7.5, hp: 25, damage: 3, hitRadius: 28, attackCooldown: 15, size: 64
     },
     {
         id: 'losyash', name: 'Лосяш', img: 'losyash', color: '#ffb74d',
         desc: 'Умный, больше HP',
-        speed: 6.2, hp: 32, damage: 2, hitRadius: 38, attackCooldown: 18, size: 92
+        speed: 6.2, hp: 32, damage: 2, hitRadius: 27, attackCooldown: 18, size: 64
     },
     {
         id: 'yozhik', name: 'Ёжик', img: 'yozhik', color: '#b39ddb',
         desc: 'Сильный удар',
-        speed: 6.5, hp: 22, damage: 4, hitRadius: 42, attackCooldown: 20, size: 92
+        speed: 6.5, hp: 22, damage: 4, hitRadius: 30, attackCooldown: 20, size: 64
     },
     {
         id: 'pin', name: 'Пин', img: 'pin', color: '#90a4ae',
         desc: 'Броня и баланс',
-        speed: 6.0, hp: 28, damage: 3, hitRadius: 36, attackCooldown: 16, size: 92
+        speed: 6.0, hp: 28, damage: 3, hitRadius: 25, attackCooldown: 16, size: 64
     },
     {
         id: 'barash', name: 'Бараш', img: 'barash', color: '#f48fb1',
         desc: 'Поэт: средний бой',
-        speed: 6.4, hp: 26, damage: 3, hitRadius: 38, attackCooldown: 16, size: 92,
+        speed: 6.4, hp: 26, damage: 3, hitRadius: 27, attackCooldown: 16, size: 64,
         drawStyle: 'barash'
     },
     {
         id: 'kopatych', name: 'Копатыч', img: 'kopatych', color: '#8d6e63',
         desc: 'Силач: много HP',
-        speed: 5.4, hp: 36, damage: 3, hitRadius: 40, attackCooldown: 19, size: 96,
+        speed: 5.4, hp: 36, damage: 3, hitRadius: 28, attackCooldown: 19, size: 67,
         drawStyle: 'kopatych'
     },
     {
         id: 'luntik', name: 'Лунтик', img: 'luntik', color: '#ab47bc',
         desc: 'Мягкий, но шустрый',
-        speed: 7.0, hp: 27, damage: 3, hitRadius: 40, attackCooldown: 15, size: 94
+        speed: 7.0, hp: 27, damage: 3, hitRadius: 28, attackCooldown: 15, size: 65
     },
     {
         id: 'robonanny', name: 'Няня', img: 'robonanny', color: '#ef5350',
         desc: 'Босс: много HP',
-        speed: 5.5, hp: 40, damage: 3, hitRadius: 38, attackCooldown: 17, size: 96
+        speed: 5.5, hp: 40, damage: 3, hitRadius: 27, attackCooldown: 17, size: 67
     },
     {
         id: 'pacman', name: 'Пакман', img: 'pacman', color: '#ffeb3b',
         desc: 'Кусает! 2 жизни',
-        speed: 7.8, hp: 20, damage: 4, hitRadius: 44, attackCooldown: 12, size: 88,
+        speed: 7.8, hp: 20, damage: 4, hitRadius: 31, attackCooldown: 12, size: 61,
         isPacman: true, lives: 2
     }
 ];
@@ -300,8 +401,38 @@ function emptyEditorLevel() {
         npcs: [],
         goalCarrots: 5,
         nannySpeed: 4.2,
-        playMode: 'collect' // collect | team (командный бой)
+        playMode: 'chase' // battle|chase|tag|race|team
     };
+}
+
+
+const CUSTOM_PLAY_MODES = [
+    { id: 'battle', label: '⚔️ БИТВА', short: 'битва', color: '#b71c1c', tip: 'Бой: выбей всех врагов' },
+    { id: 'chase', label: '🥕 ДОГОН', short: 'догонялки', color: '#1b5e20', tip: 'Собери морковки, убегай от няни' },
+    { id: 'tag', label: '🏃 ГОЛЯ', short: 'голя', color: '#e65100', tip: 'Салки: водящий догоняет остальных' },
+    { id: 'race', label: '🏁 БЕГ', short: 'бег', color: '#0d47a1', tip: 'Гонки: финиш справа, Shift — ускорение' },
+    { id: 'team', label: '🔵🔴 КОМ', short: 'команды', color: '#4a148c', tip: 'Синие vs красные' }
+];
+function normalizePlayMode(pm) {
+    if (pm === 'collect') return 'chase';
+    if (pm === 'battle' || pm === 'chase' || pm === 'tag' || pm === 'race' || pm === 'team') return pm;
+    return 'chase';
+}
+function getCustomPlayMode() {
+    return normalizePlayMode(customLevel && customLevel.playMode);
+}
+function playModeMeta(pm) {
+    pm = normalizePlayMode(pm);
+    for (var i = 0; i < CUSTOM_PLAY_MODES.length; i++) {
+        if (CUSTOM_PLAY_MODES[i].id === pm) return CUSTOM_PLAY_MODES[i];
+    }
+    return CUSTOM_PLAY_MODES[1];
+}
+function cyclePlayMode(pm) {
+    var ids = ['battle', 'chase', 'tag', 'race', 'team'];
+    pm = normalizePlayMode(pm);
+    var i = ids.indexOf(pm);
+    return ids[(i + 1) % ids.length];
 }
 
 function placeableCharacters() {
@@ -353,7 +484,7 @@ function normalizeLevel(lv) {
     out.goalCarrots = Math.max(1, lv.goalCarrots || 5);
     out.nannySpeed = lv.nannySpeed || 4.2;
     // NPC
-    out.playMode = (lv.playMode === 'team') ? 'team' : 'collect';
+    out.playMode = normalizePlayMode(lv.playMode);
     out.npcs = Array.isArray(lv.npcs)
         ? lv.npcs.filter(n => n && n.id && n.x != null && n.y != null).map(n => ({
             id: n.id, x: n.x, y: n.y,
@@ -403,7 +534,7 @@ function cloneLevel(lv) {
 initCharStorage();
 
 function isCustomTeamMode() {
-    return gameMode === 'custom' && customLevel && customLevel.playMode === 'team';
+    return gameMode === 'custom' && customLevel && getCustomPlayMode() === 'team';
 }
 function sameTeam(a, b) {
     if (!a || !b) return false;
@@ -439,6 +570,16 @@ let carrotsCollected = 0;
 let carrotSpawnCD = 0;
 let chaseCaught = false; // няня поймала игрока
 let chasePulse = 0;
+// Режим Пакман: золотая морковь → няня синяя (scared)
+let nannyPowerT = 0;     // кадры, пока няня уязвима
+let nannyEatenFlash = 0; // вспышка «СЪЕЛ НЯНЮ!»
+// Режим Пакман: лабиринт
+let pacWalls = [];
+let pacOpenSpots = [];
+let pacPlayerSpawns = [];
+let pacNannySpawns = [];
+let pacDotSpots = [];
+let pacPlayAsGhost = false; // true = играешь няней-призраком
 
 // Голя (режим 3)
 let gola = null;           // кто сейчас «голя» (водящий)
@@ -457,13 +598,16 @@ const DEAD_RESTART = { x: 250, y: 530, w: 180, h: 42 };
 const DEAD_SELECT = { x: 450, y: 530, w: 200, h: 42 };
 const RES_RESTART = { x: 220, y: 545, w: 200, h: 40 };
 const RES_SELECT = { x: 480, y: 545, w: 200, h: 40 };
-// 5 режимов: 3 сверху + 2 снизу
+// 6 режимов: 3 сверху + 3 снизу
 const BTN_MODE_BATTLE = { x: 20, y: 125, w: 280, h: 165 };
 const BTN_MODE_CHASE = { x: 310, y: 125, w: 280, h: 165 };
 const BTN_MODE_TAG = { x: 600, y: 125, w: 280, h: 165 };
-const BTN_MODE_RACE = { x: 80, y: 310, w: 360, h: 175 };
-const BTN_MODE_EDITOR = { x: 460, y: 310, w: 360, h: 175 };
+const BTN_MODE_RACE = { x: 20, y: 310, w: 280, h: 175 };
+const BTN_MODE_PAC = { x: 310, y: 310, w: 280, h: 175 };
+const BTN_MODE_EDITOR = { x: 600, y: 310, w: 280, h: 175 };
 const BTN_BACK_MODE = { x: 20, y: 20, w: 160, h: 40 };
+// Режим Пакман: 3 «пакмана» (Пин, Крош, Ёжик) + 1 призрак (Няня)
+const PAC_HERO_IDS = ['pin', 'krosh', 'yozhik'];
 
 // Редактор — панель инструментов (герои, палка, нож)
 const ED_TOOLS = [
@@ -483,16 +627,30 @@ const ED_BTN_CLEAR = { x: 566, y: 70, w: 90, h: 34 };
 const ED_BTN_BACK = { x: 20, y: 20, w: 120, h: 36 };
 const ED_BTN_GOAL_M = { x: 750, y: 20, w: 40, h: 36 };
 const ED_BTN_GOAL_P = { x: 840, y: 20, w: 40, h: 36 };
-const ED_BTN_PLAYMODE = { x: 662, y: 70, w: 120, h: 34 };
+const ED_BTN_PLAYMODE = { x: 640, y: 70, w: 148, h: 34 };
 const ED_BTN_TEAM = { x: 788, y: 70, w: 100, h: 34 };
 const ED_FIELD = { x: 40, y: 120, w: 820, h: 450 }; // область редактирования
 
 const CARD_W = 88, CARD_H = 200, CARD_GAP = 6;
+function selectableCharacters() {
+    if (gameMode === 'pac') {
+        // 3 пакмана + няня-призрак
+        const order = PAC_HERO_IDS.concat(['robonanny']);
+        const list = [];
+        for (let i = 0; i < order.length; i++) {
+            const ch = CHARACTERS.find(c => c.id === order[i]);
+            if (ch) list.push(ch);
+        }
+        return list.length ? list : CHARACTERS.slice(0, 3);
+    }
+    return CHARACTERS;
+}
 function cardLayout() {
-    const total = CHARACTERS.length * CARD_W + (CHARACTERS.length - 1) * CARD_GAP;
+    const list = selectableCharacters();
+    const total = list.length * CARD_W + (list.length - 1) * CARD_GAP;
     const startX = (900 - total) / 2;
     const y = 220;
-    return CHARACTERS.map((_, i) => ({
+    return list.map((_, i) => ({
         x: startX + i * (CARD_W + CARD_GAP),
         y, w: CARD_W, h: CARD_H
     }));
@@ -546,8 +704,9 @@ function randomSpawnAway(occupied, minDist = 90, margin = 50, tries = 40) {
 }
 
 function pickRandomCharacter() {
-    selectedIndex = Math.floor(Math.random() * CHARACTERS.length);
-    return CHARACTERS[selectedIndex];
+    const list = selectableCharacters();
+    selectedIndex = Math.floor(Math.random() * list.length);
+    return list[selectedIndex];
 }
 
 function placeAllFighters() {
@@ -571,7 +730,7 @@ function buildPlayerFromCfg(charCfg) {
         img: charCfg.img,
         displayName: charCfg.name,
         speed: charCfg.speed,
-        radius: charCfg.isPacman ? 14 : 8,
+        radius: charCfg.isPacman ? 11 : 7,
         hp: charCfg.hp,
         damage: charCfg.damage,
         hitRadius: charCfg.hitRadius,
@@ -618,15 +777,18 @@ function buildNpcsAndBoss(charCfg, forChase) {
             name: bossCfg.id,
             img: bossCfg.img,
             displayName: bossCfg.id === 'robonanny' ? 'Няня' : bossCfg.name,
-            speed: Math.max(3.8, playerSpd * 0.72),
+            // няня в догонялках — заметно медленнее героя
+            speed: Math.max(4.0, playerSpd * CHASE_SPEED_NANNY_MULT),
             radius: 10,
             hp: 999,
             damage: 0,
             hitRadius: 40,
-            size: 90,
+            size: 68,
             ai: true,
             drawStyle: bossCfg.drawStyle || null
         });
+        nanny._huntTarget = null;
+        nanny._huntSticky = 0;
         npcs = rest.map(c => makeFighter({
             name: c.id,
             img: c.img,
@@ -635,7 +797,7 @@ function buildNpcsAndBoss(charCfg, forChase) {
             speed: 4.6 + Math.random() * 0.9,
             hp: 1,
             damage: 0,
-            size: 62,
+            size: 50,
             ai: true,
             drawStyle: c.drawStyle || null,
             carrots: 0
@@ -643,14 +805,14 @@ function buildNpcsAndBoss(charCfg, forChase) {
         // Пакман тоже убегает и собирает морковь
         if (charCfg.id !== 'pacman') {
             pacman = {
-                name: 'pacman', img: 'pacman', x: 450, y: 300, speed: 5.4, radius: 14, size: 56, angle: 0,
+                name: 'pacman', img: 'pacman', x: 450, y: 300, speed: 5.4, radius: 14, size: 44, angle: 0,
                 lives: 1, livesMax: 1, hp: 1, hpMax: 1, damage: 0, biteCooldown: 0, invuln: 0,
                 mouth: 0, ai: true, dead: false, isPacman: true, hasKnife: false, displayName: 'Пакман',
                 fleeAngle: Math.random() * Math.PI * 2, wander: Math.random() * Math.PI * 2, carrots: 0
             };
         } else {
             pacman = {
-                name: 'pacman', x: 0, y: 0, speed: 0, radius: 14, size: 52, angle: 0,
+                name: 'pacman', x: 0, y: 0, speed: 0, radius: 14, size: 40, angle: 0,
                 lives: 0, livesMax: 0, hp: 0, hpMax: 0, damage: 0, biteCooldown: 0, invuln: 0,
                 mouth: 0, ai: false, dead: true, isPacman: true, hasKnife: false, displayName: 'Пакман',
                 carrots: 0
@@ -666,7 +828,7 @@ function buildNpcsAndBoss(charCfg, forChase) {
             hp: 15,
             damage: 2,
             hitRadius: 32,
-            size: 80,
+            size: 60,
             ai: true,
             drawStyle: bossCfg.drawStyle || null
         });
@@ -677,19 +839,19 @@ function buildNpcsAndBoss(charCfg, forChase) {
             speed: 3.2 + Math.random() * 0.3,
             hp: 10,
             damage: 1,
-            size: 62,
+            size: 50,
             ai: true,
             drawStyle: c.drawStyle || null
         }));
         if (charCfg.id === 'pacman') {
             pacman = {
-                name: 'pacman', x: 0, y: 0, speed: 0, radius: 14, size: 52, angle: 0,
+                name: 'pacman', x: 0, y: 0, speed: 0, radius: 14, size: 40, angle: 0,
                 lives: 0, livesMax: 0, hp: 0, hpMax: 0, damage: 0, biteCooldown: 0, invuln: 0,
                 mouth: 0, ai: false, dead: true, isPacman: true, hasKnife: false, displayName: 'Пакман'
             };
         } else {
             pacman = {
-                name: 'pacman', img: 'pacman', x: 450, y: 300, speed: 5.2, radius: 14, size: 56, angle: 0,
+                name: 'pacman', img: 'pacman', x: 450, y: 300, speed: 5.2, radius: 14, size: 44, angle: 0,
                 lives: 2, livesMax: 2, hp: 1, hpMax: 1, damage: 2, biteCooldown: 0, invuln: 0,
                 mouth: 0, ai: true, dead: false, isPacman: true, hasKnife: false, displayName: 'Пакман'
             };
@@ -700,6 +862,10 @@ function buildNpcsAndBoss(charCfg, forChase) {
 function startGame(charCfg) {
     if (gameMode === 'custom') {
         startCustomGame(charCfg);
+        return;
+    }
+    if (gameMode === 'pac') {
+        startPacGame(charCfg);
         return;
     }
     if (gameMode === 'chase') {
@@ -745,8 +911,45 @@ function spawnCarrot(occupied) {
     if (player) occ.push({ x: player.x, y: player.y });
     if (nanny) occ.push({ x: nanny.x, y: nanny.y });
     for (const c of carrots) occ.push({ x: c.x, y: c.y });
-    const p = randomSpawnAway(occ, 70, 45);
+    // 40 попыток без стен
+    let p = null;
+    for (let i = 0; i < 40; i++) {
+        const cand = randomSpawnAway(occ, 70, 45);
+        if (!circleHitsWall(cand.x, cand.y, 12, activeWalls())) { p = cand; break; }
+        p = cand;
+    }
+    if (!p) p = randomSpawnAway(occ, 70, 45);
     carrots.push({ x: p.x, y: p.y, pulse: Math.random() * Math.PI * 2, taken: false });
+}
+
+/** Морковка в свободной клетке лабиринта (режим Пакман) */
+function spawnPacCarrot() {
+    if (!pacOpenSpots || !pacOpenSpots.length) {
+        spawnCarrot();
+        return;
+    }
+    // предпочитаем клетки без соседних точек
+    let best = null, bestScore = -Infinity;
+    for (let t = 0; t < 25; t++) {
+        const s = pacOpenSpots[Math.floor(Math.random() * pacOpenSpots.length)];
+        let near = 0;
+        for (const c of carrots) {
+            if (Math.hypot(c.x - s.x, c.y - s.y) < 28) near++;
+        }
+        // не на няне / игроке
+        let pen = 0;
+        if (nanny && Math.hypot(s.x - nanny.x, s.y - nanny.y) < 36) pen += 5;
+        if (player && Math.hypot(s.x - player.x, s.y - player.y) < 28) pen += 2;
+        const score = 10 - near * 3 - pen + Math.random();
+        if (score > bestScore) { bestScore = score; best = s; }
+    }
+    if (!best) best = pacOpenSpots[Math.floor(Math.random() * pacOpenSpots.length)];
+    carrots.push({
+        x: best.x, y: best.y,
+        pulse: Math.random() * Math.PI * 2,
+        taken: false,
+        power: Math.random() < 0.08
+    });
 }
 
 /** Режим 4: Гонки — кто первый до финиша */
@@ -992,7 +1195,12 @@ function startCustomGame(charCfg) {
     customLevel = normalizeLevel(lv);
     if (!customLevel.playerSpawn) customLevel.playerSpawn = { x: 450, y: 300 };
     customLevel.goalCarrots = Math.max(1, customLevel.goalCarrots || 5);
-    const teamMode = customLevel.playMode === 'team';
+    const pm = getCustomPlayMode();
+    const teamMode = pm === 'team';
+    const battleMode = pm === 'battle';
+    const tagMode = pm === 'tag';
+    const raceMode = pm === 'race';
+    const chaseMode = pm === 'chase';
 
     buildPlayerFromCfg(charCfg);
     player.team = 'ally';
@@ -1001,11 +1209,15 @@ function startCustomGame(charCfg) {
     player.hasStick = false;
     player.swing = 0;
     player.hitCooldown = 0;
+    player.isGola = false;
+    player.finished = false;
+    player.finishPlace = 0;
+    player.raceBoost = 0;
     player.x = customLevel.playerSpawn.x;
     player.y = customLevel.playerSpawn.y;
-    if (teamMode) {
-        player.hp = 5;
-        player.hpMax = 5;
+    if (teamMode || battleMode) {
+        player.hp = battleMode ? 6 : 5;
+        player.hpMax = player.hp;
         player.damage = 2;
         player.hitRadius = 34;
         player.attackCooldown = 16;
@@ -1021,19 +1233,20 @@ function startCustomGame(charCfg) {
 
     if (customLevel.nannySpawn) {
         const nannyCfg = CHARACTERS.find(c => c.id === 'robonanny') || CHARACTERS[0];
-        const nhp = teamMode ? 6 : (hasWeapons ? 5 : 1);
+        const nhp = (teamMode || battleMode) ? (battleMode ? 5 : 6) : ((hasWeapons && chaseMode) ? 5 : 1);
         nanny = makeFighter({
             name: nannyCfg.id, img: nannyCfg.img, displayName: nannyCfg.name,
-            speed: customLevel.nannySpeed || (teamMode ? 4.0 : 4.2), radius: 8, hp: nhp,
-            damage: teamMode ? 2 : 1,
-            hitRadius: 32, attackCooldown: 18, size: 90, ai: true, upgraded: false
+            speed: customLevel.nannySpeed || ((teamMode || battleMode) ? 4.0 : 4.2), radius: 8, hp: nhp,
+            damage: (teamMode || battleMode) ? 2 : 1,
+            hitRadius: 32, attackCooldown: 18, size: 68, ai: true, upgraded: false
         });
         nanny.hpMax = nhp;
         nanny.x = customLevel.nannySpawn.x;
         nanny.y = customLevel.nannySpawn.y;
         nanny.stun = 0;
         nanny.team = 'enemy';
-        nanny.hasStick = teamMode;
+        nanny.hasStick = teamMode || battleMode;
+        nanny.isGola = false;
     } else {
         nanny = null;
     }
@@ -1046,13 +1259,14 @@ function startCustomGame(charCfg) {
         const team = (slot.team === 'ally') ? 'ally' : 'enemy';
         if (cfg.isPacman) {
             const p = {
-                name: 'pacman', img: 'pacman', x: slot.x, y: slot.y, speed: 5.2, radius: 14, size: 56,
-                angle: 0, lives: 1, livesMax: 1, hp: teamMode ? 3 : 1, hpMax: teamMode ? 3 : 1,
-                damage: teamMode ? 1 : 0, biteCooldown: 0, invuln: 0,
-                mouth: 0, ai: true, dead: false, isPacman: true, hasKnife: false, hasStick: teamMode,
+                name: 'pacman', img: 'pacman', x: slot.x, y: slot.y, speed: 5.2, radius: 14, size: 44,
+                angle: 0, lives: 1, livesMax: 1, hp: (teamMode || battleMode) ? 3 : 1, hpMax: (teamMode || battleMode) ? 3 : 1,
+                damage: (teamMode || battleMode) ? 1 : 0, biteCooldown: 0, invuln: 0,
+                mouth: 0, ai: true, dead: false, isPacman: true, hasKnife: false, hasStick: teamMode || battleMode,
                 displayName: 'Пакман', fleeAngle: Math.random() * Math.PI * 2,
                 wander: Math.random() * Math.PI * 2, carrots: 0, swing: 0, hitCooldown: 0,
-                hitRadius: 42, attackCooldown: 12, team: team
+                hitRadius: 42, attackCooldown: 12, team: battleMode ? 'enemy' : team,
+                isGola: false, finished: false, finishPlace: 0, raceBoost: 0, raceBase: 5, laneY: slot.y
             };
             if (!pacman) pacman = p;
             else npcs.push(p);
@@ -1060,17 +1274,24 @@ function startCustomGame(charCfg) {
             const ent = makeFighter({
                 name: cfg.id, img: cfg.img, displayName: cfg.name,
                 speed: 4.6 + Math.random() * 0.8, radius: 8,
-                hp: teamMode ? 4 : 1,
-                damage: teamMode ? 2 : 0,
+                hp: (teamMode || battleMode) ? 4 : 1,
+                damage: (teamMode || battleMode) ? 2 : 0,
                 hitRadius: 32, attackCooldown: 16, size: 64, ai: true,
                 drawStyle: cfg.drawStyle || null
             });
             ent.x = slot.x;
             ent.y = slot.y;
             ent.carrots = 0;
-            ent.hasStick = teamMode;
+            ent.hasStick = teamMode || battleMode;
             ent.hasKnife = false;
-            ent.team = team;
+            ent.team = battleMode ? 'enemy' : team;
+            ent.isGola = false;
+            ent.finished = false;
+            ent.finishPlace = 0;
+            ent.raceBoost = 0;
+            ent.raceBase = (cfg.speed || 3.8) * (0.9 + Math.random() * 0.25);
+            ent.laneY = slot.y;
+            ent.wander = Math.random() * Math.PI * 2;
             npcs.push(ent);
         }
     }
@@ -1088,10 +1309,10 @@ function startCustomGame(charCfg) {
     }));
     stickPickup = groundSticks[0] || null;
 
-    carrots = customLevel.carrots.map(c => ({
+    carrots = (customLevel.carrots || []).map(c => ({
         x: c.x, y: c.y, pulse: Math.random() * Math.PI * 2, taken: false
     }));
-    if (!teamMode && carrots.length === 0) {
+    if (chaseMode && carrots.length === 0) {
         for (let i = 0; i < customLevel.goalCarrots; i++) {
             const p = randomFieldPos(60);
             if (!circleHitsWall(p.x, p.y, 16, customLevel.walls)) {
@@ -1099,11 +1320,86 @@ function startCustomGame(charCfg) {
             }
         }
     }
-    if (teamMode) carrots = [];
+    if (teamMode || battleMode || tagMode || raceMode) carrots = [];
     carrotsCollected = 0;
     carrotSpawnCD = 0;
     chaseCaught = false;
     chasePulse = 0;
+    raceFinishOrder = [];
+    raceCountdown = 0;
+    raceStarted = false;
+    gola = null;
+    tagCooldown = 0;
+    tagTimer = 0;
+    tagTimeAsGola = {};
+    lastTagFlash = 0;
+
+    if (tagMode) {
+        player.isGola = true;
+        gola = player;
+        tagCooldown = TAG_COOLDOWN;
+        tagTimer = TAG_ROUND_SEC * FPS_EST;
+        tagTimeAsGola = {};
+        var others = [nanny].concat(npcs || []).concat(pacman ? [pacman] : []).filter(function (e) { return e && !e.dead; });
+        for (var oi = 0; oi < others.length; oi++) {
+            var o = others[oi];
+            o.isGola = false;
+            o.hp = 1; o.hpMax = 1;
+            var best = null, bestD = -1;
+            for (var ti = 0; ti < 20; ti++) {
+                var pp = randomFieldPos(55);
+                if (circleHitsWall(pp.x, pp.y, o.radius || 10, customLevel.walls)) continue;
+                var dd = Math.hypot(pp.x - player.x, pp.y - player.y);
+                if (dd > bestD) { bestD = dd; best = pp; }
+            }
+            if (best) { o.x = best.x; o.y = best.y; }
+        }
+        var parts = tagParticipants();
+        for (var pi = 0; pi < parts.length; pi++) {
+            if (parts[pi] && parts[pi].name) tagTimeAsGola[parts[pi].name] = 0;
+        }
+    }
+
+    if (raceMode) {
+        customLevel._raceFinishX = Math.min(FIELD.maxX - 40, Math.max(RACE_FINISH_X, (customLevel.playerSpawn.x || 100) + 420));
+        raceCountdown = 150;
+        raceStarted = false;
+        nanny = null;
+        if (!npcs.length && !pacman) {
+            var pool = CHARACTERS.filter(function (c) { return c.id !== charCfg.id && c.id !== 'robonanny' && !c.isPacman; });
+            for (var i = pool.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+            }
+            pool.slice(0, 3).forEach(function (cfg, ix) {
+                var f = makeFighter({
+                    name: cfg.id, img: cfg.img || cfg.id, displayName: cfg.name,
+                    speed: cfg.speed, radius: 8, hp: 1, damage: 0, hitRadius: 20, attackCooldown: 99, size: 50, ai: true
+                });
+                f.x = player.x - 12;
+                f.y = Math.min(FIELD.maxY - 40, Math.max(FIELD.minY + 40, player.y + (ix - 1) * 55));
+                f.finished = false; f.finishPlace = 0; f.raceBoost = 0;
+                f.raceBase = (cfg.speed || 3.5) * (0.9 + Math.random() * 0.25);
+                f.laneY = f.y; f.wander = Math.random() * Math.PI * 2; f.team = 'enemy';
+                npcs.push(f);
+            });
+        }
+        for (var ri = 0; ri < npcs.length; ri++) {
+            var rn = npcs[ri];
+            rn.finished = false; rn.finishPlace = 0; rn.hp = 1;
+            rn.raceBase = rn.raceBase || rn.speed; rn.laneY = rn.y;
+        }
+    }
+
+    if (battleMode) {
+        for (var bi = 0; bi < npcs.length; bi++) {
+            npcs[bi].team = 'enemy'; npcs[bi].hasStick = true;
+            npcs[bi].hp = Math.max(4, npcs[bi].hp); npcs[bi].hpMax = npcs[bi].hp; npcs[bi].damage = 2;
+        }
+        if (pacman) { pacman.team = 'enemy'; pacman.hasStick = true; pacman.hp = 3; pacman.hpMax = 3; pacman.damage = 1; }
+        if (nanny) nanny.hasStick = true;
+    }
+
     paused = false;
     gameOver = false;
     gameWon = false;
@@ -1121,17 +1417,25 @@ function startCustomGame(charCfg) {
     const enemyN = (customLevel.npcs || []).filter(n => n.team !== 'ally').length + (customLevel.nannySpawn ? 1 : 0);
     if (teamMode) {
         document.getElementById('hint').textContent =
-            '⚔️ Командный бой! Синие (ты + союзники) vs Красные' +
-            ' | союзн: ' + allyN + ' | враги: ' + enemyN +
+            '⚔️ Командный бой! Синие vs Красные | союзн: ' + allyN + ' | враги: ' + enemyN +
             ' | Пробел — удар | WASD | Shift | Esc | R';
+    } else if (battleMode) {
+        document.getElementById('hint').textContent =
+            '⚔️ БИТВА на карте! Выбей всех врагов | Пробел — удар | WASD | Shift | Esc | R';
+    } else if (tagMode) {
+        document.getElementById('hint').textContent =
+            '🔴 ГОЛЯ! Догони кого-нибудь | WASD | Shift | ' + TAG_ROUND_SEC + 'с | Esc | R';
+    } else if (raceMode) {
+        document.getElementById('hint').textContent =
+            '🏁 БЕГ! A/D — бег · Shift — ускорение · финиш справа | Esc | R';
     } else {
         const heroN = (customLevel.npcs || []).length;
         document.getElementById('hint').textContent =
-            '🗺️ Свой уровень! Собери ' + customLevel.goalCarrots + ' 🥕' +
+            '🥕 ДОГОНЯЛКИ! Собери ' + customLevel.goalCarrots + ' 🥕' +
             (nanny ? ' · убеги от няни' : '') +
             (heroN ? ' · герои: ' + heroN : '') +
-            (weaponHint ? ' · оружие: ' + weaponHint + ' (пробел — удар)' : '') +
-            ' | WASD | Shift | Esc | Q | R';
+            (weaponHint ? ' · ' + weaponHint : '') +
+            ' | WASD | Shift | Esc | R';
     }
 }
 
@@ -1362,6 +1666,69 @@ function updateCustomLevel() {
     }
     if (nanny && nanny.stun > 0) nanny.stun--;
 
+    var pm = getCustomPlayMode();
+
+    if (pm === 'tag') {
+        updatePlayer();
+        updateTagAI();
+        tryTransferGola();
+        updateTagRound();
+        return;
+    }
+
+    if (pm === 'race') {
+        var finishX = (customLevel && customLevel._raceFinishX) || RACE_FINISH_X;
+        if (raceCountdown > 0) {
+            raceCountdown--;
+            if (raceCountdown <= 0) raceStarted = true;
+            return;
+        }
+        raceStarted = true;
+        function moveRacer(ent) {
+            if (!ent || ent.finished || ent.dead || ent.hp <= 0) return;
+            if (ent === player) {
+                var left = isDown('KeyA') || isDown('ArrowLeft');
+                var right = isDown('KeyD') || isDown('ArrowRight');
+                var up = isDown('KeyW') || isDown('ArrowUp');
+                var down = isDown('KeyS') || isDown('ArrowDown');
+                var sprint = isDown('ShiftLeft') || isDown('ShiftRight');
+                var spd = (ent.speed || 5) * (sprint ? 1.45 : 1);
+                var mx = 0, my = 0;
+                if (right) mx += 1;
+                if (left) mx -= 0.35;
+                if (up) my -= 1;
+                if (down) my += 1;
+                if (mx === 0 && my === 0) mx = 0.55;
+                var len = Math.hypot(mx, my) || 1;
+                moveEntity(ent, (mx / len) * spd, (my / len) * spd);
+            } else {
+                ent.wander = (ent.wander || 0) + 0.04;
+                var base = ent.raceBase || ent.speed || 4;
+                var ty = (ent.laneY != null ? ent.laneY : ent.y) + Math.sin(ent.wander * 2) * 6;
+                var dx = finishX - ent.x, dy = ty - ent.y;
+                var ln = Math.hypot(dx, dy) || 1;
+                moveEntity(ent, (dx / ln) * base, (dy / ln) * base * 0.35);
+            }
+            if (ent.x >= finishX - 12 && !ent.finished) {
+                ent.finished = true;
+                raceFinishOrder.push(ent);
+                ent.finishPlace = raceFinishOrder.length;
+                if (ent === player) {
+                    gameWon = ent.finishPlace === 1;
+                    gameOver = true;
+                    finalRanking = { first: raceFinishOrder[0], place: ent.finishPlace, order: raceFinishOrder.slice() };
+                    document.getElementById('hint').textContent = gameWon
+                        ? '🏆 Ты первый! Enter — заново | R — выбор'
+                        : ('Финиш: ' + ent.finishPlace + ' место | Enter — заново | R');
+                }
+            }
+        }
+        moveRacer(player);
+        for (var r = 0; r < npcs.length; r++) moveRacer(npcs[r]);
+        if (pacman) moveRacer(pacman);
+        return;
+    }
+
     updatePlayer();
 
     if (player && !player.dead) {
@@ -1377,6 +1744,78 @@ function updateCustomLevel() {
             knife.holdTimer--;
             if (knife.holdTimer <= 0) dropCustomKnife();
         }
+    }
+
+    if (pm === 'battle') {
+        function hurtPlayer(dmg) {
+            if (!player || player.dead || (player.invuln || 0) > 0) return;
+            player.hp -= dmg;
+            player.invuln = 32;
+            if (player.hp <= 0) {
+                player.hp = 0; player.dead = true; playerDead = true;
+                finishCustom(false);
+            }
+        }
+        function foes() {
+            return allCustomFighters().filter(function (f) {
+                return f !== player && (f.team || 'enemy') === 'enemy' && f.hp > 0 && !f.dead;
+            });
+        }
+        var enemyList = foes();
+        for (var ei = 0; ei < enemyList.length; ei++) {
+            var n = enemyList[ei];
+            if (n.swing > 0) n.swing--;
+            if (n.hitCooldown > 0) n.hitCooldown--;
+            if (n.stun > 0) { n.stun--; continue; }
+            if (!player || player.dead) continue;
+            var edx = player.x - n.x, edy = player.y - n.y;
+            var eln = Math.hypot(edx, edy) || 1;
+            moveEntity(n, (edx / eln) * n.speed * 0.95, (edy / eln) * n.speed * 0.95);
+            if (n.hasStick && dist(n, player) < 90) trySwing(n);
+            if (n.swing > 9 && n.hitCooldown <= 0) {
+                var tip = stickTip(n);
+                if (dist(tip, player) < 52) {
+                    hurtPlayer(n.damage || 1);
+                    n.hitCooldown = n.attackCooldown || 16;
+                    n.swing = 0;
+                }
+            }
+            if (dist(n, player) < CATCH_RADIUS && !player.hasKnife) hurtPlayer(1);
+        }
+        if (player && !player.dead && player.hp > 0) {
+            var fl = foes();
+            if (player.hasKnife) {
+                for (var fi = 0; fi < fl.length; fi++) {
+                    if (dist(player, fl[fi]) < 48) {
+                        fl[fi].hp = 0; fl[fi].dead = true;
+                        if (knife.heldBy === player) {
+                            knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
+                            if (knife.killsLeft <= 0) dropCustomKnife();
+                        }
+                    }
+                }
+            } else if (player.hasStick && player.swing > 9 && player.hitCooldown <= 0) {
+                var ptip = stickTip(player);
+                for (var fj = 0; fj < fl.length; fj++) {
+                    if (dist(ptip, fl[fj]) < (player.hitRadius || 34) + 10) {
+                        fl[fj].hp -= player.damage || 2;
+                        player.hitCooldown = player.attackCooldown || 16;
+                        player.swing = 0;
+                        if (fl[fj].hp <= 0) { fl[fj].hp = 0; fl[fj].dead = true; }
+                        break;
+                    }
+                }
+            }
+        }
+        if (playerDead || (player && (player.hp <= 0 || player.dead))) {
+            finishCustom(false);
+            return;
+        }
+        if (foes().length <= 0) {
+            finishCustom(true);
+            return;
+        }
+        return;
     }
 
     for (const n of npcs) updateCustomNpcAI(n);
@@ -1453,46 +1892,105 @@ function updateCustomLevel() {
         return;
     }
 
-    if (nanny && !nanny.dead && nanny.hp > 0 && !playerDead && player && player.hp > 0) {
+    // Няня гонится за БЛИЖАЙШЕЙ живой целью: игрок, NPC или пакман (не только за тобой)
+    if (nanny && !nanny.dead && nanny.hp > 0) {
+        function nannyPreyList() {
+            const list = [];
+            if (player && !player.dead && player.hp > 0) list.push(player);
+            for (const n of (npcs || [])) {
+                if (n && !n.dead && n.hp > 0) list.push(n);
+            }
+            if (pacman && !pacman.dead && pacman.hp > 0) list.push(pacman);
+            return list;
+        }
+        function nearestNannyPrey() {
+            let best = null, bestD = Infinity;
+            for (const t of nannyPreyList()) {
+                const d = dist(nanny, t);
+                if (d < bestD) { bestD = d; best = t; }
+            }
+            return best;
+        }
+        function nannyCatchTarget(t) {
+            if (!t || t.dead || t.hp <= 0) return;
+            // нож у цели — няню можно «уколоть» при касании
+            if (t.hasKnife && dist(t, nanny) < 48) {
+                nanny.hp = 0;
+                nanny.dead = true;
+                if (knife && knife.heldBy === t) {
+                    knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
+                    if (knife.killsLeft <= 0) dropCustomKnife();
+                }
+                return;
+            }
+            if ((t.invuln || 0) > 0) return;
+            t.hp = 0;
+            t.dead = true;
+            t.hasStick = false;
+            t.hasKnife = false;
+            if (knife && knife.heldBy === t) dropCustomKnife();
+            if (t === player) {
+                playerDead = true;
+                finishCustom(false);
+            }
+        }
+
         if (!(nanny.stun > 0)) {
-            const dx = player.x - nanny.x, dy = player.y - nanny.y;
-            const len = Math.hypot(dx, dy) || 1;
-            const spd = nanny.speed;
-            moveEntity(nanny, (dx / len) * spd, (dy / len) * spd);
-            if (Math.hypot(player.x - nanny.x, player.y - nanny.y) > 8) {
-                const side = Math.sin(chasePulse * 3) > 0 ? 1 : -1;
-                moveEntity(nanny, (-dy / len) * spd * 0.4 * side, (dx / len) * spd * 0.4 * side);
+            // тот же умный ИИ, что в догонялках/пакмане
+            const prey = nearestNannyPrey();
+            if (prey) {
+                // временно подменяем «цель chase», чтобы smartMove работал
+                const prevHunt = nanny._huntTarget;
+                nanny._huntTarget = prey;
+                // предсказание + BFS
+                if (prey._px == null) { prey._px = prey.x; prey._py = prey.y; }
+                const tvx = prey.x - prey._px, tvy = prey.y - prey._py;
+                prey._px = prey.x; prey._py = prey.y;
+                const dd = dist(nanny, prey);
+                const eta = Math.min(18, Math.max(5, dd / 4));
+                let px = prey.x + tvx * eta, py = prey.y + tvy * eta;
+                const pSpd = (player && player.speed) ? player.speed : 6;
+                const base = Math.max(nanny.speed, pSpd * 0.9);
+                let boost = 1 + (dd < 150 ? 0.25 : 0) + (dd < 70 ? 0.25 : 0);
+                smartMoveToward(nanny, px, py, base * boost);
+                nanny._huntTarget = prevHunt;
             }
         }
-        if (player.hasKnife && dist(player, nanny) < 48) {
-            nanny.hp = 0;
-            nanny.dead = true;
-            if (knife.heldBy === player) {
-                knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
-                if (knife.killsLeft <= 0) dropCustomKnife();
+
+        // игрок бьёт няню палкой/ножом (как раньше)
+        if (player && !player.dead && player.hp > 0) {
+            if (player.hasKnife && dist(player, nanny) < 48) {
+                nanny.hp = 0;
+                nanny.dead = true;
+                if (knife.heldBy === player) {
+                    knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
+                    if (knife.killsLeft <= 0) dropCustomKnife();
+                }
             }
-        }
-        if (player.hasStick && !player.hasKnife && player.swing > 9 && player.hitCooldown <= 0) {
-            const tip = stickTip(player);
-            if (dist(tip, nanny) < (player.hitRadius || 40) + 10) {
-                nanny.hp -= player.damage || 3;
-                nanny.stun = 40;
-                player.hitCooldown = player.attackCooldown || 15;
-                player.swing = 0;
-                moveEntity(nanny, Math.cos(player.angle) * 22, Math.sin(player.angle) * 22);
-                if (nanny.hp <= 0) {
-                    nanny.hp = 0;
-                    nanny.dead = true;
+            if (player.hasStick && !player.hasKnife && player.swing > 9 && player.hitCooldown <= 0) {
+                const tip = stickTip(player);
+                if (dist(tip, nanny) < (player.hitRadius || 40) + 10) {
+                    nanny.hp -= player.damage || 3;
+                    nanny.stun = 40;
+                    player.hitCooldown = player.attackCooldown || 15;
+                    player.swing = 0;
+                    moveEntity(nanny, Math.cos(player.angle) * 22, Math.sin(player.angle) * 22);
+                    if (nanny.hp <= 0) {
+                        nanny.hp = 0;
+                        nanny.dead = true;
+                    }
                 }
             }
         }
-        if (!nanny.dead && nanny.hp > 0 && dist(player, nanny) < CATCH_RADIUS && player.invuln <= 0) {
-            if (!(player.hasKnife && dist(player, nanny) < 48)) {
-                player.hp = 0;
-                player.dead = true;
-                playerDead = true;
-                finishCustom(false);
-                return;
+
+        // касание — ловит ЛЮБУЮ ближайшую жертву (и героев тоже)
+        if (!nanny.dead && nanny.hp > 0) {
+            for (const t of nannyPreyList()) {
+                if (dist(nanny, t) < CATCH_RADIUS) {
+                    nannyCatchTarget(t);
+                    if (gameOver) return;
+                    break;
+                }
             }
         }
     }
@@ -1886,20 +2384,21 @@ function drawEditorScreen() {
     const nSt = (editorLevel.sticks || []).length;
     const nKn = (editorLevel.knives || []).length;
     const nHero = (editorLevel.npcs || []).length;
-    const modeTag = editorLevel.playMode === 'team' ? '⚔️ бой' : '🥕 сбор';
+    const modeTag = playModeMeta(editorLevel.playMode).label;
     const alliesN = (editorLevel.npcs || []).filter(n => n.team === 'ally').length;
     const enemiesN = (editorLevel.npcs || []).filter(n => n.team !== 'ally').length;
     ctx.fillText(editorLevel.name + ' · ' + modeTag +
-        (editorLevel.playMode === 'team'
+        (normalizePlayMode(editorLevel.playMode) === 'team'
             ? (' · 🔵' + alliesN + ' 🔴' + enemiesN)
-            : (' · 🎯' + editorLevel.goalCarrots)) +
+            : (normalizePlayMode(editorLevel.playMode) === 'chase'
+                ? (' · 🎯' + editorLevel.goalCarrots) : '')) +
         ' · 🧱' + editorLevel.walls.length +
         (nHero ? ' · 👥' + nHero : '') +
         (nSt ? ' · 🪵' + nSt : '') +
         (nKn ? ' · 🔪' + nKn : ''), 150, 58);
 
     drawButton(ED_BTN_BACK, '← МЕНЮ', '#333', '#ffcc00', '#ffcc00');
-    if (editorLevel.playMode !== 'team') {
+    if (normalizePlayMode(editorLevel.playMode) === 'chase') {
         drawButton(ED_BTN_GOAL_M, '−', '#222', '#4deeea', '#4deeea');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 14px Arial';
@@ -1907,10 +2406,11 @@ function drawEditorScreen() {
         ctx.fillText('🎯' + editorLevel.goalCarrots, 815, 44);
         drawButton(ED_BTN_GOAL_P, '+', '#222', '#4deeea', '#4deeea');
     } else {
-        ctx.fillStyle = '#ff8a80';
-        ctx.font = 'bold 13px Arial';
+        var mm = playModeMeta(editorLevel.playMode);
+        ctx.fillStyle = mm.color || '#ff8a80';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('⚔️ БОЙ', 815, 44);
+        ctx.fillText(mm.short.toUpperCase(), 815, 44);
     }
 
     for (const t of ED_TOOLS) {
@@ -1921,9 +2421,10 @@ function drawEditorScreen() {
     drawButton(ED_BTN_SAVE, '💾', '#1565c0', '#64b5f6', '#fff');
     drawButton(ED_BTN_LOAD, '📂', '#6a1b9a', '#ce93d8', '#fff');
     drawButton(ED_BTN_CLEAR, 'ОЧИСТИТЬ', '#5d4037', '#ffab91', '#fff');
-    const teamModeOn = editorLevel.playMode === 'team';
-    drawButton(ED_BTN_PLAYMODE, teamModeOn ? '⚔️ БОЙ' : '🥕 СБОР',
-        teamModeOn ? '#b71c1c' : '#1b5e20', teamModeOn ? '#ff8a80' : '#81c784', '#fff');
+    const pmEd = normalizePlayMode(editorLevel.playMode);
+    const teamModeOn = pmEd === 'team';
+    const metaEd = playModeMeta(pmEd);
+    drawButton(ED_BTN_PLAYMODE, metaEd.label, metaEd.color || '#333', '#ffcc00', '#fff');
     if (teamModeOn) {
         const allyOn = editorNpcTeam === 'ally';
         drawButton(ED_BTN_TEAM, allyOn ? '🔵 СОЮЗ' : '🔴 ВРАГ',
@@ -2049,24 +2550,23 @@ function handleEditorClick(mx, my) {
     if (hitBtn(ED_BTN_BACK, mx, my)) { goModeSelect(); return; }
     if (hitBtn(ED_BTN_CLEAR, mx, my)) { clearEditorLevel(); return; }
     if (hitBtn(ED_BTN_PLAYMODE, mx, my)) {
-        editorLevel.playMode = editorLevel.playMode === 'team' ? 'collect' : 'team';
-        showEditorMsg(editorLevel.playMode === 'team'
-            ? '⚔️ Командный бой: ставь союзников 🔵 и врагов 🔴'
-            : '🥕 Режим сбора морковок');
+        editorLevel.playMode = cyclePlayMode(editorLevel.playMode);
+        var mclick = playModeMeta(editorLevel.playMode);
+        showEditorMsg(mclick.label + ' — ' + mclick.tip);
         return;
     }
-    if (editorLevel.playMode === 'team' && hitBtn(ED_BTN_TEAM, mx, my)) {
+    if (normalizePlayMode(editorLevel.playMode) === 'team' && hitBtn(ED_BTN_TEAM, mx, my)) {
         editorNpcTeam = editorNpcTeam === 'ally' ? 'enemy' : 'ally';
         showEditorMsg(editorNpcTeam === 'ally' ? '🔵 Ставим СОЮЗНИКОВ' : '🔴 Ставим ВРАГОВ');
         return;
     }
     if (hitBtn(ED_BTN_GOAL_M, mx, my)) {
-        if (editorLevel.playMode === 'team') return;
+        if (normalizePlayMode(editorLevel.playMode) !== 'chase') return;
         editorLevel.goalCarrots = Math.max(1, (editorLevel.goalCarrots || 5) - 1);
         return;
     }
     if (hitBtn(ED_BTN_GOAL_P, mx, my)) {
-        if (editorLevel.playMode === 'team') return;
+        if (normalizePlayMode(editorLevel.playMode) !== 'chase') return;
         editorLevel.goalCarrots = Math.min(99, (editorLevel.goalCarrots || 5) + 1);
         return;
     }
@@ -2273,6 +2773,447 @@ function startChaseGame(charCfg) {
     gameplayStart();
     document.getElementById('hint').textContent =
         '🥕 Гонка до ' + CARROTS_TO_WIN + ' (★' + CARROTS_LEGEND + ')! Друзья тоже собирают | WASD | Shift | Esc | Q — выйти';
+}
+
+
+/** Лабиринт для режима Пакман (Смешарики): # стена, . путь, o энергетик, P игрок, N няня, A союзник */
+function buildPacMaze() {
+    // Большой лабиринт БЕЗ ТУПИКОВ (только петли) — почти весь экран
+    // # стена  . путь  o энергетик  P игрок  N няня  A союзник
+    // каждый коридор — петля (degree ≥ 2), тупиков нет
+    const MAP = [
+        '#############################', // верх
+        '#o.........................o#',
+        '#.#...#.#...#.#...#.#...#.#.#',
+        '#...........................#',
+        '#.....#...#.#...#.#...#.....#',
+        '#...........................#',
+        '#.#.#...#.#...#.#...#.#...#.#',
+        '#...........................#',
+        '#.#...#.#...#.#...#.#...#.#.#',
+        '#...........................#',
+        '#..A#.#...#.#.N.#.#...#.#A..#', // няня
+        '#...........................#',
+        '#.#.#...#.#...#.#...#.#...#.#',
+        '#...........................#',
+        '#.#...#.#...#.#...#.#...#.#.#',
+        '#...........................#',
+        '#.....#...#.#...#.#...#.....#',
+        '#...........................#',
+        '#.#.#...#.#...#.#...#.#...#.#',
+        '#o............P............o#', // игрок
+        '#############################' // низ
+    ];
+    const COLS = 29;
+    for (let i = 0; i < MAP.length; i++) {
+        if (MAP[i].length < COLS) MAP[i] = MAP[i] + '#'.repeat(COLS - MAP[i].length);
+        else if (MAP[i].length > COLS) MAP[i] = MAP[i].slice(0, COLS);
+    }
+    const ROWS = MAP.length;
+    // клетка максимально большая, maze почти на весь 900×600
+    const TILE = Math.max(20, Math.min(
+        Math.floor((900 - 12) / COLS),
+        Math.floor((600 - 12) / ROWS)
+    ));
+    const mazeW = COLS * TILE;
+    const mazeH = ROWS * TILE;
+    const ox = Math.floor((900 - mazeW) / 2);
+    const oy = Math.floor((600 - mazeH) / 2);
+    pacWalls = [];
+    pacOpenSpots = [];
+    pacPlayerSpawns = [];
+    pacNannySpawns = [];
+    pacDotSpots = [];
+    const allySpawns = [];
+
+    // карта стен 0/1 — потом сольём в длинные стены (не «кубики»)
+    const solid = [];
+    for (let r = 0; r < ROWS; r++) {
+        solid[r] = [];
+        for (let c = 0; c < COLS; c++) {
+            const ch = MAP[r][c];
+            const x = ox + c * TILE;
+            const y = oy + r * TILE;
+            const cx = x + TILE / 2;
+            const cy = y + TILE / 2;
+            if (ch === '#') {
+                solid[r][c] = 1;
+            } else {
+                solid[r][c] = 0;
+                const spot = { x: cx, y: cy, r: r, c: c };
+                pacOpenSpots.push(spot);
+                if (ch === 'P') pacPlayerSpawns.push(spot);
+                else if (ch === 'N') pacNannySpawns.push(spot);
+                else if (ch === 'A') allySpawns.push(spot);
+                if (ch === '.' || ch === 'o' || ch === 'P' || ch === 'A') {
+                    pacDotSpots.push({ x: cx, y: cy, power: ch === 'o' });
+                }
+            }
+        }
+    }
+    // Сливаем стены в длинные прямоугольники — гладкие коридоры, без «кубиков»
+    pacWalls = mergeMazeWallRects(solid, ROWS, COLS, ox, oy, TILE);
+    // запасные точки
+    if (!pacPlayerSpawns.length && pacOpenSpots.length) {
+        // широкий коридор снизу/сверху — не угол
+        pacPlayerSpawns.push(pickWidestOpenSpot(pacOpenSpots) || pacOpenSpots[pacOpenSpots.length - 1]);
+    }
+    if (!pacNannySpawns.length && pacOpenSpots.length) pacNannySpawns.push(pacOpenSpots[Math.floor(pacOpenSpots.length / 2)]);
+    // союзники: A + свободные клетки
+    pacAllySpawns = allySpawns.length ? allySpawns : pacOpenSpots.slice(2, 6);
+    // стены вокруг лабиринта — нельзя убежать за maze
+    pacWalls.push({ x: 0, y: 0, w: 900, h: oy });
+    pacWalls.push({ x: 0, y: oy + mazeH, w: 900, h: 600 - (oy + mazeH) });
+    pacWalls.push({ x: 0, y: oy, w: ox, h: mazeH });
+    pacWalls.push({ x: ox + mazeW, y: oy, w: 900 - (ox + mazeW), h: mazeH });
+    // кэш для unstick
+    pacMazeMeta = { ox: ox, oy: oy, TILE: TILE, ROWS: ROWS, COLS: COLS, solid: solid };
+    return { ox, oy, TILE, ROWS, COLS };
+}
+let pacAllySpawns = [];
+let pacMazeMeta = null;
+
+/** Слить сетку стен в длинные rect — без отдельных кубиков */
+function mergeMazeWallRects(solid, ROWS, COLS, ox, oy, TILE) {
+    const used = [];
+    for (let r = 0; r < ROWS; r++) {
+        used[r] = [];
+        for (let c = 0; c < COLS; c++) used[r][c] = false;
+    }
+    const out = [];
+    // горизонтальные полосы
+    for (let r = 0; r < ROWS; r++) {
+        let c = 0;
+        while (c < COLS) {
+            if (!solid[r][c] || used[r][c]) { c++; continue; }
+            let c2 = c;
+            while (c2 < COLS && solid[r][c2]) c2++;
+            // насколько вниз тянется такой же прямоугольник
+            let r2 = r + 1;
+            while (r2 < ROWS) {
+                let ok = true;
+                for (let cc = c; cc < c2; cc++) {
+                    if (!solid[r2][cc] || used[r2][cc]) { ok = false; break; }
+                }
+                if (!ok) break;
+                r2++;
+            }
+            for (let rr = r; rr < r2; rr++) {
+                for (let cc = c; cc < c2; cc++) used[rr][cc] = true;
+            }
+            // inset чуть меньше, чем раньше — коридоры шире, не застреваешь
+            const inset = 0.5;
+            out.push({
+                x: ox + c * TILE + inset,
+                y: oy + r * TILE + inset,
+                w: (c2 - c) * TILE - inset * 2,
+                h: (r2 - r) * TILE - inset * 2
+            });
+            c = c2;
+        }
+    }
+    return out;
+}
+
+/** Клетка с наибольшим «воздухом» вокруг (для безопасного спавна) */
+function pickWidestOpenSpot(spots) {
+    if (!spots || !spots.length) return null;
+    let best = spots[0], bestScore = -1;
+    for (let i = 0; i < spots.length; i++) {
+        const s = spots[i];
+        let free = 0;
+        const step = 18;
+        const dirs = [[step,0],[-step,0],[0,step],[0,-step],[step,step],[-step,step],[step,-step],[-step,-step]];
+        for (let d = 0; d < dirs.length; d++) {
+            if (!circleHitsWall(s.x + dirs[d][0], s.y + dirs[d][1], 6, pacWalls)) free++;
+        }
+        // бонус нижним/центральным открытым рядам
+        const score = free * 10 - Math.abs(s.y - 480) * 0.02;
+        if (score > bestScore) { bestScore = score; best = s; }
+    }
+    return best;
+}
+
+function pickPacSpot(list, fallback) {
+    // рандом по списку (если есть), иначе по fallback
+    if (list && list.length) return list[Math.floor(Math.random() * list.length)];
+    if (fallback && fallback.length) return fallback[Math.floor(Math.random() * fallback.length)];
+    return { x: 450, y: 480 };
+}
+
+/** Список безопасных клеток лабиринта (не в стене) */
+function pacSafeSpots(radius) {
+    const r = radius == null ? 6 : radius;
+    const walls = pacWalls && pacWalls.length ? pacWalls : activeWalls();
+    const out = [];
+    const spots = pacOpenSpots || [];
+    for (let i = 0; i < spots.length; i++) {
+        const s = spots[i];
+        if (!circleHitsWall(s.x, s.y, r, walls)) out.push(s);
+    }
+    return out.length ? out : spots.slice();
+}
+
+/**
+ * Рандомный спавн: безопасная клетка, далеко от already[]
+ * minDist — минимальная дистанция до уже занятых
+ */
+function randomPacSpawn(already, minDist, radius) {
+    const safe = pacSafeSpots(radius == null ? 6 : radius);
+    const used = already || [];
+    const md = minDist == null ? 100 : minDist;
+    let pool = [];
+    for (let i = 0; i < safe.length; i++) {
+        const s = safe[i];
+        let ok = true;
+        for (let j = 0; j < used.length; j++) {
+            if (Math.hypot(s.x - used[j].x, s.y - used[j].y) < md) { ok = false; break; }
+        }
+        if (ok) pool.push(s);
+    }
+    if (!pool.length) pool = safe;
+    if (!pool.length) return { x: 450, y: 400 };
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/** Если персонаж застрял в стене — вытолкнуть в ближайшую свободную клетку */
+function unstickFromWalls(ent) {
+    if (!ent || gameMode !== 'pac') return false;
+    const r = ent.radius || 8;
+    if (!circleHitsWall(ent.x, ent.y, r, activeWalls())) return false;
+    // ищем ближайшую открытую точку
+    let best = null, bestD = Infinity;
+    const spots = pacOpenSpots || [];
+    for (let i = 0; i < spots.length; i++) {
+        const s = spots[i];
+        if (circleHitsWall(s.x, s.y, r, activeWalls())) continue;
+        const d = Math.hypot(s.x - ent.x, s.y - ent.y);
+        if (d < bestD) { bestD = d; best = s; }
+    }
+    if (best) {
+        ent.x = best.x;
+        ent.y = best.y;
+        return true;
+    }
+    // микро-сдвиги
+    const tryOff = [12, -12, 20, -20, 28, -28];
+    for (let i = 0; i < tryOff.length; i++) {
+        for (let j = 0; j < tryOff.length; j++) {
+            const nx = ent.x + tryOff[i], ny = ent.y + tryOff[j];
+            if (canMove(nx, ny, r)) {
+                ent.x = nx; ent.y = ny;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function ensureClearPacSpawn(ent) {
+    if (!ent) return;
+    // уменьшаем радиус под коридор
+    ent.radius = Math.min(ent.radius || 8, 6);
+    if (circleHitsWall(ent.x, ent.y, ent.radius, activeWalls())) {
+        unstickFromWalls(ent);
+    }
+    // если всё ещё плохо — широкий слот
+    if (circleHitsWall(ent.x, ent.y, ent.radius, activeWalls())) {
+        const s = pickWidestOpenSpot(pacOpenSpots);
+        if (s) { ent.x = s.x; ent.y = s.y; }
+    }
+}
+
+function drawPacMazeWalls() {
+    if (!pacWalls || !pacWalls.length) return;
+    for (const w of pacWalls) {
+        ctx.fillStyle = '#1520c8';
+        roundRect(w.x, w.y, w.w, w.h, 4);
+        ctx.fill();
+        ctx.strokeStyle = '#4d6aff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    // рамка лабиринта
+    ctx.strokeStyle = '#6688ff';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(FIELD.minX - 4, FIELD.minY - 4, FIELD.maxX - FIELD.minX + 8, FIELD.maxY - FIELD.minY + 8);
+}
+
+/** Режим 5: Пакман — герои ИЛИ игра за няню-призрака */
+function startPacGame(charCfg) {
+    let cfg = charCfg;
+    pacPlayAsGhost = !!(cfg && cfg.id === 'robonanny');
+    if (!pacPlayAsGhost && (!cfg || PAC_HERO_IDS.indexOf(cfg.id) < 0)) {
+        cfg = CHARACTERS.find(c => c.id === 'krosh') || charCfg;
+        pacPlayAsGhost = false;
+    }
+
+    const nannyCfg = CHARACTERS.find(c => c.id === 'robonanny');
+    npcs = [];
+    pacman = null;
+
+    if (pacPlayAsGhost) {
+        // === Ты — НЯНЯ-ПРИЗРАК ===
+        buildPlayerFromCfg(nannyCfg);
+        player.hp = 1;
+        player.hpMax = 1;
+        player.carrots = 0;
+        player.dead = false;
+        player.isPacmanRole = false;
+        player.isGhost = true;
+        player.lives = 3;
+        player.livesMax = 3;
+        player.invuln = 0;
+        player.displayName = 'Няня-призрак';
+        player.speed = PAC_SPEED_NANNY;
+        player._baseSpeed = PAC_SPEED_NANNY;
+        nanny = player; // та же сущность
+        nanny.isGhost = true;
+        nanny._huntTarget = null;
+        nanny._huntSticky = 0;
+        nanny._baseSpeed = PAC_SPEED_NANNY;
+        // все 3 героя — AI
+        for (let i = 0; i < PAC_HERO_IDS.length; i++) {
+            const c = CHARACTERS.find(x => x.id === PAC_HERO_IDS[i]);
+            if (!c) continue;
+            const ally = makeFighter({
+                name: c.id, img: c.img, displayName: c.name,
+                speed: PAC_SPEED_ALLY, hp: 1, damage: 0, size: 46, ai: true,
+                drawStyle: c.drawStyle || null, carrots: 0
+            });
+            ally.isPacmanRole = true;
+            ally.lives = 3; ally.livesMax = 3; ally.invuln = 0;
+            ally._zoneX = null; ally._baseSpeed = PAC_SPEED_ALLY;
+            npcs.push(ally);
+        }
+    } else {
+        // === Ты — пакман-герой ===
+        buildPlayerFromCfg(cfg);
+        player.hp = 1;
+        player.hpMax = 1;
+        player.carrots = 0;
+        player.dead = false;
+        player.isPacmanRole = true;
+        player.isGhost = false;
+        player.lives = 3;
+        player.livesMax = 3;
+        player.invuln = 0;
+        player.size = Math.min(player.size || 64, 48);
+
+        nanny = makeFighter({
+            name: 'robonanny',
+            img: 'robonanny',
+            displayName: 'Няня-призрак',
+            speed: PAC_SPEED_NANNY,
+            radius: 10, hp: 999, damage: 0, hitRadius: 40, size: 58,
+            ai: true,
+            drawStyle: nannyCfg && nannyCfg.drawStyle || null
+        });
+        nanny.isGhost = true;
+        nanny._huntTarget = null;
+        nanny._huntSticky = 0;
+        nanny._baseSpeed = PAC_SPEED_NANNY;
+
+        for (let i = 0; i < PAC_HERO_IDS.length; i++) {
+            const id = PAC_HERO_IDS[i];
+            if (id === cfg.id) continue;
+            const c = CHARACTERS.find(x => x.id === id);
+            if (!c) continue;
+            const ally = makeFighter({
+                name: c.id, img: c.img, displayName: c.name,
+                speed: PAC_SPEED_ALLY, hp: 1, damage: 0, size: 46, ai: true,
+                drawStyle: c.drawStyle || null, carrots: 0
+            });
+            ally.isPacmanRole = true;
+            ally.lives = 3; ally.livesMax = 3; ally.invuln = 0;
+            ally._zoneX = null; ally._baseSpeed = PAC_SPEED_ALLY;
+            npcs.push(ally);
+        }
+    }
+
+    knife = {
+        onGround: false, x: 0, y: 0, heldBy: null, spawnCD: 99999, pulse: 0,
+        holdTimer: 0, holdMax: 0, killsLeft: 0
+    };
+
+    // === Лабиринт ===
+    buildPacMaze();
+    player.radius = 6;
+    player.size = pacPlayAsGhost ? 34 : 32;
+    if (pacPlayAsGhost) {
+        player.speed = PAC_SPEED_NANNY;
+        player._baseSpeed = PAC_SPEED_NANNY;
+    } else {
+        player.speed = PAC_SPEED_PLAYER;
+        player._baseSpeed = PAC_SPEED_PLAYER;
+    }
+    if (nanny && nanny !== player) {
+        nanny.radius = 6;
+        nanny.size = 34;
+        nanny.speed = PAC_SPEED_NANNY;
+        nanny._baseSpeed = PAC_SPEED_NANNY;
+    }
+    for (const n of npcs) {
+        if (!n) continue;
+        n.radius = 6;
+        n.size = 30;
+        n.speed = PAC_SPEED_ALLY;
+        n._baseSpeed = PAC_SPEED_ALLY;
+    }
+
+    // РАНДОМ-спавн
+    const used = [];
+    const pSpot = randomPacSpawn(used, 0, 6);
+    player.x = pSpot.x; player.y = pSpot.y;
+    ensureClearPacSpawn(player);
+    used.push({ x: player.x, y: player.y });
+
+    if (nanny && nanny !== player) {
+        const nSpot = randomPacSpawn(used, 160, 6);
+        nanny.x = nSpot.x; nanny.y = nSpot.y;
+        ensureClearPacSpawn(nanny);
+        used.push({ x: nanny.x, y: nanny.y });
+    }
+    for (const n of npcs) {
+        if (!n) continue;
+        const spot = randomPacSpawn(used, 90, 6);
+        n.x = spot.x; n.y = spot.y;
+        ensureClearPacSpawn(n);
+        used.push({ x: n.x, y: n.y });
+    }
+
+    // точки-морковки по всему лабиринту
+    carrots = [];
+    carrotsCollected = 0;
+    carrotSpawnCD = 20; // респавн точек — цель 100 🥕
+    chaseCaught = false;
+    chasePulse = 0;
+    nannyPowerT = 0;
+    nannyEatenFlash = 0;
+    if (nanny) { nanny.scared = false; nanny.invuln = 0; }
+    for (let i = 0; i < pacDotSpots.length; i++) {
+        const d = pacDotSpots[i];
+        // не класть прямо на старт няни
+        if (nanny && Math.hypot(d.x - nanny.x, d.y - nanny.y) < 28) continue;
+        carrots.push({
+            x: d.x, y: d.y,
+            pulse: Math.random() * Math.PI * 2,
+            taken: false,
+            power: !!d.power
+        });
+    }
+    paused = false;
+    gameOver = false;
+    gameWon = false;
+    playerDead = false;
+    showExitDialog = false;
+    deathOrder = [];
+    finalRanking = null;
+    screen = 'game';
+    gameplayStart();
+    document.getElementById('hint').textContent = pacPlayAsGhost
+        ? '👻 Ты НЯНЯ! Лови 3 героев (у них 3❤) · золотая 🥕 делает тебя синей! | WASD | R'
+        : '🟡 ПАКМАН: 3❤ · золотая 🥕 = синяя няня · 100 🥕 | WASD | Shift | R';
 }
 
 /** Режим 3: Голя — выбранный персонаж начинает водящим, кого коснулся — тот стал голей */
@@ -2537,10 +3478,13 @@ function fighterRankEntry(ent) {
 /** Все, кто может собирать морковь (не няня) */
 function carrotCollectors() {
     const list = [];
-    if (player && !player.dead && player.hp > 0 && !playerDead) list.push(player);
+    // призрак не ест 🥕 (кроме что золотую едят герои)
+    if (player && !player.dead && player.hp > 0 && !playerDead && !player.isGhost && !pacPlayAsGhost) {
+        list.push(player);
+    }
     if (npcs) {
         for (const n of npcs) {
-            if (n && !n.dead && n.hp > 0) list.push(n);
+            if (n && !n.dead && n.hp > 0 && n.isPacmanRole) list.push(n);
         }
     }
     if (pacman && !pacman.dead && pacman.hp > 0) list.push(pacman);
@@ -2650,17 +3594,22 @@ function finishChase(won, winnerEnt) {
     const winner = winnerEnt || (won ? player : null);
     gameWon = !!(won && winner && player && winner === player);
     playerDead = !!(player && (player.dead || player.hp <= 0));
-    chaseCaught = !won && playerDead;
-    // синхронизируем счёт игрока для UI
+    chaseCaught = !won && playerDead && !pacPlayAsGhost;
     if (player) carrotsCollected = player.carrots || 0;
     buildChaseRanking(winner);
     const wName = finalRanking && finalRanking.first
         ? finalRanking.first.displayName
         : '???';
     const wCar = finalRanking && finalRanking.first ? finalRanking.first.carrots : 0;
-    document.getElementById('hint').textContent = won
-        ? '🥕 1 место: ' + wName + ' (' + wCar + ' 🥕)! Enter — заново | R — выбор'
-        : 'Няня поймала! Места по моркови | Enter — заново | R — выбор';
+    if (pacPlayAsGhost) {
+        document.getElementById('hint').textContent = gameWon
+            ? '👻 Няня победила! Все герои пойманы | Enter — заново | R — выбор'
+            : 'Герои спаслись / няню съели | Enter — заново | R — выбор';
+    } else {
+        document.getElementById('hint').textContent = won
+            ? '🥕 1 место: ' + wName + ' (' + wCar + ' 🥕)! Enter — заново | R — выбор'
+            : 'Няня поймала! Места по моркови | Enter — заново | R — выбор';
+    }
 }
 
 function clampToField(ent) {
@@ -2678,6 +3627,7 @@ function circleHitsWall(x, y, r, walls) {
 }
 function activeWalls() {
     if (gameMode === 'custom' && customLevel) return customLevel.walls;
+    if (gameMode === 'pac' && pacWalls && pacWalls.length) return pacWalls;
     return null;
 }
 function canMove(x, y, r) {
@@ -2883,96 +3833,629 @@ function updateAI(ent) {
 }
 
 // ——— Режим 2: AI ———
-/** Все (кроме игрока) убегают от няни и собирают морковь */
+/**
+ * Умный союзник (Пин / Ёжик / Крош):
+ * — BFS-путь по лабиринту
+ * — убегает от няни ЗАРАНЕЕ и в сторону, где есть выход
+ * — выбирает БЕЗОПАСНУЮ морковку (не ту, что рядом с няней)
+ * — не толпится: разные «предпочтительные» зоны
+ */
 function fleeFromNanny(ent, speedMult = 1) {
-    if (!nanny || ent === nanny || ent.hp <= 0 || ent.dead) return;
-    const d = dist(ent, nanny);
-    const danger = d < 200;
-    if (danger) {
-        // бежать от няни
-        const dx = ent.x - nanny.x;
-        const dy = ent.y - nanny.y;
-        const len = Math.hypot(dx, dy) || 1;
-        ent.fleeAngle = (ent.fleeAngle || 0) + (Math.random() - 0.5) * 0.15;
-        const nx = dx / len + Math.cos(ent.fleeAngle) * 0.35;
-        const ny = dy / len + Math.sin(ent.fleeAngle) * 0.35;
-        const nlen = Math.hypot(nx, ny) || 1;
-        const panic = d < 90 ? 1.35 : 1.1;
-        moveEntity(ent, (nx / nlen) * ent.speed * speedMult * panic, (ny / nlen) * ent.speed * speedMult * panic);
-    } else {
-        // бегут к ближайшей морковке (Крош, Лосяш, Пин, Ёжик, Лунтик, Пакман…)
-        const carrot = nearestCarrot(ent);
-        if (carrot) {
-            const dx = carrot.x - ent.x;
-            const dy = carrot.y - ent.y;
-            const len = Math.hypot(dx, dy) || 1;
-            const greed = 0.85 + Math.random() * 0.2;
-            moveEntity(ent, (dx / len) * ent.speed * speedMult * greed, (dy / len) * ent.speed * speedMult * greed);
-        } else {
-            ent.wander = (ent.wander || 0) + 0.04;
-            if (Math.random() < 0.02) ent.wander = Math.random() * Math.PI * 2;
-            moveEntity(ent, Math.cos(ent.wander) * ent.speed * 0.55, Math.sin(ent.wander) * ent.speed * 0.55);
+    if (!ent || ent.hp <= 0 || ent.dead) return;
+    const dN = nanny ? dist(ent, nanny) : 9999;
+    const spd = (ent.speed || 5) * speedMult;
+
+    // --- ОПАСНО: бежим умно ---
+    const dangerR = gameMode === 'pac' ? 170 : 200;
+    const panicR = gameMode === 'pac' ? 95 : 90;
+    if (nanny && dN < dangerR) {
+        // точка побега: от няни + немного вбок (не в стену)
+        const ax = ent.x - nanny.x;
+        const ay = ent.y - nanny.y;
+        const al = Math.hypot(ax, ay) || 1;
+        // перпендикуляр для «среза» в коридоре
+        const side = (ent._fleeSide != null) ? ent._fleeSide : (Math.random() < 0.5 ? 1 : -1);
+        ent._fleeSide = side;
+        let fx = ent.x + (ax / al) * 140 + (-ay / al) * 70 * side;
+        let fy = ent.y + (ay / al) * 140 + (ax / al) * 70 * side;
+        // если предсказанная точка в стене — чисто от няни
+        if (!canMove(fx, fy, ent.radius || 8)) {
+            fx = ent.x + (ax / al) * 160;
+            fy = ent.y + (ay / al) * 160;
         }
+        // рядом с няней — паника: быстрее
+        const panic = dN < panicR ? 1.45 : 1.18;
+        smartMoveToward(ent, fx, fy, spd * panic);
+        // если почти зажали — рывок в любой свободный проход
+        if (dN < 55) {
+            const step = 28;
+            const dirs = [[step,0],[-step,0],[0,step],[0,-step],[step,step],[-step,step],[step,-step],[-step,-step]];
+            let best = null, bestAway = -1;
+            for (let i = 0; i < dirs.length; i++) {
+                const nx = ent.x + dirs[i][0], ny = ent.y + dirs[i][1];
+                if (!canMove(nx, ny, ent.radius || 8)) continue;
+                const away = Math.hypot(nx - nanny.x, ny - nanny.y);
+                if (away > bestAway) { bestAway = away; best = { x: nx, y: ny }; }
+            }
+            if (best) smartMoveToward(ent, best.x, best.y, spd * 1.5);
+        }
+        return;
     }
+
+    // --- БЕЗОПАСНО: умный сбор 🥕 ---
+    const carrot = smartSafeCarrot(ent);
+    if (carrot) {
+        // липкость к выбранной морковке, чтобы не дёргались
+        if (!ent._carrotT || ent._carrotT <= 0 || !ent._carrotGoal || ent._carrotGoal.taken) {
+            ent._carrotGoal = carrot;
+            ent._carrotT = 40 + Math.floor(Math.random() * 30);
+        } else {
+            ent._carrotT--;
+        }
+        const g = ent._carrotGoal || carrot;
+        smartMoveToward(ent, g.x, g.y, spd * 1.05);
+        return;
+    }
+
+    // --- нет морковок: патруль / к игроку не лезем, гуляем по maze ---
+    if (!ent._patrol || ent._patrolT <= 0) {
+        if (pacOpenSpots && pacOpenSpots.length) {
+            ent._patrol = pacOpenSpots[Math.floor(Math.random() * pacOpenSpots.length)];
+        } else {
+            ent._patrol = randomFieldPos(60);
+        }
+        ent._patrolT = 50 + Math.floor(Math.random() * 40);
+    } else {
+        ent._patrolT--;
+    }
+    smartMoveToward(ent, ent._patrol.x, ent._patrol.y, spd * 0.85);
+}
+
+/** Безопасная морковка: далеко от няни, не занята другим союзником */
+function smartSafeCarrot(ent) {
+    if (!carrots || !carrots.length) return null;
+    let best = null, bestScore = -Infinity;
+    // «личная» зона — чтобы Пин и Ёжик не бежали в одну точку
+    const preferX = ent._zoneX != null ? ent._zoneX : (ent.x);
+    const preferY = ent._zoneY != null ? ent._zoneY : (ent.y);
+
+    for (let i = 0; i < carrots.length; i++) {
+        const c = carrots[i];
+        if (!c || c.taken) continue;
+        const dMe = dist(ent, c);
+        let score = 500 - dMe;
+        // бонус энергетику
+        if (c.power) score += 40;
+        // штраф, если няня близко к морковке
+        if (nanny) {
+            const dN = Math.hypot(c.x - nanny.x, c.y - nanny.y);
+            if (dN < 70) score -= 400;
+            else if (dN < 120) score -= 120;
+            else score += Math.min(80, dN * 0.15);
+        }
+        // не толпиться: если другой NPC ближе к этой 🥕 — штраф
+        if (npcs) {
+            for (let j = 0; j < npcs.length; j++) {
+                const o = npcs[j];
+                if (!o || o === ent || o.dead) continue;
+                if (dist(o, c) + 8 < dMe) score -= 55;
+            }
+        }
+        // предпочитать «свою» половину карты
+        const zd = Math.hypot(c.x - preferX, c.y - preferY);
+        score -= zd * 0.08;
+        if (score > bestScore) { bestScore = score; best = c; }
+    }
+    return best;
 }
 
 /** Все живые жертвы няни: игрок, NPC, пакман */
 function chaseVictims() {
     const list = [];
-    if (player && !player.dead && player.hp > 0 && !playerDead) list.push(player);
+    // жертвы няни = пакман-герои (не призрак)
+    if (player && !player.dead && player.hp > 0 && !playerDead && !player.isGhost && !pacPlayAsGhost) {
+        list.push(player);
+    }
     if (npcs) {
         for (const n of npcs) {
-            if (n && !n.dead && n.hp > 0) list.push(n);
+            if (n && !n.dead && n.hp > 0 && (n.isPacmanRole || !n.isGhost)) list.push(n);
         }
     }
     if (pacman && !pacman.dead && pacman.hp > 0) list.push(pacman);
     return list;
 }
 
-/** Ближайшая живая жертва для няни */
+/** Ближайшая / умная жертва (для UI «Няня — за …») */
 function nearestChaseVictim() {
+    return smartNannyTarget();
+}
+
+/**
+ * Выбор жертвы: равно на ВСЕХ (ты / Пин / Ёжик / Крош).
+ * Ближайший + лидер по 🥕 + тупик. Без «только игрок».
+ */
+function smartNannyTarget() {
     if (!nanny) return null;
-    let best = null, bestD = Infinity;
-    for (const v of chaseVictims()) {
-        const d = dist(nanny, v);
-        if (d < bestD) {
-            bestD = d;
-            best = v;
+    const victims = chaseVictims();
+    if (!victims.length) return null;
+
+    // липкость к текущей цели, но переключаемся, если кто-то заметно ближе
+    if (nanny._huntTarget && victims.indexOf(nanny._huntTarget) >= 0) {
+        nanny._huntSticky = (nanny._huntSticky || 0) - 1;
+        if (nanny._huntSticky > 0) {
+            const dCur = dist(nanny, nanny._huntTarget);
+            let nearest = null, nd = Infinity;
+            for (let i = 0; i < victims.length; i++) {
+                const dd = dist(nanny, victims[i]);
+                if (dd < nd) { nd = dd; nearest = victims[i]; }
+            }
+            // если другой ближе на ~45% — меняем цель
+            if (nearest && nearest !== nanny._huntTarget && nd < dCur * 0.55) {
+                nanny._huntTarget = nearest;
+                nanny._huntSticky = 35;
+                return nearest;
+            }
+            return nanny._huntTarget;
         }
     }
+
+    let best = null, bestScore = -Infinity;
+    for (let i = 0; i < victims.length; i++) {
+        const v = victims[i];
+        const d = dist(nanny, v);
+        let score = 600 - d * 1.6;
+        // лидер по моркови интереснее
+        score += (v.carrots || 0) * 2;
+        // в тупике — добить
+        if (gameMode === 'pac' && typeof mazeTrapBonus === 'function') {
+            score += mazeTrapBonus(v) * 22;
+        }
+        if (d < 70) score += 60;
+        // все равны: без бонуса «только игрок»
+        if (score > bestScore) { bestScore = score; best = v; }
+    }
+    nanny._huntTarget = best;
+    nanny._huntSticky = 40 + Math.floor(Math.random() * 35);
     return best;
 }
 
-/** Няня бежит за ближайшей жертвой (не только за игроком) */
-function updateNannyChase() {
-    if (!nanny || gameOver) return;
-    const target = nearestChaseVictim();
-    if (!target) return;
-    const dx = target.x - nanny.x;
-    const dy = target.y - nanny.y;
+/** Сколько выходов закрыто (0..4) — для сжатия в тупике */
+function mazeTrapBonus(ent) {
+    if (!ent) return 0;
+    const step = 24;
+    const dirs = [[step, 0], [-step, 0], [0, step], [0, -step]];
+    let blocked = 0;
+    for (let i = 0; i < dirs.length; i++) {
+        if (!canMove(ent.x + dirs[i][0], ent.y + dirs[i][1], ent.radius || 8)) blocked++;
+    }
+    return blocked;
+}
+
+/**
+ * BFS-поиск пути по сетке с учётом стен.
+ * Возвращает точку-следующий шаг {x,y} или null.
+ */
+function nannyPathStep(sx, sy, tx, ty, radius) {
+    const G = 20; // шаг сетки
+    const maxN = 900;
+    const qx = [], qy = [];
+    const came = new Map();
+    const k = (x, y) => x + ',' + y;
+    const sgx = Math.round(sx / G) * G;
+    const sgy = Math.round(sy / G) * G;
+    const tgx = Math.round(tx / G) * G;
+    const tgy = Math.round(ty / G) * G;
+    const sk = k(sgx, sgy);
+    qx.push(sgx); qy.push(sgy);
+    came.set(sk, null);
+    let head = 0;
+    const dirs = [[G,0],[-G,0],[0,G],[0,-G],[G,G],[G,-G],[-G,G],[-G,-G]];
+    let found = null;
+    while (head < qx.length && head < maxN) {
+        const cx = qx[head], cy = qy[head];
+        head++;
+        if (Math.abs(cx - tgx) <= G && Math.abs(cy - tgy) <= G) {
+            found = k(cx, cy);
+            break;
+        }
+        for (let i = 0; i < dirs.length; i++) {
+            // диагонали только если обе оси свободны (без срезания углов)
+            const dx = dirs[i][0], dy = dirs[i][1];
+            const nx = cx + dx, ny = cy + dy;
+            const nk = k(nx, ny);
+            if (came.has(nk)) continue;
+            if (!canMove(nx, ny, radius)) continue;
+            if (dx && dy) {
+                if (!canMove(cx + dx, cy, radius) || !canMove(cx, cy + dy, radius)) continue;
+            }
+            came.set(nk, k(cx, cy));
+            qx.push(nx); qy.push(ny);
+        }
+    }
+    if (!found) {
+        // не нашли — идём к ближайшей достигнутой клетке к цели
+        let bestK = null, bestD = Infinity;
+        came.forEach(function (_, key) {
+            const p = key.split(',');
+            const x = +p[0], y = +p[1];
+            const d = (x - tgx) * (x - tgx) + (y - tgy) * (y - tgy);
+            if (d < bestD) { bestD = d; bestK = key; }
+        });
+        found = bestK;
+    }
+    if (!found || found === sk) return null;
+    // разматываем путь: нужен ПЕРВЫЙ шаг от старта
+    let cur = found;
+    let prev = came.get(cur);
+    while (prev && prev !== sk) {
+        cur = prev;
+        prev = came.get(cur);
+    }
+    const parts = cur.split(',');
+    return { x: +parts[0], y: +parts[1] };
+}
+
+/**
+ * Умное движение: BFS-путь + обход + анти-застревание
+ */
+function smartMoveToward(ent, tx, ty, speed) {
+    if (!ent || speed <= 0) return false;
+    const r = ent.radius || 10;
+    const ox = ent.x, oy = ent.y;
+
+    // 1) BFS waypoint
+    const step = nannyPathStep(ox, oy, tx, ty, r);
+    let aimX = tx, aimY = ty;
+    if (step) {
+        aimX = step.x;
+        aimY = step.y;
+    }
+
+    const dx = aimX - ox, dy = aimY - oy;
     const len = Math.hypot(dx, dy) || 1;
-    // ускоряется, если близко
-    const boost = len < 150 ? 1.12 : 1.0;
-    moveEntity(nanny, (dx / len) * nanny.speed * boost, (dy / len) * nanny.speed * boost);
+    // кандидаты направлений
+    const cands = [
+        { x: (dx / len) * speed, y: (dy / len) * speed },
+        { x: Math.sign(dx) * speed, y: 0 },
+        { x: 0, y: Math.sign(dy) * speed },
+        { x: (dx / len) * speed * 0.7, y: (dy / len) * speed * 0.7 }
+    ];
+    // если застряла — пробуем все 8
+    if ((ent._stuck || 0) > 8) {
+        for (let a = 0; a < 8; a++) {
+            const ang = a * Math.PI / 4 + (ent._unstuckAng || 0);
+            cands.push({ x: Math.cos(ang) * speed, y: Math.sin(ang) * speed });
+        }
+    }
+
+    let best = null, bestScore = -Infinity;
+    for (let i = 0; i < cands.length; i++) {
+        const o = cands[i];
+        let nx = ox, ny = oy;
+        if (canMove(ox + o.x, oy, r)) nx = ox + o.x;
+        if (canMove(nx, oy + o.y, r)) ny = oy + o.y;
+        if (nx === ox && ny === oy) continue;
+        const toGoal = Math.hypot(tx - nx, ty - ny);
+        const toAim = Math.hypot(aimX - nx, aimY - ny);
+        const moved = Math.hypot(nx - ox, ny - oy);
+        const score = -toGoal * 1.0 - toAim * 0.35 + moved * 0.5;
+        if (score > bestScore) {
+            bestScore = score;
+            best = { x: nx, y: ny };
+        }
+    }
+
+    if (!best) {
+        ent._stuck = (ent._stuck || 0) + 3;
+        ent._unstuckAng = Math.random() * Math.PI * 2;
+        const a = ent._unstuckAng;
+        return moveEntity(ent, Math.cos(a) * speed, Math.sin(a) * speed);
+    }
+
+    const movedDist = Math.hypot(best.x - ox, best.y - oy);
+    if (movedDist < speed * 0.15) ent._stuck = (ent._stuck || 0) + 1;
+    else ent._stuck = Math.max(0, (ent._stuck || 0) - 2);
+
+    ent.x = best.x;
+    ent.y = best.y;
+    ent.angle = Math.atan2(best.y - oy, best.x - ox);
+    clampToField(ent);
+    return true;
+}
+
+/**
+ * Умная няня v3 (ещё злее):
+ * — BFS + двойной шаг (быстрее думает в лабиринте)
+ * — перехват пути жертвы (cut-off)
+ * — если жертва в тупике — сжимает
+ * — скорость ≈ / чуть выше игрока вблизи
+ * — не отпускает игрока
+ */
+function isNannyScared() {
+    return gameMode === 'pac' && nannyPowerT > 0 && nanny && !nanny.dead;
+}
+
+/** Золотая морковь: няня синеет, её можно съесть */
+function activatePacPower(eater) {
+    if (gameMode !== 'pac') return;
+    nannyPowerT = PAC_POWER_FRAMES;
+    if (nanny) {
+        nanny.scared = true;
+        nanny.speed = PAC_SPEED_NANNY_SCARED;
+    }
+    const who = eater === player ? 'Ты' : ((eater && eater.displayName) || 'Герой');
+    document.getElementById('hint').textContent =
+        '💙 ' + who + ' съел золотую 🥕! Няня СИНЯЯ — догони и съешь!';
+}
+
+/** Съесть синюю няню (респавн в центре / N-точке) */
+function eatScaredNanny(eater) {
+    if (!nanny || !isNannyScared() || !eater || eater.dead) return false;
+    if (dist(eater, nanny) >= CATCH_RADIUS + 6) return false;
+
+    eater.carrots = (eater.carrots || 0) + PAC_EAT_NANNY_SCORE;
+    if (eater === player) carrotsCollected = eater.carrots;
+
+    // респавн няни
+    const used = [{ x: eater.x, y: eater.y }];
+    if (player && eater !== player) used.push({ x: player.x, y: player.y });
+    const s = (typeof randomPacSpawn === 'function')
+        ? randomPacSpawn(used, 140, 6)
+        : (pacNannySpawns && pacNannySpawns[0]) || { x: 450, y: 300 };
+    nanny.x = s.x;
+    nanny.y = s.y;
+    if (typeof ensureClearPacSpawn === 'function') ensureClearPacSpawn(nanny);
+    nanny.invuln = 60;
+    nannyPowerT = 0;
+    nanny.scared = false;
+    nanny.speed = nanny._baseSpeed || PAC_SPEED_NANNY;
+    nannyEatenFlash = 70;
+
+    const who = eater === player ? 'Ты' : ((eater && eater.displayName) || 'Герой');
+    document.getElementById('hint').textContent =
+        '😋 ' + who + ' съел няню! +' + PAC_EAT_NANNY_SCORE + ' 🥕';
+    return true;
+}
+
+function updateNannyChase() {
+    if (!nanny || gameOver || nanny.dead) return;
+
+    // тик режима силы
+    if (gameMode === 'pac' && nannyPowerT > 0) {
+        nannyPowerT--;
+        if (nannyPowerT <= 0) {
+            nanny.scared = false;
+            nanny.speed = nanny._baseSpeed || PAC_SPEED_NANNY;
+            if (pacPlayAsGhost && player) {
+                player.speed = PAC_SPEED_NANNY;
+                player._baseSpeed = PAC_SPEED_NANNY;
+            }
+            document.getElementById('hint').textContent = pacPlayAsGhost
+                ? '⚠ Сила кончилась! Ты снова опасная няня — лови героев!'
+                : '⚠ Сила кончилась! Няня снова опасна · собирай 🥕';
+        } else if (pacPlayAsGhost && player) {
+            // игрок-няня синяя — медленнее, управление у игрока
+            player.speed = PAC_SPEED_NANNY_SCARED;
+            player._baseSpeed = PAC_SPEED_NANNY_SCARED;
+        }
+    }
+    if (nannyEatenFlash > 0) nannyEatenFlash--;
+    if ((nanny.invuln || 0) > 0) nanny.invuln--;
+
+    // игрок сам управляет няней — AI не двигает
+    if (pacPlayAsGhost || nanny === player) {
+        return;
+    }
+
+    // СИНЯЯ: убегает от ближайшего героя
+    if (isNannyScared()) {
+        const hunters = chaseVictims();
+        let threat = null, bestD = Infinity;
+        for (let i = 0; i < hunters.length; i++) {
+            const h = hunters[i];
+            const dd = dist(nanny, h);
+            if (dd < bestD) { bestD = dd; threat = h; }
+        }
+        if (threat) {
+            const ax = nanny.x - threat.x, ay = nanny.y - threat.y;
+            const al = Math.hypot(ax, ay) || 1;
+            const fx = nanny.x + (ax / al) * 120;
+            const fy = nanny.y + (ay / al) * 120;
+            const spd = PAC_SPEED_NANNY_SCARED;
+            nanny.speed = spd;
+            smartMoveToward(nanny, fx, fy, spd);
+        }
+        return;
+    }
+
+    const target = smartNannyTarget();
+    if (!target) return;
+
+    if (target._px == null) { target._px = target.x; target._py = target.y; }
+    const tvx = target.x - target._px;
+    const tvy = target.y - target._py;
+    target._px = target.x;
+    target._py = target.y;
+    target._vx = tvx;
+    target._vy = tvy;
+
+    const d = dist(nanny, target);
+
+    // перехват: дальше смотрим, куда бежит
+    const eta = Math.min(28, Math.max(8, d / Math.max(2.2, nanny.speed)));
+    let predX = target.x + tvx * eta;
+    let predY = target.y + tvy * eta;
+    if (Math.hypot(tvx, tvy) < 0.3) {
+        predX = target.x;
+        predY = target.y;
+    }
+    // cut-off: точка ВПЕРЕДИ жертвы + смещение к выходу из коридора
+    if (Math.hypot(tvx, tvy) > 0.5) {
+        const vl = Math.hypot(tvx, tvy) || 1;
+        predX = target.x + (tvx / vl) * Math.min(120, d * 0.55);
+        predY = target.y + (tvy / vl) * Math.min(120, d * 0.55);
+    }
+    if (!canMove(predX, predY, target.radius || 8)) {
+        // запасной перехват — 4 стороны вокруг жертвы
+        const offs = [[40,0],[-40,0],[0,40],[0,-40],[55,55],[-55,55]];
+        let ok = false;
+        for (let i = 0; i < offs.length; i++) {
+            const px = target.x + offs[i][0], py = target.y + offs[i][1];
+            if (canMove(px, py, nanny.radius || 8)) {
+                // предпочитаем точку ближе к няне (отрезать)
+                if (!ok || Math.hypot(px - nanny.x, py - nanny.y) < Math.hypot(predX - nanny.x, predY - nanny.y)) {
+                    predX = px; predY = py; ok = true;
+                }
+            }
+        }
+        if (!ok) { predX = target.x; predY = target.y; }
+    }
+
+    // тупик жертвы — идём прямо в морду
+    let trap = 0;
+    if (typeof mazeTrapBonus === 'function') trap = mazeTrapBonus(target);
+    if (trap >= 3) {
+        predX = target.x;
+        predY = target.y;
+    }
+
+    // База скорости: в пакмане — константа, не разгоняется до твоей
+    let base;
+    if (gameMode === 'pac') {
+        base = nanny._baseSpeed || PAC_SPEED_NANNY;
+    } else {
+        const pSpd = (player && player.speed) ? player.speed : 6.5;
+        base = Math.max(nanny._baseSpeed || nanny.speed || 4.2, pSpd * CHASE_SPEED_NANNY_MULT);
+    }
+
+    // лёгкий буст рядом — но няня НЕ обгоняет героев
+    let boost = 1.0;
+    if (d < 160) boost += 0.06;
+    if (d < 80) boost += 0.08;
+    if (d < 45) boost += 0.06;
+    if (trap >= 3) boost += 0.08;
+    if ((target.carrots || 0) >= 30) boost += 0.05;
+    // потолок: в пакмане не выше ~92% скорости героя
+    if (gameMode === 'pac') {
+        const cap = PAC_SPEED_PLAYER * 0.92;
+        boost = Math.min(boost, cap / base);
+    }
+
+    const spd = base * boost;
+    nanny.speed = base; // не накапливаем разгон
+
+    // один уверенный шаг + лёгкий дожим (без двойного «ракетного» шага)
+    smartMoveToward(nanny, predX, predY, spd);
+    if (d < 90) {
+        const dx = target.x - nanny.x, dy = target.y - nanny.y;
+        const len = Math.hypot(dx, dy) || 1;
+        moveEntity(nanny, (dx / len) * spd * 0.28, (dy / len) * spd * 0.28);
+    }
+}
+
+
+/**
+ * Удар няни по герою-пакману (ты / Пин / Ёжик / Крош).
+ * В режиме pac: 3 жизни, респавн. Иначе — выбывание как раньше.
+ * @returns true если цель окончательно выбыла
+ */
+function nannyHitHero(ent) {
+    if (!ent || !nanny || gameOver) return false;
+    if (ent.dead || ent.hp <= 0) return false;
+    if ((ent.invuln || 0) > 0) return false;
+    if (dist(ent, nanny) >= CATCH_RADIUS) return false;
+
+    // Синяя няня — её едят герои, а не наоборот
+    if (isNannyScared()) {
+        eatScaredNanny(ent);
+        return false;
+    }
+    if ((nanny.invuln || 0) > 0) return false;
+
+    // Режим Пакман: 3 жизни
+    if (gameMode === 'pac' && (ent.livesMax > 0 || ent.isPacmanRole)) {
+        ent.lives = Math.max(0, (ent.lives != null ? ent.lives : 3) - 1);
+        if (ent.lives > 0) {
+            ent.hp = 1;
+            ent.dead = false;
+            ent.invuln = 100; // ~1.6 сек неуязвимости
+            // респавн в случайной клетке, подальше от няни
+            const used = nanny ? [{ x: nanny.x, y: nanny.y }] : [];
+            if (player && ent !== player) used.push({ x: player.x, y: player.y });
+            const s = (typeof randomPacSpawn === 'function')
+                ? randomPacSpawn(used, 120, 6)
+                : randomFieldPos(60);
+            ent.x = s.x; ent.y = s.y;
+            if (typeof ensureClearPacSpawn === 'function') ensureClearPacSpawn(ent);
+            if (ent === player) {
+                playerDead = false;
+                document.getElementById('hint').textContent =
+                    '❤ Осталось жизней: ' + ent.lives + ' · убегай от няни!';
+            }
+            return false;
+        }
+        // жизни кончились
+        ent.hp = 0;
+        ent.dead = true;
+        ent.lives = 0;
+        if (ent === player) {
+            playerDead = true;
+            // если ты был няней — герои победили
+            finishChase(false, null);
+        }
+        return true;
+    }
+
+    // Догонялки / прочее: один удар = выбыл
+    ent.hp = 0;
+    ent.dead = true;
+    if (ent === player) {
+        playerDead = true;
+        finishChase(false, null);
+    }
+    return true;
+}
+
+/** Победа няни: поймать всех героев */
+function checkPacGhostWin() {
+    if (!pacPlayAsGhost || gameOver || gameMode !== 'pac') return;
+    const alive = (npcs || []).filter(function (n) { return n && !n.dead && n.hp > 0; });
+    if (alive.length === 0) finishChase(true, player);
 }
 
 function updateChaseNPCs() {
-    for (const n of npcs) {
-        if (n.hp <= 0 || n.dead) continue;
-        fleeFromNanny(n, 1);
-        // если няня догнала NPC — «выбывает» (убежал с поля)
-        if (dist(n, nanny) < CATCH_RADIUS) {
-            n.hp = 0;
-            n.dead = true;
+    // раздаём «зоны» Пину/Ёжику/Крошу — чтобы не бежали стаей
+    if (npcs && npcs.length) {
+        for (let i = 0; i < npcs.length; i++) {
+            const n = npcs[i];
+            if (!n || n._zoneX != null) continue;
+            if (i === 0) { n._zoneX = FIELD.minX + 120; n._zoneY = FIELD.minY + 100; }
+            else if (i === 1) { n._zoneX = FIELD.maxX - 120; n._zoneY = FIELD.maxY - 100; }
+            else { n._zoneX = FIELD.maxX - 120; n._zoneY = FIELD.minY + 100; }
+            if (gameMode === 'pac') n.speed = n._baseSpeed || PAC_SPEED_ALLY;
         }
     }
-    if (pacman && !pacman.dead && pacman.hp > 0) {
-        fleeFromNanny(pacman, 1.05);
-        pacman.mouth = (pacman.mouth + 0.25) % (Math.PI * 2);
-        if (dist(pacman, nanny) < CATCH_RADIUS) {
-            pacman.hp = 0;
-            pacman.dead = true;
+    for (const n of npcs) {
+        if (!n || n.dead || n.hp <= 0) continue;
+        if (n.invuln > 0) n.invuln--;
+        if (gameMode === 'pac') n.speed = n._baseSpeed || PAC_SPEED_ALLY;
+        // синяя няня — союзники тоже гонятся съесть
+        if (isNannyScared() && nanny) {
+            smartMoveToward(n, nanny.x, nanny.y, (n.speed || PAC_SPEED_ALLY) * 1.1);
+        } else {
+            fleeFromNanny(n, 1.0);
         }
+        nannyHitHero(n);
+    }
+    if (pacman && !pacman.dead && pacman.hp > 0) {
+        if (pacman.invuln > 0) pacman.invuln--;
+        if (isNannyScared() && nanny) {
+            smartMoveToward(pacman, nanny.x, nanny.y, pacman.speed * 1.05);
+        } else {
+            fleeFromNanny(pacman, 1.12);
+        }
+        pacman.mouth = (pacman.mouth + 0.25) % (Math.PI * 2);
+        nannyHitHero(pacman);
     }
 }
 
@@ -2980,35 +4463,41 @@ function updateCarrots() {
     if (gameOver) return;
     // подбор: игрок + все друзья (пин, крош, лосяш, пакман, лунтик, ёжик…)
     const collectors = carrotCollectors();
+    const pickR = gameMode === 'pac' ? 22 : CARROT_PICKUP_R;
     for (const c of carrots) {
         if (c.taken) continue;
         c.pulse += 0.1;
         for (const ent of collectors) {
             if (c.taken) break;
-            if (dist(ent, c) < CARROT_PICKUP_R) {
+            if (dist(ent, c) < pickR) {
                 c.taken = true;
-                ent.carrots = (ent.carrots || 0) + 1;
+                // золотая морковь: +2 🥕 и няня синеет
+                const add = (gameMode === 'pac' && c.power) ? 2 : 1;
+                ent.carrots = (ent.carrots || 0) + add;
                 if (ent === player) carrotsCollected = ent.carrots;
+                if (gameMode === 'pac' && c.power) activatePacPower(ent);
             }
         }
     }
     carrots = carrots.filter(c => !c.taken);
-    // спавн новых
-    if (carrots.length < MAX_CARROTS_ON_FIELD) {
+    // спавн новых (и в Пакмане тоже — нужно набрать 100)
+    const maxDots = gameMode === 'pac' ? 18 : MAX_CARROTS_ON_FIELD;
+    if (carrots.length < maxDots) {
         if (carrotSpawnCD > 0) carrotSpawnCD--;
         else {
-            spawnCarrot();
-            carrotSpawnCD = CARROT_RESPAWN_CD;
+            if (gameMode === 'pac') spawnPacCarrot();
+            else spawnCarrot();
+            carrotSpawnCD = gameMode === 'pac' ? 18 : CARROT_RESPAWN_CD;
         }
     }
-    // побеждает первый, кто набрал CARROTS_TO_WIN (10)
+    // побеждает первый, кто набрал 100 🥕
     for (const ent of collectors) {
         if ((ent.carrots || 0) >= CARROTS_TO_WIN) {
             finishChase(true, ent);
             return;
         }
     }
-    // легендарный счёт 90 — тоже мгновенная победа (на всякий)
+    // легендарный счёт
     for (const ent of collectors) {
         if ((ent.carrots || 0) >= CARROTS_LEGEND) {
             finishChase(true, ent);
@@ -3018,15 +4507,23 @@ function updateCarrots() {
 }
 
 function checkNannyCatch() {
-    if (!player || !nanny || playerDead || gameOver) return;
-    if (player.invuln > 0) return;
-    if (dist(player, nanny) < CATCH_RADIUS) {
-        player.hp = 0;
-        player.dead = true;
-        playerDead = true;
-        // игра заканчивается, места — по собранной моркови
-        finishChase(false, null);
+    if (!nanny || gameOver) return;
+    if (gameMode === 'pac' && pacPlayAsGhost) {
+        // ты — няня: ловишь героев-AI
+        for (let i = 0; i < (npcs || []).length; i++) {
+            const n = npcs[i];
+            if (n && !n.dead && n.hp > 0) nannyHitHero(n);
+        }
+        // победа: все герои выбыли
+        const alive = (npcs || []).filter(function (n) { return n && !n.dead && n.hp > 0; });
+        if (alive.length === 0 && !gameOver) {
+            finishChase(true, player);
+        }
+        return;
     }
+    if (!player) return;
+    if (playerDead && gameMode !== 'pac') return;
+    nannyHitHero(player);
 }
 
 function updatePlayer() {
@@ -3039,7 +4536,9 @@ function updatePlayer() {
     if (gameMode === 'battle' && isDown('Space')) trySwing(player);
     // свой уровень: удар палкой (Пробел), если подобрал
     if (gameMode === 'custom' && isDown('Space') && !player.hasKnife && (player.hasStick || isCustomTeamMode())) trySwing(player);
-    const spd = isDown('ShiftLeft') || isDown('ShiftRight') ? player.speed * 1.5 : player.speed;
+    const baseSpd = player._baseSpeed || player.speed;
+    const shiftMul = gameMode === 'pac' ? PAC_SHIFT_MULT : 1.5;
+    const spd = isDown('ShiftLeft') || isDown('ShiftRight') ? baseSpd * shiftMul : baseSpd;
     let dx = 0, dy = 0;
     if (isDown('ArrowLeft') || isDown('KeyA')) dx -= spd;
     if (isDown('ArrowRight') || isDown('KeyD')) dx += spd;
@@ -3096,6 +4595,26 @@ function checkGameEnd() {
 
 function hitBtn(btn, mx, my) {
     return mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h;
+}
+
+/** Подсказка смены трека поверх canvas */
+function drawMusicToast() {
+    if (musicToastT <= 0) return;
+    musicToastT--;
+    const a = Math.min(1, musicToastT / 30);
+    ctx.save();
+    ctx.globalAlpha = 0.85 * a + 0.15;
+    ctx.fillStyle = 'rgba(20,10,40,0.92)';
+    roundRect(200, 8, 500, 42, 12);
+    ctx.fill();
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(musicToastText || '🎵', 450, 36);
+    ctx.restore();
 }
 
 function canvasMouse(e) {
@@ -3164,6 +4683,7 @@ function setHintSelect() {
     const modeName = gameMode === 'chase' ? 'Догонялки 🥕'
         : gameMode === 'tag' ? 'Голя 🔴'
         : gameMode === 'race' ? 'Гонки 🏁'
+        : gameMode === 'pac' ? 'Пакман 🟡 (Пин/Крош/Ёжик + Няня)'
         : gameMode === 'custom'
             ? ((customLevel && customLevel.playMode === 'team') ? 'Командный бой ⚔️' : 'Свой уровень 🏗️')
         : 'Битва ⚔️';
@@ -3199,10 +4719,10 @@ function drawModeScreen() {
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 20px Arial';
-    ctx.fillText('Выбери режим · 1 / 2 / 3 / 4 / 5 или клик', 450, 88);
+    ctx.fillText('Выбери режим · 1–6 или клик', 450, 88);
     ctx.fillStyle = '#bbb';
     ctx.font = '13px Arial';
-    ctx.fillText('Потом герой → Enter. Режим 5 — создай свой уровень!', 450, 112);
+    ctx.fillText('Потом герой → Enter. Режим 5 — Пакман (Пин/Крош/Ёжик + Няня)!', 450, 112);
 
     drawButton(BTN_EXIT_SELECT, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
 
@@ -3244,12 +4764,25 @@ function drawModeScreen() {
         ['Водящий ловит всех', 'Меньше быть голей'],
         'rgba(120,30,140,0.55)', '#ce93d8', 'НАЖМИ 3', 2);
     drawModeCard(BTN_MODE_RACE, '🏁 ГОНКИ', 'Режим 4 · кто быстрее',
-        ['Беги к финишу!', 'Shift — ускорение · 5 гонщиков'],
+        ['Беги к финишу!', 'Shift — ускорение'],
         'rgba(230,120,20,0.6)', '#ffb74d', 'НАЖМИ 4', 3);
-    drawModeCard(BTN_MODE_EDITOR, '🏗️ СОЗДАТЬ УРОВЕНЬ', 'Режим 5 · редактор + режимы',
-        ['🥕 Сбор или ⚔️ командный бой', 'Союзники 🔵 vs враги 🔴 + оружие'],
-        'rgba(20,80,120,0.6)', '#4deeea', 'НАЖМИ 5', 4);
+    drawModeCard(BTN_MODE_PAC, '🟡 ПАКМАН', 'Режим 5 · лабиринт',
+        ['Пин/Крош/Ёжик или 👻Няня', 'Золотая 🥕 · 3 жизни'],
+        'rgba(255,193,7,0.45)', '#ffeb3b', 'НАЖМИ 5', 4);
+    drawModeCard(BTN_MODE_EDITOR, '🏗️ СОЗДАТЬ', 'Режим 6 · редактор',
+        ['Свой уровень', 'Режимы + стены'],
+        'rgba(20,80,120,0.6)', '#4deeea', 'НАЖМИ 6', 5);
 
+    // подсказка по музыке
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    roundRect(180, 555, 540, 32, 10);
+    ctx.fill();
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = '13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🎵 M — вкл/выкл · N — след. · B — пред. · треков: ' + musicTracks.length, 450, 576);
+
+    drawMusicToast();
     if (showExitDialog) drawExitDialog();
 }
 
@@ -3275,6 +4808,7 @@ function drawSelectScreen() {
     const modeTitle = gameMode === 'chase' ? 'ДОГОНЯЛКИ — ВЫБОР'
         : gameMode === 'tag' ? 'ГОЛЯ — ВЫБОР ВОДЯЩЕГО'
         : gameMode === 'race' ? 'ГОНКИ — ВЫБОР ГОНЩИКА'
+        : gameMode === 'pac' ? 'ПАКМАН — ГЕРОЙ ИЛИ НЯНЯ-ПРИЗРАК'
         : gameMode === 'custom' ? 'СВОЙ УРОВЕНЬ — ГЕРОЙ'
         : 'БИТВА — ВЫБОР';
     ctx.fillStyle = '#ffcc00';
@@ -3297,6 +4831,7 @@ function drawSelectScreen() {
     ctx.fillStyle = gameMode === 'chase' ? 'rgba(46,125,50,0.9)'
         : gameMode === 'tag' ? 'rgba(123,31,162,0.95)'
         : gameMode === 'race' ? 'rgba(230,120,20,0.95)'
+        : gameMode === 'pac' ? 'rgba(255,160,0,0.95)'
         : gameMode === 'custom' ? 'rgba(20,90,130,0.95)'
         : 'rgba(183,28,28,0.9)';
     roundRect(350, 130, 200, 32, 10);
@@ -3306,11 +4841,13 @@ function drawSelectScreen() {
     ctx.fillText(gameMode === 'chase' ? '🥕 Догонялки'
         : gameMode === 'tag' ? '🔴 Голя (салки)'
         : gameMode === 'race' ? '🏁 Гонки'
+        : gameMode === 'pac' ? '🟡 Пакман'
         : gameMode === 'custom' ? '🏗️ Свой уровень'
         : '⚔️ Битва', 450, 152);
 
     const cards = cardLayout();
-    CHARACTERS.forEach((ch, i) => {
+    const selectList = selectableCharacters();
+    selectList.forEach((ch, i) => {
         const c = cards[i];
         const selected = i === selectedIndex;
         const hovered = i === hoverIndex;
@@ -3354,7 +4891,7 @@ function drawSelectScreen() {
 
         ctx.fillStyle = ch.color;
         ctx.font = '9px Arial';
-        if (gameMode === 'chase' || gameMode === 'tag' || gameMode === 'custom' || gameMode === 'race') {
+        if (gameMode === 'chase' || gameMode === 'tag' || gameMode === 'custom' || gameMode === 'race' || gameMode === 'pac') {
             ctx.fillText('Скорость ' + ch.speed, cx, c.y + 162);
         } else {
             ctx.fillText('HP ' + ch.hp + ' · Урон ' + ch.damage, cx, c.y + 162);
@@ -3368,7 +4905,8 @@ function drawSelectScreen() {
         ctx.restore();
     });
 
-    const cur = CHARACTERS[selectedIndex];
+    const cur = selectList[selectedIndex] || selectList[0];
+    if (!cur) return;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     roundRect(160, 440, 580, 140, 14);
     ctx.fill();
@@ -3378,6 +4916,7 @@ function drawSelectScreen() {
     ctx.fillText(cur.name + (gameMode === 'chase' ? ' — БЕГИ ЗА 🥕!'
         : gameMode === 'tag' ? ' — СТАРТУЕТ ГОЛЕЙ!'
         : gameMode === 'race' ? ' — НА СТАРТ!'
+        : gameMode === 'pac' ? (cur.id === 'robonanny' ? ' — ПРИЗРАК! ЛОВИ!' : ' — ПАКМАН! ЕШЬ 🥕!')
         : gameMode === 'custom' ? ' — ПРОЙДИ УРОВЕНЬ!'
         : ' — В БОЙ!'), 450, 478);
     ctx.fillStyle = '#ffeeaa';
@@ -3391,6 +4930,12 @@ function drawSelectScreen() {
         ctx.fillText('Режим Голя: ты водящий ' + TAG_ROUND_SEC + ' сек. Кого коснёшься — тот станет голей', 450, 528);
     } else if (gameMode === 'race') {
         ctx.fillText('Гонки: беги вправо к финишу! Shift — ускорение. Скорость героя ' + cur.speed, 450, 528);
+    } else if (gameMode === 'pac') {
+        if (cur.id === 'robonanny') {
+            ctx.fillText('👻 Ты ПРИЗРАК-НЯНЯ! Лови Пина, Кроша и Ёжика (у них 3❤)', 450, 528);
+        } else {
+            ctx.fillText('Пакман: ешь 🥕 · золотая 🥕 → няня синяя · можно выбрать няню!', 450, 528);
+        }
     } else if (gameMode === 'custom') {
         const g = customLevel ? customLevel.goalCarrots : 5;
         ctx.fillText('Свой уровень: собери ' + g + ' 🥕, стены мешают, няня (если есть) ловит. Скорость ' + cur.speed, 450, 528);
@@ -3401,6 +4946,7 @@ function drawSelectScreen() {
     ctx.font = 'bold 18px Arial';
     ctx.fillText('Enter / клик — начать  ·  Esc — к режимам', 450, 558);
 
+    drawMusicToast();
     if (showExitDialog) drawExitDialog();
 }
 
@@ -3425,6 +4971,19 @@ function pickAt(mx, my) {
 
 // ——— Игровая отрисовка ———
 function drawField() {
+    if (gameMode === 'pac') {
+        // тёмный фон как в Пакмане
+        ctx.fillStyle = '#050510';
+        ctx.fillRect(0, 0, 900, 600);
+        ctx.fillStyle = '#0a0a28';
+        for (let i = 0; i < 18; i++) {
+            ctx.beginPath();
+            ctx.arc(40 + i * 50, 40 + (i % 4) * 120, 18, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        drawPacMazeWalls();
+        return;
+    }
     ctx.fillStyle = gameMode === 'chase' || gameMode === 'custom' ? '#c8e6c9'
         : gameMode === 'tag' ? '#e1bee7'
         : '#f4e8c0';
@@ -3464,6 +5023,49 @@ function drawField() {
 }
 
 function drawCarrot(c) {
+    // В режиме Пакман — вместо точек рисуем морковки (маленькие / power — крупнее)
+    if (gameMode === 'pac') {
+        const pulse = 1 + Math.sin(c.pulse) * 0.12;
+        const scale = (c.power ? 0.55 : 0.32) * pulse;
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.scale(scale, scale);
+        // свечение
+        ctx.fillStyle = c.power ? 'rgba(255,220,80,0.35)' : 'rgba(255,152,0,0.28)';
+        ctx.beginPath();
+        ctx.arc(0, 0, c.power ? 28 : 22, 0, Math.PI * 2);
+        ctx.fill();
+        // тело моркови
+        ctx.fillStyle = c.power ? '#ffc107' : '#ff6d00';
+        ctx.beginPath();
+        ctx.moveTo(0, 16);
+        ctx.quadraticCurveTo(11, 3, 7, -9);
+        ctx.lineTo(-7, -9);
+        ctx.quadraticCurveTo(-11, 3, 0, 16);
+        ctx.closePath();
+        ctx.fill();
+        // полоски
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(4, 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-3, 7); ctx.lineTo(3, 9); ctx.stroke();
+        // ботва
+        ctx.fillStyle = '#66bb6a';
+        ctx.beginPath();
+        ctx.moveTo(-3, -9);
+        ctx.quadraticCurveTo(-9, -20, -1, -24);
+        ctx.quadraticCurveTo(0, -14, 0, -9);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(3, -9);
+        ctx.quadraticCurveTo(9, -20, 1, -24);
+        ctx.quadraticCurveTo(0, -14, 0, -9);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        return;
+    }
     const s = 1 + Math.sin(c.pulse) * 0.12;
     ctx.save();
     ctx.translate(c.x, c.y);
@@ -3840,14 +5442,26 @@ function drawUIChase() {
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     ctx.fillRect(8, 8, 280, Math.min(panelH, 340));
 
-    ctx.fillStyle = '#ff9800';
+    ctx.fillStyle = gameMode === 'pac' ? '#ffeb3b' : '#ff9800';
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'left';
     const myCar = player ? (player.carrots || 0) : carrotsCollected;
-    ctx.fillText('🥕 Цель: ' + CARROTS_TO_WIN + '  (★' + CARROTS_LEGEND + ')', 16, 32);
+    if (gameMode === 'pac' && pacPlayAsGhost) {
+        ctx.fillText('👻 НЯНЯ · поймай всех героев', 16, 32);
+    } else {
+        ctx.fillText((gameMode === 'pac' ? '🟡 ПАКМАН  ' : '') + '🥕 Цель: ' + CARROTS_TO_WIN + '  (★' + CARROTS_LEGEND + ')', 16, 32);
+    }
     ctx.fillStyle = '#fff';
     ctx.font = '15px Arial';
-    ctx.fillText('Ты: ' + myCar + ' / ' + CARROTS_TO_WIN, 16, 54);
+    // жизни (режим Пакман — 3 у всех)
+    if (gameMode === 'pac' && player) {
+        const hearts = '❤'.repeat(Math.max(0, player.lives || 0)) + '♡'.repeat(Math.max(0, (player.livesMax || 3) - (player.lives || 0)));
+        ctx.fillStyle = '#ff5252';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('Ты ' + hearts + '  🥕 ' + myCar + '/' + CARROTS_TO_WIN, 16, 54);
+    } else {
+        ctx.fillText('Ты: ' + myCar + ' / ' + CARROTS_TO_WIN, 16, 54);
+    }
 
     // прогресс-бар игрока
     const barW = 250, barH = 10;
@@ -3864,7 +5478,7 @@ function drawUIChase() {
     let y = 92;
     ctx.font = 'bold 13px Arial';
     ctx.fillStyle = '#ffcc00';
-    ctx.fillText('МЕСТА (морковь)', 16, y);
+    ctx.fillText(gameMode === 'pac' ? 'МЕСТА · жизни' : 'МЕСТА (морковь)', 16, y);
     y += 18;
     ctx.font = '13px Arial';
     board.forEach((ent, i) => {
@@ -3873,7 +5487,10 @@ function drawUIChase() {
         const isMe = ent === player;
         const caught = ent.hp <= 0 || ent.dead;
         ctx.fillStyle = caught ? '#666' : (isMe ? '#4fc3f7' : '#eee');
-        const name = (ent.displayName || ent.name) + (isMe ? ' (ты)' : '') + (caught ? ' ✕' : '');
+        let name = (ent.displayName || ent.name) + (isMe ? ' (ты)' : '') + (caught ? ' ✕' : '');
+        if (gameMode === 'pac' && ent.livesMax > 0 && !caught) {
+            name += ' ❤' + (ent.lives || 0);
+        }
         ctx.fillText(medal + ' ' + name, 16, y);
         ctx.fillStyle = caught ? '#666' : '#ffab40';
         ctx.fillText((ent.carrots || 0) + ' 🥕', 210, y);
@@ -3897,15 +5514,33 @@ function drawUIChase() {
 
     drawButton(BTN_EXIT_GAME, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
 
-    // кто охотится
+    // кто охотится / синяя няня
     ctx.font = '14px Arial';
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#f44336';
-    const hunt = nearestChaseVictim();
-    const huntName = hunt
-        ? (hunt === player ? 'тебя' : (hunt.displayName || hunt.name || 'жертву'))
-        : '…';
-    ctx.fillText((nanny.displayName || 'Няня') + ' — за ' + huntName, 300, 70);
+    if (gameMode === 'pac' && isNannyScared()) {
+        const sec = Math.ceil(nannyPowerT / 60);
+        ctx.fillStyle = nannyPowerT < 90 ? '#fff' : '#42a5f5';
+        ctx.font = 'bold 15px Arial';
+        ctx.fillText('💙 Няня СИНЯЯ ' + sec + 'с — догони и съешь! +' + PAC_EAT_NANNY_SCORE + '🥕', 300, 70);
+    } else {
+        ctx.fillStyle = '#f44336';
+        const hunt = nearestChaseVictim();
+        const huntName = hunt
+            ? (hunt === player ? 'тебя' : (hunt.displayName || hunt.name || 'жертву'))
+            : '…';
+        ctx.fillText((gameMode === 'pac' ? '👻 ' : '') + (nanny.displayName || 'Няня') + ' — за ' + huntName, 300, 70);
+    }
+    // вспышка «съел няню»
+    if (nannyEatenFlash > 0) {
+        const a = Math.min(1, nannyEatenFlash / 40);
+        ctx.fillStyle = 'rgba(66,165,245,' + (0.55 * a) + ')';
+        roundRect(280, 200, 340, 70, 14);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 26px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('😋 СЪЕЛ НЯНЮ! +' + PAC_EAT_NANNY_SCORE + '🥕', 450, 245);
+    }
 }
 
 function drawUITag() {
@@ -4043,11 +5678,46 @@ function drawTagResults() {
 
 function drawUICustom() {
     ctx.fillStyle = 'rgba(0,0,0,0.65)';
-    ctx.fillRect(8, 8, 520, 108);
+    ctx.fillRect(8, 8, 520, 120);
+    var pmUi = getCustomPlayMode();
+    var metaUi = playModeMeta(pmUi);
     ctx.fillStyle = '#4deeea';
-    ctx.font = 'bold 20px Arial';
+    ctx.font = 'bold 18px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText('🏗️ ' + ((customLevel && customLevel.name) || 'Уровень'), 20, 32);
+    ctx.fillText('🏗️ ' + ((customLevel && customLevel.name) || 'Уровень') + ' · ' + metaUi.label, 20, 30);
+
+    if (pmUi === 'tag') {
+        drawUITag();
+        drawButton(BTN_EXIT_GAME, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+        return;
+    }
+    if (pmUi === 'race') {
+        var fx = (customLevel && customLevel._raceFinishX) || RACE_FINISH_X;
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 16px Arial';
+        if (raceCountdown > 0) ctx.fillText('Старт через ' + Math.ceil(raceCountdown / 60) + '…', 20, 56);
+        else if (player && player.finished) ctx.fillText('Финиш: ' + player.finishPlace + ' место', 20, 56);
+        else ctx.fillText('🏁 До финиша ~' + Math.max(0, Math.floor(fx - (player ? player.x : 0))) + 'px', 20, 56);
+        ctx.fillStyle = '#fff';
+        ctx.font = '13px Arial';
+        ctx.fillText('A/D — бег · Shift — ускорение', 20, 80);
+        drawButton(BTN_EXIT_GAME, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+        return;
+    }
+    if (pmUi === 'battle') {
+        var left = allCustomFighters().filter(function (f) {
+            return f !== player && (f.team || 'enemy') === 'enemy' && f.hp > 0 && !f.dead;
+        }).length;
+        ctx.fillStyle = '#ff8a80';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('⚔️ Врагов: ' + left, 20, 56);
+        var php = player ? Math.max(0, player.hp) + '/' + (player.hpMax || player.hp) : '0';
+        ctx.fillStyle = '#fff';
+        ctx.font = '13px Arial';
+        ctx.fillText('HP ' + php + ' · Пробел — удар', 20, 80);
+        drawButton(BTN_EXIT_GAME, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+        return;
+    }
 
     if (isCustomTeamMode()) {
         const a = countTeamAlive('ally');
@@ -4101,13 +5771,15 @@ function drawUICustom() {
 function drawUI() {
     if (gameMode === 'race') {
         drawRaceUI();
+        drawMusicToast();
         if (showExitDialog) drawExitDialog();
         return;
     }
-    if (gameMode === 'chase') drawUIChase();
+    if (gameMode === 'chase' || gameMode === 'pac') drawUIChase();
     else if (gameMode === 'tag') drawUITag();
     else if (gameMode === 'custom') drawUICustom();
     else drawUIBattle();
+    drawMusicToast();
 
     if (playerDead && !gameOver && gameMode === 'battle') {
         ctx.fillStyle = 'rgba(0,0,0,0.72)';
@@ -4125,8 +5797,8 @@ function drawUI() {
     }
 
     if (gameOver) {
-        if (gameMode === 'chase') drawChaseResults();
-        else if (gameMode === 'tag') drawTagResults();
+        if (gameMode === 'chase' || gameMode === 'pac') drawChaseResults();
+        else if (gameMode === 'tag' || (gameMode === 'custom' && getCustomPlayMode() === 'tag')) drawTagResults();
         else drawResultsScreen();
     } else if (paused && !showExitDialog) {
         ctx.fillStyle = 'rgba(255,220,0,0.9)';
@@ -4208,7 +5880,7 @@ function drawChaseResults() {
         const car = who.carrots || 0;
         let label = car + ' 🥕';
         if (car >= CARROTS_LEGEND) label += ' ★90';
-        else if (car >= CARROTS_TO_WIN) label += ' ✓10';
+        else if (car >= CARROTS_TO_WIN) label += ' ✓' + CARROTS_TO_WIN;
         ctx.fillText(label, 740, y + 5);
 
         if (who.img && images[who.img] && images[who.img].complete && images[who.img].naturalWidth) {
@@ -4240,9 +5912,29 @@ function drawGame() {
     }
     drawField();
     if (gameMode === 'custom') {
-        if (!isCustomTeamMode()) drawAllCarrots();
-        drawStickOnGround();
-        drawGroundKnives();
+        var pmD = getCustomPlayMode();
+        if (pmD === 'chase') drawAllCarrots();
+        if (pmD === 'race') {
+            var fxx = (customLevel && customLevel._raceFinishX) || RACE_FINISH_X;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,204,0,0.9)';
+            ctx.lineWidth = 6;
+            ctx.setLineDash([14, 10]);
+            ctx.beginPath();
+            ctx.moveTo(fxx, FIELD.minY);
+            ctx.lineTo(fxx, FIELD.maxY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏁 ФИНИШ', fxx, FIELD.minY + 22);
+            ctx.restore();
+        }
+        if (pmD === 'battle' || pmD === 'team' || pmD === 'chase') {
+            drawStickOnGround();
+            drawGroundKnives();
+        }
         function drawTeamRing(ent) {
             if (!isCustomTeamMode() || !ent) return;
             ctx.beginPath();
@@ -4277,11 +5969,66 @@ function drawGame() {
             if (player.hasKnife) drawKnifeHeld(player);
             else if (player.hasStick) drawStick(player);
         }
-    } else if (gameMode === 'chase') {
+    } else if (gameMode === 'chase' || gameMode === 'pac') {
         drawAllCarrots();
         for (const n of npcs) drawCharacter(n);
         if (pacman && !pacman.dead) drawPacman();
-        if (nanny) drawCharacter(nanny);
+        if (nanny && !(pacPlayAsGhost && nanny === player)) {
+            if (gameMode === 'pac') {
+                const scared = isNannyScared();
+                // мигание перед концом силы
+                const blink = scared && nannyPowerT < 90 && Math.floor(nannyPowerT / 8) % 2 === 0;
+                ctx.save();
+                // синяя подложка под няней
+                if (scared) {
+                    ctx.beginPath();
+                    ctx.arc(nanny.x, nanny.y, (nanny.size || 50) * 0.55, 0, Math.PI * 2);
+                    ctx.fillStyle = blink ? 'rgba(255,255,255,0.35)' : 'rgba(33,150,243,0.55)';
+                    ctx.fill();
+                }
+                ctx.globalAlpha = blink ? 0.4 : (scared ? 0.95 : 0.88);
+                drawCharacter(nanny);
+                ctx.globalAlpha = 1;
+                // ореол
+                ctx.beginPath();
+                ctx.arc(nanny.x, nanny.y, (nanny.size || 60) * 0.58, 0, Math.PI * 2);
+                if (scared) {
+                    ctx.strokeStyle = blink ? '#ffffff' : '#42a5f5';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    ctx.fillStyle = blink ? '#fff' : '#90caf9';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(blink ? 'Скоро…' : 'СИНЯЯ — ЕШЬ!', nanny.x, nanny.y + (nanny.size || 40) * 0.55 + 14);
+                } else {
+                    ctx.strokeStyle = 'rgba(255,80,80,0.65)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+                ctx.restore();
+            } else {
+                drawCharacter(nanny);
+            }
+        }
+        if (pacPlayAsGhost && player) {
+            // ореол призрака на тебе
+            ctx.save();
+            const scared = isNannyScared();
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, (player.size || 50) * 0.58, 0, Math.PI * 2);
+            ctx.strokeStyle = scared ? '#42a5f5' : 'rgba(255,80,80,0.85)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            if (scared) {
+                ctx.fillStyle = 'rgba(33,150,243,0.35)';
+                ctx.fill();
+                ctx.fillStyle = '#90caf9';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('ТЫ СИНЯЯ!', player.x, player.y + 28);
+            }
+            ctx.restore();
+        }
         drawCharacter(player);
     } else if (gameMode === 'tag') {
         for (const n of npcs) drawCharacter(n);
@@ -4315,11 +6062,21 @@ function updateGame() {
         return;
     }
 
-    if (gameMode === 'chase') {
+    if (gameMode === 'chase' || gameMode === 'pac') {
         chasePulse += 0.08;
         updatePlayer();
+        // не клинит в стенах лабиринта
+        if (gameMode === 'pac') {
+            if (player) unstickFromWalls(player);
+            if (nanny) unstickFromWalls(nanny);
+            if (npcs) for (let i = 0; i < npcs.length; i++) if (npcs[i]) unstickFromWalls(npcs[i]);
+        }
         updateNannyChase();
         updateChaseNPCs();
+        if (gameMode === 'pac') {
+            if (player) unstickFromWalls(player);
+            if (nanny) unstickFromWalls(nanny);
+        }
         updateCarrots();
         checkNannyCatch();
         return;
@@ -4376,7 +6133,7 @@ function goModeSelect() {
     wallDrag = null;
     levelsListOpen = false;
     document.getElementById('hint').textContent =
-        'Выбери режим: 1 — Битва | 2 — Догонялки | 3 — Голя | 4 — Гонки | 5 — Создать уровень';
+        'Выбери режим 1–6 | M — муз. · N — след. трек · B — пред. | Q — выйти';
 }
 
 function chooseMode(mode) {
@@ -4387,6 +6144,8 @@ function chooseMode(mode) {
     gameMode = mode;
     screen = 'select';
     showExitDialog = false;
+    selectedIndex = 0;
+    hoverIndex = -1;
     setHintSelect();
 }
 
@@ -4463,9 +6222,23 @@ document.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (e.code === 'Space') e.preventDefault();
 
-    // M — вкл/выкл фоновой музыки
+    // Музыка: M — mute (в редакторе: Shift+M), N/]/ — след., B/[, — пред.
     if (e.code === 'KeyM') {
-        toggleMusic();
+        if (screen === 'editor' && !e.shiftKey) {
+            // fallthrough: в редакторе M = режим уровня
+        } else {
+            toggleMusic();
+            return;
+        }
+    }
+    if (!showExitDialog && (e.code === 'KeyN' || e.code === 'BracketRight' || e.code === 'Period')) {
+        e.preventDefault();
+        nextMusicTrack(false);
+        return;
+    }
+    if (!showExitDialog && (e.code === 'KeyB' || e.code === 'BracketLeft' || e.code === 'Comma')) {
+        e.preventDefault();
+        prevMusicTrack();
         return;
     }
 
@@ -4489,7 +6262,8 @@ document.addEventListener('keydown', e => {
         if (e.code === 'Digit2' || e.code === 'Numpad2') { chooseMode('chase'); return; }
         if (e.code === 'Digit3' || e.code === 'Numpad3') { chooseMode('tag'); return; }
         if (e.code === 'Digit4' || e.code === 'Numpad4') { chooseMode('race'); return; }
-        if (e.code === 'Digit5' || e.code === 'Numpad5') { openEditor(); return; }
+        if (e.code === 'Digit5' || e.code === 'Numpad5') { chooseMode('pac'); return; }
+        if (e.code === 'Digit6' || e.code === 'Numpad6') { openEditor(); return; }
         if (e.code === 'Escape') { showExitDialog = true; return; }
         return;
     }
@@ -4540,11 +6314,11 @@ document.addEventListener('keydown', e => {
         if (e.code === 'KeyS') { saveCurrentLevel(); return; }
         if (e.code === 'Enter' || e.code === 'KeyP') { startCustomFromEditor(); return; }
         if (e.code === 'KeyM') {
-            editorLevel.playMode = editorLevel.playMode === 'team' ? 'collect' : 'team';
-            showEditorMsg(editorLevel.playMode === 'team' ? '⚔️ Командный бой' : '🥕 Сбор морковок');
+            editorLevel.playMode = cyclePlayMode(editorLevel.playMode);
+            showEditorMsg(playModeMeta(editorLevel.playMode).label);
             return;
         }
-        if (e.code === 'KeyT' && editorLevel.playMode === 'team') {
+        if (e.code === 'KeyT' && normalizePlayMode(editorLevel.playMode) === 'team') {
             editorNpcTeam = editorNpcTeam === 'ally' ? 'enemy' : 'ally';
             showEditorMsg(editorNpcTeam === 'ally' ? '🔵 Союзники' : '🔴 Враги');
             return;
@@ -4553,11 +6327,12 @@ document.addEventListener('keydown', e => {
     }
 
     if (screen === 'select') {
+        const selList = selectableCharacters();
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-            selectedIndex = (selectedIndex - 1 + CHARACTERS.length) % CHARACTERS.length;
+            selectedIndex = (selectedIndex - 1 + selList.length) % selList.length;
         }
         if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-            selectedIndex = (selectedIndex + 1) % CHARACTERS.length;
+            selectedIndex = (selectedIndex + 1) % selList.length;
         }
         if (e.code === 'KeyT') {
             pickRandomCharacter();
@@ -4567,7 +6342,7 @@ document.addEventListener('keydown', e => {
             return;
         }
         if (e.code === 'Enter' || e.code === 'Space') {
-            startGame(CHARACTERS[selectedIndex]);
+            startGame(selList[selectedIndex] || selList[0]);
         }
         if (e.code === 'Escape') {
             if (gameMode === 'custom') openEditor();
@@ -4651,6 +6426,10 @@ canvas.addEventListener('click', e => {
             chooseMode('race');
             return;
         }
+        if (hitBtn(BTN_MODE_PAC, mx, my)) {
+            chooseMode('pac');
+            return;
+        }
         if (hitBtn(BTN_MODE_EDITOR, mx, my)) {
             openEditor();
             return;
@@ -4682,7 +6461,8 @@ canvas.addEventListener('click', e => {
         const i = pickAt(mx, my);
         if (i >= 0) {
             selectedIndex = i;
-            startGame(CHARACTERS[selectedIndex]);
+            const list = selectableCharacters();
+            startGame(list[selectedIndex] || list[0]);
         }
         return;
     }

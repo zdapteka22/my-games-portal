@@ -163,7 +163,7 @@
       const t = i / Math.max(1, snake.length - 1);
       const g = Math.floor(180 + (1 - t) * 75);
       ctx.fillStyle = i === 0 ? "#b8ff6a" : `rgb(40,${g},70)`;
-      const pad = i === 0 ? 1 : 2;
+      const pad = i === 0 ? 4 : 5;
       roundRect(s.x * CELL + pad, s.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
       ctx.fill();
       if (i === 0) {
