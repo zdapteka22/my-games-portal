@@ -1,0 +1,80 @@
+name: Sync shared reviews
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pull cloud reviews into data/user-reviews.json
+        run: |
+          set -e
+          CFG="data/reviews-config.json"
+          URL=$(python3 -c "import json; print(json.load(open('$CFG')).get('sharedUrl',''))" 2>/dev/null || true)
+          if [ -z "$URL" ]; then
+            echo "No sharedUrl in config"
+            exit 0
+          fi
+          mkdir -p data
+          if [ ! -f data/user-reviews.json ]; then
+            echo '{"reviews":[]}' > data/user-reviews.json
+          fi
+          curl -fsSL "$URL" -o /tmp/cloud.json || echo '[]' > /tmp/cloud.json
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          cloud_path = Path("/tmp/cloud.json")
+          local_path = Path("data/user-reviews.json")
+          try:
+              cloud = json.loads(cloud_path.read_text(encoding="utf-8"))
+          except Exception:
+              cloud = []
+          if not isinstance(cloud, list):
+              cloud = []
+          try:
+              local = json.loads(local_path.read_text(encoding="utf-8"))
+          except Exception:
+              local = {"reviews": []}
+          if not isinstance(local, dict):
+              local = {"reviews": []}
+          reviews = local.get("reviews") if isinstance(local.get("reviews"), list) else []
+          by_id = {}
+          for r in reviews + cloud:
+              if not isinstance(r, dict):
+                  continue
+              rid = str(r.get("id") or r.get("_id") or "")
+              if not rid:
+                  continue
+              # normalize
+              item = {
+                  "id": str(r.get("id") or r.get("_id")),
+                  "who": str(r.get("who") or "Игрок")[:40],
+                  "game": str(r.get("game") or "other")[:40],
+                  "stars": max(1, min(5, int(r.get("stars") or 5))),
+                  "text": str(r.get("text") or "")[:400],
+                  "date": str(r.get("date") or ""),
+              }
+              if not item["text"]:
+                  continue
+              by_id[rid] = item
+          merged = sorted(by_id.values(), key=lambda x: x.get("date") or "", reverse=True)[:200]
+          local_path.write_text(json.dumps({"reviews": merged}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print("reviews:", len(merged))
+          PY
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/user-reviews.json
+          if git diff --staged --quiet; then
+            echo "No changes"
+          else
+            git commit -m "chore: sync shared user reviews"
+            git push
+          fi

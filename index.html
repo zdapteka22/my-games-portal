@@ -1285,7 +1285,9 @@
     <div id="panel-review" class="panel">
       <div class="card" id="userReview">
         <h3>✍️ Добавить свой отзыв</h3>
-        <p style="color:#aaa;font-size:14px;margin-bottom:14px">Напиши отзыв об игре — он появится в блоке «Отзывы» на этом устройстве.</p>
+        <p style="color:#aaa;font-size:14px;margin-bottom:14px">
+          Напиши отзыв — он появится в блоке «Отзывы» <b>у всех</b> (и у друзей с другого аккаунта / телефона).
+        </p>
         <form class="add-form" id="userReviewForm">
           <label><span>Имя *</span>
             <input type="text" name="who" required maxlength="40" placeholder="Как тебя зовут">
@@ -1315,7 +1317,7 @@
             <textarea name="text" required rows="3" maxlength="400" placeholder="Что понравилось / не понравилось"></textarea>
           </label>
           <div class="row">
-            <button type="submit" class="btn-play" style="height:44px;font-size:15px;min-width:180px">💬 Опубликовать</button>
+            <button type="submit" class="btn-play" style="height:44px;font-size:15px;min-width:180px">💬 Опубликовать для всех</button>
           </div>
           <p class="hint-mini" id="reviewNote"></p>
         </form>
@@ -1410,6 +1412,10 @@
     const STORAGE_ADMIN_OK = "portal_admin_ok_v1";
     const STORAGE_FRIENDS = "portal_friends_v1";
     const ADMIN_PASSWORD = "bluecat";
+    const REVIEWS_REPO = "zdapteka22/my-games-portal";
+    const DEFAULT_SHARED_REVIEWS_URL = "https://crudcrud.com/api/69a6d57b5d794a17abf2b3ee0069358f/reviews";
+    let sharedReviewsUrl = DEFAULT_SHARED_REVIEWS_URL;
+    let sharedReviewsCache = [];
     let lastRequestText = "";
     let friendModalName = "";
     const THEME_IDS = ["black", "blue", "purple", "green", "red", "orange", "pink", "gold", "cyan"];
@@ -1888,6 +1894,153 @@
     function loadFriends() { return loadJSON(STORAGE_FRIENDS); }
     function saveFriends(list) { saveJSON(STORAGE_FRIENDS, list); }
 
+    function normalizeReview(r) {
+      if (!r || typeof r !== "object") return null;
+      const who = String(r.who || "").trim().slice(0, 40);
+      const text = String(r.text || "").trim().slice(0, 400);
+      if (!who || !text) return null;
+      const stars = Math.max(1, Math.min(5, Number(r.stars) || 5));
+      const id = String(r.id || r._id || ("r_" + who + "_" + (r.date || "") + "_" + text.slice(0, 12)));
+      return {
+        id: id,
+        who: who,
+        game: String(r.game || "other").slice(0, 40),
+        stars: stars,
+        text: text,
+        date: String(r.date || ""),
+        shared: !!r.shared
+      };
+    }
+
+    function mergeReviews() {
+      const byId = {};
+      const local = loadUserReviews();
+      [].concat(sharedReviewsCache || [], local || []).forEach(function (raw) {
+        const r = normalizeReview(raw);
+        if (!r) return;
+        if (!byId[r.id] || (r.date && r.date > (byId[r.id].date || ""))) byId[r.id] = r;
+      });
+      return Object.keys(byId).map(function (k) { return byId[k]; })
+        .sort(function (a, b) { return String(b.date || "").localeCompare(String(a.date || "")); })
+        .slice(0, 150);
+    }
+
+    async function fetchSharedReviews() {
+      const lists = [];
+      // 1) live cloud (all devices / accounts)
+      try {
+        try {
+          const cfgRes = await fetch("data/reviews-config.json", { cache: "no-store" });
+          if (cfgRes.ok) {
+            const cfg = await cfgRes.json();
+            if (cfg && cfg.sharedUrl) sharedReviewsUrl = String(cfg.sharedUrl);
+          }
+        } catch (_) {}
+        const cloudRes = await fetch(sharedReviewsUrl, { cache: "no-store" });
+        if (cloudRes.ok) {
+          const cloud = await cloudRes.json();
+          if (Array.isArray(cloud)) {
+            lists.push(cloud.map(function (r) {
+              const n = normalizeReview(r);
+              if (n) n.shared = true;
+              return n;
+            }).filter(Boolean));
+          }
+        }
+      } catch (_) {}
+      // 2) permanent file on the site
+      try {
+        const fileRes = await fetch("data/user-reviews.json", { cache: "no-store" });
+        if (fileRes.ok) {
+          const fileData = await fileRes.json();
+          const arr = (fileData && Array.isArray(fileData.reviews)) ? fileData.reviews
+            : (Array.isArray(fileData) ? fileData : []);
+          lists.push(arr.map(function (r) {
+            const n = normalizeReview(r);
+            if (n) n.shared = true;
+            return n;
+          }).filter(Boolean));
+        }
+      } catch (_) {}
+      // 3) GitHub Issues titled [Отзыв] …
+      try {
+        const issuesRes = await fetch(
+          "https://api.github.com/repos/" + REVIEWS_REPO + "/issues?state=open&per_page=50&sort=created&direction=desc",
+          { headers: { Accept: "application/vnd.github+json" }, cache: "no-store" }
+        );
+        if (issuesRes.ok) {
+          const issues = await issuesRes.json();
+          if (Array.isArray(issues)) {
+            const fromIssues = [];
+            issues.forEach(function (issue) {
+              if (!issue || issue.pull_request) return;
+              const title = String(issue.title || "");
+              if (title.indexOf("[Отзыв]") !== 0) return;
+              let parsed = null;
+              const body = String(issue.body || "");
+              const m = body.match(/```json\s*([\s\S]*?)```/i);
+              if (m) {
+                try { parsed = JSON.parse(m[1]); } catch (_) {}
+              }
+              const n = normalizeReview(parsed || {
+                id: "issue_" + issue.number,
+                who: title.replace(/^\[Отзыв\]\s*/i, "").split("·")[0].trim() || ("Игрок#" + issue.number),
+                game: "other",
+                stars: 5,
+                text: body.replace(/```json[\s\S]*?```/ig, "").trim().slice(0, 400),
+                date: issue.created_at || ""
+              });
+              if (n) {
+                n.shared = true;
+                if (!n.id || n.id.indexOf("r_") === 0) n.id = "issue_" + issue.number;
+                fromIssues.push(n);
+              }
+            });
+            lists.push(fromIssues);
+          }
+        }
+      } catch (_) {}
+
+      const byId = {};
+      lists.forEach(function (list) {
+        (list || []).forEach(function (r) {
+          if (!r || !r.id) return;
+          byId[r.id] = r;
+        });
+      });
+      sharedReviewsCache = Object.keys(byId).map(function (k) { return byId[k]; });
+      return sharedReviewsCache;
+    }
+
+    async function publishReviewToCloud(rev) {
+      const payload = {
+        id: rev.id,
+        who: rev.who,
+        game: rev.game,
+        stars: rev.stars,
+        text: rev.text,
+        date: rev.date
+      };
+      // Live shared store (visible on other accounts immediately)
+      try {
+        const res = await fetch(sharedReviewsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const saved = await res.json().catch(function () { return payload; });
+          const n = normalizeReview(Object.assign({}, payload, saved, { shared: true }));
+          if (n) {
+            sharedReviewsCache.unshift(n);
+            return { ok: true, via: "cloud", review: n };
+          }
+          return { ok: true, via: "cloud", review: payload };
+        }
+      } catch (_) {}
+      return { ok: false, via: "local" };
+    }
+
     function cleanFriendName(raw) {
       return String(raw || "")
         .replace(/\s*·\s*минус\s*$/i, "")
@@ -2048,7 +2201,7 @@
     function renderUserReviews() {
       const mount = document.getElementById("userReviewsMount");
       if (!mount) return;
-      const list = loadUserReviews();
+      const list = mergeReviews();
       if (!list.length) {
         mount.innerHTML = "";
         wireReviewPeople();
@@ -2056,12 +2209,16 @@
       }
       const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
       const names = { snake: "Змейка", pacman: "Пакман", mario: "Марио", smeshariki: "Смешарики", tanks: "Танчики", labyrinth: "Лабиринт", battle: "Битва", other: "Другая" };
+      const localIds = {};
+      loadUserReviews().forEach(function (r) { if (r && r.id) localIds[r.id] = true; });
       mount.innerHTML = list.map(r => {
         const bad = Number(r.stars) <= 2 ? " bad" : "";
+        const mine = localIds[r.id] ? " · твой" : "";
+        const scope = r.shared ? " · видно всем" : " · только на этом устройстве";
         return "<article class='review-card-static" + bad + "' data-game='" + esc(r.game) + "' data-user-review='1'>" +
           "<div class='review-top'><span class='review-who'>✍️ " + esc(r.who) + "</span><span class='stars'>" + stars(Number(r.stars) || 0) + "</span></div>" +
           "<p>" + esc(r.text) + "</p>" +
-          "<div class='review-game'>об игре: " + esc(names[r.game] || r.game) + " · ваш отзыв</div></article>";
+          "<div class='review-game'>об игре: " + esc(names[r.game] || r.game) + mine + scope + "</div></article>";
       }).join("");
       wireReviewPeople();
     }
@@ -2299,11 +2456,11 @@
       }
     });
 
-    on("userReviewForm", "submit", (e) => {
+    on("userReviewForm", "submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const rev = {
-        id: "r_" + Date.now(),
+        id: "r_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
         who: String(fd.get("who") || "").trim(),
         game: String(fd.get("game") || "other"),
         stars: Number(fd.get("stars") || 5),
@@ -2311,14 +2468,26 @@
         date: new Date().toISOString()
       };
       if (!rev.who || !rev.text) return toast("Заполни имя и текст");
+      const note = document.getElementById("reviewNote");
+      if (note) note.textContent = "Публикуем для всех…";
+      toast("Публикуем отзыв…");
+
+      // always keep a local copy
       const list = loadUserReviews();
       list.unshift(rev);
       saveUserReviews(list.slice(0, 100));
+
+      const pub = await publishReviewToCloud(rev);
+      if (pub.ok) {
+        rev.shared = true;
+        if (note) note.textContent = "✅ Отзыв виден всем (и с другого аккаунта)! Обнови страницу у друга: Ctrl+F5.";
+        toast("Отзыв опубликован для всех");
+      } else {
+        if (note) note.textContent = "⚠️ Сеть не ответила — отзыв пока только на этом устройстве. Попробуй ещё раз через минуту.";
+        toast("Сохранено только здесь — нет связи с облаком");
+      }
       e.target.reset();
-      const note = document.getElementById("reviewNote");
-      if (note) note.textContent = "Отзыв добавлен!";
       renderUserReviews();
-      toast("Отзыв опубликован");
       var revEl = document.getElementById("reviews");
       if (revEl) revEl.scrollIntoView({ behavior: "smooth" });
     });
@@ -2423,6 +2592,18 @@
     try { renderAdminQueue(); } catch (_) {}
     try { renderFriends(); } catch (_) {}
     try { wireReviewPeople(); } catch (_) {}
+    // Load shared reviews (visible on any account / device)
+    (async function () {
+      try {
+        await fetchSharedReviews();
+        renderUserReviews();
+        applyReviewFilter(
+          (document.querySelector(".rev-filter.active") || {}).getAttribute
+            ? (document.querySelector(".rev-filter.active").getAttribute("data-rev") || "all")
+            : "all"
+        );
+      } catch (_) {}
+    })();
 
     // Клик по человеку в отзывах → добавить в друзья
     document.addEventListener("click", (e) => {
