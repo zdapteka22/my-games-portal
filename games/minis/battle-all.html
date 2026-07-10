@@ -120,10 +120,13 @@
       border-radius: 12px; padding: 10px 12px; font-weight: 700; font-size: 13px;
     }
     .hud b { color: #ffcc00; }
-    .bars { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+    .bars {
+      display: flex; flex-wrap: wrap; gap: 4px; width: 100%;
+      max-height: 120px; overflow: auto; align-content: flex-start;
+    }
     .bar-item {
-      flex: 1 1 110px; background: #111; border: 1px solid #333; border-radius: 10px;
-      padding: 5px 7px; font-size: 11px; min-width: 96px;
+      flex: 1 1 88px; background: #111; border: 1px solid #333; border-radius: 8px;
+      padding: 4px 6px; font-size: 10px; min-width: 80px; max-width: 140px;
     }
     .bar-item.me { border-color: #ffcc00; }
     .bar-item.dead { opacity: .4; }
@@ -180,7 +183,7 @@
 
   <section class="screen" id="selectScreen">
     <h2 style="font-size:1.15rem;margin-bottom:4px">Выбери героя</h2>
-    <p class="sub">Все герои и картинки из твоих игр: Смешарики, Марио, Пакман, Змейка, Танчики, Лунтик и враги. У каждого — атака и супер-способность.</p>
+    <p class="sub">Все герои и картинки из твоих игр: Смешарики, Марио, Пакман, Змейка, Танчики, Лунтик и враги. В бою выходят <b>все герои сразу</b> — ты + весь список. У каждого атака и супер-способность.</p>
     <div class="filter-row" id="filterRow"></div>
     <div class="heroes" id="heroGrid"></div>
     <div class="detail" id="heroDetail">
@@ -521,19 +524,31 @@
   }
 
   function spawnPos(i, n) {
-    const cx = W/2, cy = H/2, r = 190;
-    const a = (Math.PI*2*i)/n - Math.PI/2;
-    return { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r };
+    // Несколько колец, чтобы все герои поместились на арене
+    const cx = W / 2, cy = H / 2;
+    const rings = n <= 10 ? 1 : n <= 18 ? 2 : 3;
+    const perRing = Math.ceil(n / rings);
+    const ring = Math.floor(i / perRing);
+    const idxInRing = i % perRing;
+    const countOnRing = Math.min(perRing, n - ring * perRing);
+    const r = 70 + ring * (rings === 1 ? 0 : 95) + (rings === 3 && ring === 2 ? 20 : 0);
+    const a = (Math.PI * 2 * idxInRing) / countOnRing - Math.PI / 2 + ring * 0.35;
+    return {
+      x: cx + Math.cos(a) * Math.min(r, W * 0.38),
+      y: cy + Math.sin(a) * Math.min(r * 0.85, H * 0.36)
+    };
   }
 
   function createFighter(def, isPlayer, index, total) {
     const p = spawnPos(index, total);
+    // Чуть меньше радиус, когда героев много
+    const baseR = total > 16 ? 18 : total > 10 ? 20 : 24;
     return {
-      def, isPlayer, x:p.x, y:p.y, vx:0, vy:0, r:24,
+      def, isPlayer, x:p.x, y:p.y, vx:0, vy:0, r:baseR,
       hp: def.hp, maxHp: def.hp, facing:1, dead:false,
       atkCd:0, abilCd:0, powerT:0, phaseT:0, megaT:0, growT:0,
       stunT:0, shieldT:0, poisonT:0, spinT:0, shellSlide:0,
-      aiTimer:0, aiTarget:null, flash:0, scale:1
+      aiTimer: Math.random() * 0.4, aiTarget:null, flash:0, scale:1
     };
   }
 
@@ -549,12 +564,16 @@
     makeArena();
     projectiles = []; particles = [];
     endOverlay.hidden = true;
-    const pool = HEROES.filter(h => h.id !== playerId);
-    shuffle(pool);
-    // 1 player + 5 AI = 6 fighters with pictures variety
-    const picks = [heroById(playerId), ...pool.slice(0, 5)];
-    fighters = picks.map((h,i) => createFighter(h, i===0, i, picks.length));
-    document.getElementById("hudHero").textContent = fighters[0].def.emoji + " " + fighters[0].def.name;
+
+    // ВСЕ герои из списка — игрок + все остальные как ИИ
+    const playerHero = heroById(playerId) || HEROES[0];
+    const others = HEROES.filter(h => h.id !== playerHero.id);
+    shuffle(others);
+    const picks = [playerHero, ...others];
+    fighters = picks.map((h, i) => createFighter(h, i === 0, i, picks.length));
+
+    document.getElementById("hudHero").textContent =
+      fighters[0].def.emoji + " " + fighters[0].def.name + " · все " + fighters.length;
     selectScreen.hidden = true;
     gameWrap.hidden = false;
     running = true;
@@ -862,8 +881,10 @@
     if (d<55 || (prefer>80 && d<160 && Math.random()<0.03)){
       if (Math.random()<0.55) doAttack(f);
     }
-    if (f.abilCd<=0 && d<150 && Math.random()<0.015) doAbility(f);
-    if (f.hp<f.maxHp*0.35 && f.abilCd<=0 && Math.random()<0.02) doAbility(f);
+    // Чуть реже способности, когда на арене толпа (чтобы не лагало)
+    const abilChance = fighters.length > 20 ? 0.008 : 0.015;
+    if (f.abilCd<=0 && d<150 && Math.random()<abilChance) doAbility(f);
+    if (f.hp<f.maxHp*0.35 && f.abilCd<=0 && Math.random()<0.015) doAbility(f);
   }
 
   function loop(now){
@@ -1159,7 +1180,8 @@
     ctx.fillStyle="#ffcc00";
     ctx.font="bold 14px Segoe UI, Arial";
     ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("⚔️ Битва всех игр · "+HEROES.length+" героев", W/2, 23);
+    const aliveN = fighters.filter(f => !f.dead).length;
+    ctx.fillText("⚔️ Все герои: " + aliveN + "/" + fighters.length, W/2, 23);
   }
 
   // init
