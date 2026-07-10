@@ -560,10 +560,44 @@
       display: flex; justify-content: space-between; gap: 8px; align-items: center;
       margin-bottom: 8px; flex-wrap: wrap;
     }
-    .review-card-static .review-who { font-weight: 800; font-size: 13px; color: #fff; }
+    .review-card-static .review-who {
+      font-weight: 800; font-size: 13px; color: #fff;
+      cursor: pointer; text-decoration: underline dotted rgba(255,204,0,.45);
+      text-underline-offset: 3px;
+    }
+    .review-card-static .review-who:hover { color: var(--yg-yellow); }
     .review-card-static .stars { color: #fc0; font-size: 13px; letter-spacing: 1px; }
     .review-card-static p { margin: 0 0 8px; color: #ddd; font-size: 14px; line-height: 1.4; }
     .review-card-static .review-game { color: var(--yg-muted); font-size: 12px; }
+    .friends-bar {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      margin: 0 0 14px; padding: 12px 14px; border-radius: 14px;
+      background: var(--yg-card); border: 1px solid var(--yg-border);
+    }
+    .friends-bar h3 { margin: 0; font-size: 14px; font-weight: 800; white-space: nowrap; }
+    .friends-list { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+    .friend-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px; background: #222; border: 1px solid #3a3a3a;
+      font-size: 12px; font-weight: 700;
+    }
+    .friend-chip button {
+      background: #3a1a1a; color: #ff8a8a; border: none; border-radius: 999px;
+      width: 22px; height: 22px; font-weight: 800; cursor: pointer; line-height: 1;
+    }
+    .friend-empty { color: #777; font-size: 13px; }
+    .friend-modal {
+      position: fixed; inset: 0; z-index: 320; background: rgba(0,0,0,.75);
+      display: grid; place-items: center; padding: 16px;
+    }
+    .friend-modal[hidden] { display: none !important; }
+    .friend-modal-box {
+      width: min(400px, 100%); background: #141414; border: 2px solid var(--yg-yellow);
+      border-radius: 18px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.55);
+    }
+    .friend-modal-box h3 { margin: 0 0 8px; font-size: 18px; }
+    .friend-modal-box p { margin: 0 0 14px; color: #bbb; font-size: 14px; line-height: 1.4; }
+    .friend-modal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
     @media (max-width: 800px) {
       .classics-grid { grid-template-columns: 1fr; gap: 12px; }
       .nav-cats a { display: none; }
@@ -946,7 +980,12 @@
     <!-- REVIEWS: kids, bloggers, AI — for every game -->
     <section class="reviews-block" id="reviews">
       <h2 data-i18n="reviewsTitle">💬 Отзывы — дети, блогеры и ИИ</h2>
-      <p class="menu-sub" data-i18n="reviewsSub">Отзывы по каждой игре портала</p>
+      <p class="menu-sub" data-i18n="reviewsSub">Отзывы по каждой игре портала. Нажми на имя — можно добавить в друзья.</p>
+
+      <div class="friends-bar" id="friendsBar">
+        <h3>👥 Мои друзья</h3>
+        <div class="friends-list" id="friendsList"><span class="friend-empty">Пока пусто — нажми на имя в отзыве</span></div>
+      </div>
 
       <div class="reviews-filters" id="reviewsFilters" role="tablist" aria-label="Фильтр отзывов">
         <button type="button" class="rev-filter active" data-rev="all">Все</button>
@@ -1349,6 +1388,18 @@
 
   <div class="toast" id="toast" hidden></div>
 
+  <!-- Friend profile modal -->
+  <div class="friend-modal" id="friendModal" hidden role="dialog" aria-modal="true" aria-labelledby="friendModalTitle">
+    <div class="friend-modal-box">
+      <h3 id="friendModalTitle">Профиль</h3>
+      <p id="friendModalText">Добавить этого человека в друзья?</p>
+      <div class="friend-modal-actions">
+        <button type="button" class="btn-play" id="friendAddBtn" style="height:44px;font-size:15px;min-width:160px">➕ Добавить в друзья</button>
+        <button type="button" class="btn-secondary" id="friendCloseBtn" style="height:44px">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const STORAGE_GAMES = "portal_customGames_v1";
     const STORAGE_LANG = "portal_lang_v1";
@@ -1357,8 +1408,10 @@
     const STORAGE_APPROVED = "portal_approved_games_v1";
     const STORAGE_REVIEWS = "portal_user_reviews_v1";
     const STORAGE_ADMIN_OK = "portal_admin_ok_v1";
+    const STORAGE_FRIENDS = "portal_friends_v1";
     const ADMIN_PASSWORD = "bluecat";
     let lastRequestText = "";
+    let friendModalName = "";
     const THEME_IDS = ["black", "blue", "purple", "green", "red", "orange", "pink", "gold", "cyan"];
     const THEME_META = {
       black: "#222222", blue: "#5eb0ff", purple: "#c084fc", green: "#4ade80", red: "#f87171",
@@ -1832,6 +1885,87 @@
     function saveApproved(list) { saveJSON(STORAGE_APPROVED, list); }
     function loadUserReviews() { return loadJSON(STORAGE_REVIEWS); }
     function saveUserReviews(list) { saveJSON(STORAGE_REVIEWS, list); }
+    function loadFriends() { return loadJSON(STORAGE_FRIENDS); }
+    function saveFriends(list) { saveJSON(STORAGE_FRIENDS, list); }
+
+    function cleanFriendName(raw) {
+      return String(raw || "")
+        .replace(/\s*·\s*минус\s*$/i, "")
+        .replace(/^✍️\s*/, "")
+        .trim();
+    }
+
+    function isFriend(name) {
+      const n = cleanFriendName(name).toLowerCase();
+      return loadFriends().some(f => String(f.name || "").toLowerCase() === n);
+    }
+
+    function renderFriends() {
+      const box = document.getElementById("friendsList");
+      if (!box) return;
+      const list = loadFriends();
+      if (!list.length) {
+        box.innerHTML = "<span class='friend-empty'>Пока пусто — нажми на имя в отзыве</span>";
+        return;
+      }
+      box.innerHTML = list.map(f =>
+        "<span class='friend-chip' title='друг'>" +
+        esc(f.name) +
+        " <button type='button' data-unfriend='" + esc(f.id) + "' aria-label='Удалить'>×</button></span>"
+      ).join("");
+    }
+
+    function openFriendModal(name, meta) {
+      friendModalName = cleanFriendName(name);
+      if (!friendModalName) return;
+      const title = document.getElementById("friendModalTitle");
+      const text = document.getElementById("friendModalText");
+      const addBtn = document.getElementById("friendAddBtn");
+      const modal = document.getElementById("friendModal");
+      if (title) title.textContent = friendModalName;
+      const already = isFriend(friendModalName);
+      if (text) {
+        text.textContent = already
+          ? (friendModalName + " уже в друзьях." + (meta ? " " + meta : ""))
+          : ("Добавить «" + friendModalName + "» в друзья?" + (meta ? "\n" + meta : ""));
+      }
+      if (addBtn) {
+        addBtn.disabled = already;
+        addBtn.textContent = already ? "✓ Уже в друзьях" : "➕ Добавить в друзья";
+      }
+      if (modal) modal.hidden = false;
+    }
+
+    function closeFriendModal() {
+      const modal = document.getElementById("friendModal");
+      if (modal) modal.hidden = true;
+      friendModalName = "";
+    }
+
+    function addFriend(name) {
+      const clean = cleanFriendName(name);
+      if (!clean) return;
+      if (isFriend(clean)) {
+        toast("Уже в друзьях: " + clean);
+        return;
+      }
+      const list = loadFriends();
+      list.unshift({ id: "f_" + Date.now(), name: clean, added: new Date().toISOString() });
+      saveFriends(list.slice(0, 80));
+      renderFriends();
+      toast("В друзьях: " + clean);
+      closeFriendModal();
+    }
+
+    function wireReviewPeople() {
+      document.querySelectorAll(".review-who").forEach(function (el) {
+        if (el.getAttribute("data-friend-wired") === "1") return;
+        el.setAttribute("data-friend-wired", "1");
+        el.setAttribute("role", "button");
+        el.setAttribute("tabindex", "0");
+        el.title = "Нажми: добавить в друзья";
+      });
+    }
 
     function allGamesList() {
       const custom = loadCustom().map(g => ({
@@ -1917,6 +2051,7 @@
       const list = loadUserReviews();
       if (!list.length) {
         mount.innerHTML = "";
+        wireReviewPeople();
         return;
       }
       const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
@@ -1928,6 +2063,7 @@
           "<p>" + esc(r.text) + "</p>" +
           "<div class='review-game'>об игре: " + esc(names[r.game] || r.game) + " · ваш отзыв</div></article>";
       }).join("");
+      wireReviewPeople();
     }
 
     function renderAdminQueue() {
@@ -2285,6 +2421,45 @@
     try { renderMyRequests(); } catch (_) {}
     try { renderUserReviews(); } catch (_) {}
     try { renderAdminQueue(); } catch (_) {}
+    try { renderFriends(); } catch (_) {}
+    try { wireReviewPeople(); } catch (_) {}
+
+    // Клик по человеку в отзывах → добавить в друзья
+    document.addEventListener("click", (e) => {
+      const who = e.target.closest(".review-who");
+      if (who && who.closest("#reviews")) {
+        e.preventDefault();
+        const card = who.closest(".review-card-static");
+        const meta = card ? (card.querySelector(".review-game") || {}).textContent || "" : "";
+        openFriendModal(who.textContent, meta);
+        return;
+      }
+      const un = e.target.closest("[data-unfriend]");
+      if (un) {
+        e.preventDefault();
+        const id = un.getAttribute("data-unfriend");
+        saveFriends(loadFriends().filter(f => f.id !== id));
+        renderFriends();
+        toast("Удалено из друзей");
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const who = e.target.closest && e.target.closest(".review-who");
+      if (!who || !who.closest("#reviews")) return;
+      e.preventDefault();
+      openFriendModal(who.textContent, "");
+    });
+    on("friendAddBtn", "click", () => {
+      if (friendModalName) addFriend(friendModalName);
+    });
+    on("friendCloseBtn", "click", closeFriendModal);
+    on("friendModal", "click", (e) => {
+      if (e.target.id === "friendModal") closeFriendModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeFriendModal();
+    });
 
     try {
       applyI18n();
