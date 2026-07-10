@@ -1993,6 +1993,91 @@
     return p.type !== "flag" && p.type !== "flagpole" && p.type !== "broken";
   }
 
+  /**
+   * Марио и Луиджи толкают друг друга (как в кооперативе).
+   * Кто бежит сильнее — сдвигает второго; можно подпрыгнуть на голову напарника.
+   */
+  function resolveHeroPush() {
+    if (!player || !luigi) return;
+    if (editing || won || deathTimer > 0 || bothDeadTimer > 0) return;
+    if (playerDown || !luigi.alive || luigi.finished) return;
+    if (!rects(player, luigi)) return;
+
+    const p = player;
+    const l = luigi;
+    const pCx = p.x + p.w / 2;
+    const lCx = l.x + l.w / 2;
+    const overlapX = Math.min(p.x + p.w, l.x + l.w) - Math.max(p.x, l.x);
+    const overlapY = Math.min(p.y + p.h, l.y + l.h) - Math.max(p.y, l.y);
+    if (overlapX <= 0 || overlapY <= 0) return;
+
+    // прыжок сверху на напарника (как платформа)
+    if (overlapX > overlapY * 0.55) {
+      if (p.vy >= 0 && p.y + p.h - (p.vy || 0) <= l.y + 10) {
+        p.y = l.y - p.h;
+        p.vy = 0;
+        p.onGround = true;
+        if (p.jumpsLeft != null) p.jumpsLeft = 2;
+        // лёгкий «подброс» Луиджи
+        l.vy = Math.min(l.vy || 0, -1.2);
+        return;
+      }
+      if ((l.vy || 0) >= 0 && l.y + l.h - (l.vy || 0) <= p.y + 10) {
+        l.y = p.y - l.h;
+        l.vy = 0;
+        l.onGround = true;
+        if (l.jumpsLeft != null) l.jumpsLeft = 2;
+        p.vy = Math.min(p.vy || 0, -1.2);
+        return;
+      }
+    }
+
+    // боковой толчок
+    const pMass = isMega() ? 2.2 : p.big ? 1.3 : 1;
+    const lMass = (l.megaTimer || 0) > 0 ? 2.2 : l.big ? 1.3 : 1;
+    const total = pMass + lMass;
+    const push = overlapX + 0.5;
+
+    if (pCx <= lCx) {
+      // игрок слева, луиджи справа
+      const shareP = push * (lMass / total);
+      const shareL = push * (pMass / total);
+      p.x -= shareP;
+      l.x += shareL;
+    } else {
+      const shareP = push * (lMass / total);
+      const shareL = push * (pMass / total);
+      p.x += shareP;
+      l.x -= shareL;
+    }
+
+    // передача скорости (толчок)
+    const pSpd = p.vx || 0;
+    const lSpd = l.vx || 0;
+    const avg = (pSpd * pMass + lSpd * lMass) / total;
+    // кто въезжает — чуть сильнее толкает
+    if (Math.abs(pSpd) > Math.abs(lSpd) + 0.4) {
+      l.vx = avg + pSpd * 0.35;
+      p.vx = pSpd * 0.75;
+    } else if (Math.abs(lSpd) > Math.abs(pSpd) + 0.4) {
+      p.vx = avg + lSpd * 0.35;
+      l.vx = lSpd * 0.75;
+    } else {
+      p.vx = avg * 0.9;
+      l.vx = avg * 0.9;
+    }
+
+    // не выталкивать за карту
+    if (p.x < 0) p.x = 0;
+    if (l.x < 0) l.x = 0;
+    if (p.x > levelW - p.w) p.x = levelW - p.w;
+    if (l.x > levelW - l.w) l.x = levelW - l.w;
+
+    // если упёрлись в стену — сдвинуть второго
+    resolvePlatforms(p);
+    resolvePlatforms(l);
+  }
+
   /** Мега-Марио ломает кирпичи, ?-блоки и трубы при касании */
   function megaCrushBlocks() {
     if (!isMega() || !player) return;
@@ -3284,6 +3369,11 @@
     }
 
     updateLuigi();
+    // Марио ↔ Луиджи толкают друг друга
+    resolveHeroPush();
+    // ещё раз после AI Луиджи, чтобы не застревали
+    if (!playerDown && player) resolveHeroPush();
+
     // враги тоже «бьют» Луиджи (отбрасывают), если не топчет их
     if (luigi && luigi.alive && !luigi.finished) {
       for (const e of enemies) {
