@@ -922,6 +922,17 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
+        <a class="classic-card" href="games/minis/battle-all.html">
+          <div class="cc-art" style="background:linear-gradient(145deg,#3b1a5c,#1a0a20 50%,#4a2010)">
+            <span class="cc-badge" data-i18n="hit">NEW</span>
+            <span style="font-size:2.6rem">⚔️🪖🟡🐍🍄</span>
+          </div>
+          <div class="cc-body">
+            <h3 data-i18n="battleTitle">⚔️ Битва всех игр</h3>
+            <p data-i18n="battleDesc">Выбери героя: танчик, смешарик, пакман, призрак, змейка, Марио, Луиджи, враг, Лунтик — у каждого способность!</p>
+            <div class="cc-play" data-i18n="play">▶ Играть</div>
+          </div>
+        </a>
       </div>
     </section>
 
@@ -1301,6 +1312,8 @@
         pacmanTitle: "Пакман", pacmanDesc: "Классика: жёлтый Пакман, лабиринт, точки и 4 призрака!",
         marioTitle: "Зелёный Марио (9 уровней)", marioDesc: "Платформер: монеты, враги, трубы — добеги до флага!",
         labyTitle: "🌀 Лабиринт", labyDesc: "Отдельная игра: найди выход ⭐ в случайном лабиринте!",
+        battleTitle: "⚔️ Битва всех игр",
+        battleDesc: "Выбери героя: танчик, смешарик, пакман, призрак, змейка, Марио, Луиджи, враг, Лунтик — у каждого способность!",
         videosTitle: "▶ Смотреть видео",
         videosSub: "Трейлеры и геймплей — нажми карточку, чтобы смотреть",
         allGamesTitle: "🎮 Все игры",
@@ -1334,7 +1347,7 @@
         v2t: "Пакман — трейлер", v2d: "Легендарная аркада: точки, призраки, лабиринт",
         v3t: "Марио — платформер", v3d: "Прыжки, монеты, уровни и финиш у флага",
         v4t: "Смешарики — мир", v4d: "Персонажи и атмосфера любимого мультсериала",
-        gSnake: "Змейка", gPacman: "Пакман", gMario: "Зелёный Марио (9 уровней)", gSmesh: "Смешарики: Битва", gTanks: "Танчики", gLaby: "Лабиринт",
+        gSnake: "Змейка", gPacman: "Пакман", gMario: "Зелёный Марио (9 уровней)", gSmesh: "Смешарики: Битва", gTanks: "Танчики", gLaby: "Лабиринт", gBattle: "Битва всех игр",
       },
       en: {
         logo1: "Favorite Games", logo2: "Portal", logoBrand: "Blue Cat",
@@ -1393,7 +1406,9 @@
         v2t: "Pac-Man — trailer", v2d: "Legendary arcade: dots, ghosts, maze",
         v3t: "Mario — platformer", v3d: "Jumps, coins, levels and the flag finish",
         v4t: "Smeshariki — world", v4d: "Characters and vibe of the beloved cartoon",
-        gSnake: "Snake", gPacman: "Pac-Man", gMario: "Green Mario (9 levels)", gSmesh: "Smeshariki: Battle", gTanks: "Tanks",
+        gSnake: "Snake", gPacman: "Pac-Man", gMario: "Green Mario (9 levels)", gSmesh: "Smeshariki: Battle", gTanks: "Tanks", gLaby: "Labyrinth", gBattle: "Battle of All Games",
+        battleTitle: "⚔️ Battle of All Games",
+        battleDesc: "Pick a hero: tank, Smeshariki, Pac-Man, ghost, snake, Mario, Luigi, enemy, Luntik — each has a super ability!",
       },
       uk: {
         logo1: "Портал улюблених", logo2: "ігор", logoBrand: "Blue Cat",
@@ -1452,7 +1467,9 @@
         v2t: "Пакман — трейлер", v2d: "Легендарна аркада: крапки, привиди, лабіринт",
         v3t: "Маріо — платформер", v3d: "Стрибки, монети, рівні та фініш біля прапора",
         v4t: "Смішарики — світ", v4d: "Персонажі та атмосфера улюбленого мультсеріалу",
-        gSnake: "Змійка", gPacman: "Пакман", gMario: "Зелений Маріо (9 рівнів)", gSmesh: "Смішарики: Битва", gTanks: "Танчики",
+        gSnake: "Змійка", gPacman: "Пакман", gMario: "Зелений Маріо (9 рівнів)", gSmesh: "Смішарики: Битва", gTanks: "Танчики", gLaby: "Лабіринт", gBattle: "Битва всіх ігор",
+        battleTitle: "⚔️ Битва всіх ігор",
+        battleDesc: "Обери героя: танчик, смішарик, пакман, привид, змійка, Маріо, Луїджі, ворог, Лунтик — у кожного здатність!",
       }
     };
 
@@ -1692,6 +1709,16 @@
           url: "games/minis/labyrinth.html",
           emoji: "🌀",
           bg: "linear-gradient(145deg,#0a3a1a,#1a4a30)",
+          builtin: true
+        },
+        {
+          id: "battle",
+          title: t("gBattle"),
+          genre: t("genreArcade"),
+          rating: "5.0",
+          url: "games/minis/battle-all.html",
+          emoji: "⚔️",
+          bg: "linear-gradient(145deg,#3b1a5c,#1a0a20)",
           builtin: true
         }
       ];
