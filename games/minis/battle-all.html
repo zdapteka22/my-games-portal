@@ -154,18 +154,48 @@
       display: block;
     }
     .hint { color: #999; font-size: 12px; text-align: center; line-height: 1.4; max-width: 920px; }
+    .mode-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .mode-row button {
+      flex: 1 1 140px; min-height: 44px; border-radius: 12px; border: 2px solid #444;
+      background: #1a1a1a; color: #ddd; font-weight: 800; font-size: 14px; cursor: pointer; font-family: inherit;
+    }
+    .mode-row button.active { border-color: #ffcc00; color: #ffcc00; background: #221e10; }
+    .pads-wrap {
+      display: none; width: 100%; max-width: 960px; gap: 10px; justify-content: space-between;
+      flex-wrap: wrap; margin-top: 6px; padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    .pads-wrap.show, #gameWrap.show-pads .pads-wrap { display: flex !important; }
+    .pad-box {
+      flex: 1 1 160px; background: rgba(0,0,0,.65); border: 2px solid #444; border-radius: 16px;
+      padding: 8px; touch-action: none;
+    }
+    .pad-box h4 { margin: 0 0 6px; font-size: 12px; color: #ffcc00; text-align: center; }
     .pad {
-      display: none; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; touch-action: none;
+      display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; touch-action: none;
     }
-    @media (max-width: 900px), (pointer: coarse), (hover: none) { .pad { display: flex; } }
     .pad button {
-      min-width: 60px; height: 54px; border: 2px solid #555; border-radius: 14px;
-      background: rgba(0,0,0,.55); color: #fff; font-weight: 800; font-size: 16px;
+      min-width: 52px; height: 50px; border: 2px solid #555; border-radius: 12px;
+      background: rgba(40,40,40,.95); color: #fff; font-weight: 800; font-size: 16px;
       cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
-    .pad button:active { background: rgba(255,204,0,.3); }
-    .pad button[data-k="atk"] { min-width: 80px; background: #7f1d1d; border-color: #f87171; }
-    .pad button[data-k="abil"] { min-width: 90px; background: #1e3a5f; border-color: #60a5fa; }
+    .pad button:active { background: rgba(255,204,0,.35); }
+    .pad button[data-k="atk"] { min-width: 72px; background: #7f1d1d; border-color: #f87171; }
+    .pad button[data-k="abil"] { min-width: 72px; background: #1e3a5f; border-color: #60a5fa; }
+    /* Всегда показываем управление на телефоне / таче — приклеено вниз */
+    @media (max-width: 900px), (pointer: coarse), (hover: none) {
+      .pads-wrap { display: flex !important; position: sticky; bottom: 0; z-index: 50; }
+      body { padding-bottom: 8px; }
+      .hint { font-size: 11px; }
+    }
+    .ctrl-banner {
+      display: none; width: 100%; max-width: 960px; text-align: center;
+      background: #1a3a20; border: 1px solid #3a8a4a; color: #b8ffc8;
+      border-radius: 12px; padding: 10px; font-weight: 700; font-size: 13px;
+    }
+    @media (max-width: 900px), (pointer: coarse), (hover: none) {
+      .ctrl-banner { display: block; }
+    }
     .overlay {
       position: absolute; inset: 0; display: grid; place-items: center;
       background: rgba(0,0,0,.72); border-radius: 14px; z-index: 5;
@@ -195,7 +225,12 @@
 
   <section class="screen" id="selectScreen">
     <h2 style="font-size:1.15rem;margin-bottom:4px">Выбери героя</h2>
-    <p class="sub">Режим <b>все против всех</b>: на арене сразу <b>все <span id="heroCountLabel">?</span> героев</b> из всех твоих игр + <b>Соник</b>. Нет команд. Ты — выбранный, остальные — ИИ. Последний выживший побеждает.</p>
+    <p class="sub">Режим <b>все против всех</b> · на арене все герои. <b>1 игрок</b> — ты + ИИ. <b>2 игрока</b> — два человека на одном устройстве, остальные ИИ.</p>
+    <div class="mode-row" id="modeRow">
+      <button type="button" class="active" data-players="1">👤 1 игрок</button>
+      <button type="button" data-players="2">👥 2 игрока (мульти)</button>
+    </div>
+    <p class="sub" id="pickHint">Нажми героя для игрока 1.</p>
     <div class="filter-row" id="filterRow"></div>
     <div class="heroes" id="heroGrid"></div>
     <div class="detail" id="heroDetail">
@@ -230,17 +265,34 @@
         </div>
       </div>
     </div>
-    <p class="hint">
-      WASD / стрелки — ходить · <b>J / Пробел</b> — атака · <b>K / E</b> — способность · R — рестарт · <b>M</b> — музыка<br>
-      🎵 Музыка: <b>Смешарики · Погоня</b> · На телефоне: стрелки + ⚔️ + ✨
+    <div class="ctrl-banner" id="ctrlBanner">📱 Управление внизу экрана: стрелки · ⚔️ удар · ✨ супер</div>
+    <p class="hint" id="ctrlHint">
+      <b>Игрок 1:</b> WASD · Пробел удар · E супер<br>
+      <b>Игрок 2:</b> стрелки · Enter удар · Shift супер · R рестарт · M музыка
     </p>
-    <div class="pad">
-      <button type="button" data-k="up">↑</button>
-      <button type="button" data-k="left">←</button>
-      <button type="button" data-k="down">↓</button>
-      <button type="button" data-k="right">→</button>
-      <button type="button" data-k="atk">⚔️</button>
-      <button type="button" data-k="abil">✨</button>
+    <div class="pads-wrap" id="padsWrap">
+      <div class="pad-box">
+        <h4>Игрок 1 · синий</h4>
+        <div class="pad" data-pad="1">
+          <button type="button" data-k="up">↑</button>
+          <button type="button" data-k="left">←</button>
+          <button type="button" data-k="down">↓</button>
+          <button type="button" data-k="right">→</button>
+          <button type="button" data-k="atk">⚔️</button>
+          <button type="button" data-k="abil">✨</button>
+        </div>
+      </div>
+      <div class="pad-box" id="pad2box" hidden>
+        <h4>Игрок 2 · оранж</h4>
+        <div class="pad" data-pad="2">
+          <button type="button" data-k="up">↑</button>
+          <button type="button" data-k="left">←</button>
+          <button type="button" data-k="down">↓</button>
+          <button type="button" data-k="right">→</button>
+          <button type="button" data-k="atk">⚔️</button>
+          <button type="button" data-k="abil">✨</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -634,6 +686,8 @@
   const filterRow = document.getElementById("filterRow");
 
   let selectedId = null;
+  let selectedId2 = null;
+  let playerCountMode = 1; // 1 or 2
   let filterGroup = "all";
   let fighters = [];
   let projectiles = [];
@@ -641,11 +695,18 @@
   let running = false;
   let lastT = 0;
   let arenaObstacles = [];
-  let spawnFreeze = 0; // секунды: все на поле, бой ещё не начался
+  let spawnFreeze = 0;
   let totalHeroes = 0;
   const keys = {};
   const hold = { up:false, down:false, left:false, right:false, atk:false, abil:false };
-  const imageCache = {}; // path -> HTMLImageElement | null (failed)
+  const hold2 = { up:false, down:false, left:false, right:false, atk:false, abil:false };
+  const imageCache = {};
+
+  // touch / phone: always show pads
+  (function () {
+    const touchy = ("ontouchstart" in window) || navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
+    if (touchy) document.documentElement.classList.add("is-touch");
+  })();
 
   function heroById(id) { return HEROES.find(h => h.id === id); }
 
@@ -708,15 +769,18 @@
 
   function renderSelect() {
     const list = HEROES.filter(h => filterGroup === "all" || h.group === filterGroup);
-    grid.innerHTML = list.map(h => `
-      <button type="button" class="hero-card${selectedId===h.id?" selected":""}" data-id="${h.id}">
+    grid.innerHTML = list.map(h => {
+      const sel = selectedId === h.id || selectedId2 === h.id;
+      const tag = selectedId === h.id ? " · P1" : (selectedId2 === h.id ? " · P2" : "");
+      return `
+      <button type="button" class="hero-card${sel?" selected":""}" data-id="${h.id}">
         <div class="hero-pic" style="background:linear-gradient(145deg,${h.color}33,#111)">${picHtml(h)}</div>
-        <div class="hero-name">${h.name}</div>
+        <div class="hero-name">${h.name}${tag}</div>
         <div class="hero-from">${h.from}</div>
         <div class="hero-stats">❤️${h.hp} · ⚡${h.speed.toFixed(1)} · ⚔️${h.atk}</div>
         <div class="hero-abil">✨ ${h.abilityName}</div>
-      </button>
-    `).join("") || `<p style="color:#888;grid-column:1/-1">Нет героев в этой группе</p>`;
+      </button>`;
+    }).join("") || `<p style="color:#888;grid-column:1/-1">Нет героев в этой группе</p>`;
   }
 
   function showDetail(h) {
@@ -733,26 +797,78 @@
       </div>`;
   }
 
+  function updatePickHint() {
+    const el = document.getElementById("pickHint");
+    if (!el) return;
+    if (playerCountMode === 1) {
+      el.textContent = selectedId
+        ? ("Игрок 1: " + (heroById(selectedId) || {}).name + " · жми «В бой!»")
+        : "Нажми героя для игрока 1.";
+      startBtn.disabled = !selectedId;
+    } else {
+      if (!selectedId) el.textContent = "2 игрока: выбери героя для Игрока 1.";
+      else if (!selectedId2) el.textContent = "Игрок 1: " + (heroById(selectedId) || {}).name + " · теперь герой для Игрока 2.";
+      else el.textContent = "P1: " + (heroById(selectedId) || {}).name + " · P2: " + (heroById(selectedId2) || {}).name + " · В бой!";
+      startBtn.disabled = !(selectedId && selectedId2);
+    }
+  }
+
+  document.getElementById("modeRow").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-players]");
+    if (!b) return;
+    playerCountMode = Number(b.getAttribute("data-players")) || 1;
+    document.querySelectorAll("#modeRow button").forEach(x => {
+      x.classList.toggle("active", x === b);
+    });
+    if (playerCountMode === 1) selectedId2 = null;
+    renderSelect();
+    updatePickHint();
+  });
+
   grid.addEventListener("click", (e) => {
     const card = e.target.closest("[data-id]");
     if (!card) return;
-    selectedId = card.getAttribute("data-id");
+    const id = card.getAttribute("data-id");
+    if (playerCountMode === 1) {
+      selectedId = id;
+      selectedId2 = null;
+    } else {
+      if (!selectedId || (selectedId && selectedId2)) {
+        selectedId = id;
+        selectedId2 = null;
+      } else if (id !== selectedId) {
+        selectedId2 = id;
+      } else {
+        selectedId = id;
+      }
+    }
     renderSelect();
-    showDetail(heroById(selectedId));
-    startBtn.disabled = false;
+    showDetail(heroById(id));
+    updatePickHint();
   });
 
   document.getElementById("randBtn").addEventListener("click", () => {
     selectedId = HEROES[Math.floor(Math.random() * HEROES.length)].id;
+    if (playerCountMode === 2) {
+      do {
+        selectedId2 = HEROES[Math.floor(Math.random() * HEROES.length)].id;
+      } while (selectedId2 === selectedId && HEROES.length > 1);
+    } else selectedId2 = null;
     filterGroup = "all";
     renderFilters();
     renderSelect();
     showDetail(heroById(selectedId));
-    startBtn.disabled = false;
+    updatePickHint();
   });
 
-  startBtn.addEventListener("click", () => { if (selectedId) startMatch(selectedId); });
-  document.getElementById("againBtn").addEventListener("click", () => { if (selectedId) startMatch(selectedId); });
+  startBtn.addEventListener("click", () => {
+    if (!selectedId) return;
+    if (playerCountMode === 2 && !selectedId2) return;
+    startMatch(selectedId, selectedId2);
+  });
+  document.getElementById("againBtn").addEventListener("click", () => {
+    if (selectedId) startMatch(selectedId, playerCountMode === 2 ? selectedId2 : null);
+  });
   document.getElementById("pickBtn").addEventListener("click", () => {
     running = false;
     endOverlay.hidden = true;
@@ -784,15 +900,14 @@
     };
   }
 
-  function createFighter(def, isPlayer, index, total) {
+  function createFighter(def, isPlayer, index, total, humanSlot) {
     const p = spawnPos(index, total);
-    // Меньше размер, когда героев много — все помещаются
     const baseR = total >= 40 ? 13 : total >= 28 ? 15 : total > 14 ? 18 : 22;
-    // Чуть больше HP в королевской битве, чтобы не умирали за 3 секунды
     const hpBonus = total > 20 ? 1.35 : total > 12 ? 1.25 : 1;
     const hp = Math.round(def.hp * hpBonus);
     return {
-      def, isPlayer, x:p.x, y:p.y, vx:0, vy:0, r:baseR,
+      def, isPlayer: !!isPlayer, humanSlot: humanSlot || 0,
+      x:p.x, y:p.y, vx:0, vy:0, r:baseR,
       hp, maxHp: hp, facing:1, dead:false,
       atkCd:0, abilCd:0, powerT:0, phaseT:0, megaT:0, growT:0,
       stunT:0, shieldT:0, poisonT:0, spinT:0, shellSlide:0,
@@ -809,45 +924,46 @@
     return a;
   }
 
-  function startMatch(playerId) {
+  function startMatch(playerId, playerId2) {
     makeArena();
     projectiles = []; particles = [];
     endOverlay.hidden = true;
 
-    // ЖЁСТКО: каждый герой из HEROES ровно один раз. Без slice, без лимита.
-    const playerHero = heroById(playerId) || HEROES[0];
-    const picks = [playerHero];
-    for (let i = 0; i < HEROES.length; i++) {
-      if (HEROES[i].id !== playerHero.id) picks.push(HEROES[i]);
-    }
-    // Перемешиваем только позиции AI (игрок всегда index 0, но место на сетке своё)
-    const player = picks.shift();
-    shuffle(picks);
-    picks.unshift(player);
+    const p1 = heroById(playerId) || HEROES[0];
+    const p2 = playerId2 && playerId2 !== playerId ? heroById(playerId2) : null;
+    const humanIds = new Set([p1.id]);
+    if (p2) humanIds.add(p2.id);
+
+    const rest = HEROES.filter(h => !humanIds.has(h.id));
+    shuffle(rest);
+    const picks = [p1];
+    if (p2) picks.push(p2);
+    for (const h of rest) picks.push(h);
 
     totalHeroes = picks.length;
-    fighters = picks.map((h, i) => createFighter(h, h.id === playerHero.id, i, picks.length));
-    // Гарантия: игрок один
-    let playerCount = 0;
-    for (const f of fighters) {
-      if (f.isPlayer) {
-        playerCount++;
-        if (playerCount > 1) f.isPlayer = false;
-      }
-    }
+    fighters = picks.map((h, i) => {
+      let slot = 0;
+      if (h.id === p1.id) slot = 1;
+      else if (p2 && h.id === p2.id) slot = 2;
+      return createFighter(h, slot > 0, i, picks.length, slot);
+    });
 
-    spawnFreeze = 2.8; // сначала видно ВСЕХ, потом бой
+    spawnFreeze = 2.8;
 
-    document.getElementById("hudHero").textContent =
-      fighters.find(f => f.isPlayer).def.emoji + " " +
-      fighters.find(f => f.isPlayer).def.name;
+    const names = fighters.filter(f => f.humanSlot).map(f => "P" + f.humanSlot + " " + f.def.emoji + " " + f.def.name);
+    document.getElementById("hudHero").textContent = names.join(" · ") || "—";
     document.getElementById("hudAlive").textContent = totalHeroes + " / " + totalHeroes;
+
+    const pad2 = document.getElementById("pad2box");
+    if (pad2) pad2.hidden = !p2;
+    document.getElementById("padsWrap").classList.add("show");
+    gameWrap.classList.add("show-pads");
+
     selectScreen.hidden = true;
     gameWrap.hidden = false;
     running = true;
     lastT = performance.now();
     updateBars();
-    // 🎵 Смешарики · Погоня (нужен жест пользователя — клик «В бой» уже есть)
     playBattleMusic();
     canvas.focus();
     requestAnimationFrame(loop);
@@ -861,47 +977,68 @@
       const thumb = f.def._imgPath
         ? `<img src="${f.def._imgPath}" alt="">`
         : `<span>${f.def.emoji}</span>`;
-      return `<div class="bar-item${f.isPlayer?" me":""}${f.dead?" dead":""}">
-        <div class="bar-name">${thumb}${f.def.name}${f.isPlayer?" (ты)":""}</div>
+      return `<div class="bar-item${f.humanSlot?" me":""}${f.dead?" dead":""}">
+        <div class="bar-name">${thumb}${f.humanSlot?"P"+f.humanSlot+" ":""}${f.def.name}</div>
         <div class="bar-hp"><i style="width:${pct}%"></i></div>
       </div>`;
     }).join("");
     document.getElementById("hudAlive").textContent = alive + " / " + totalHeroes;
-    const p = fighters.find(f=>f.isPlayer);
-    if (p) {
-      const cd = Math.max(0, p.abilCd);
-      document.getElementById("hudAbil").textContent =
-        spawnFreeze > 0 ? ("старт " + spawnFreeze.toFixed(1) + "с") :
-        (cd>0 ? cd.toFixed(1)+" с" : "готово ✨");
+    const humans = fighters.filter(f => f.humanSlot && !f.dead);
+    if (spawnFreeze > 0) {
+      document.getElementById("hudAbil").textContent = "старт " + spawnFreeze.toFixed(1) + "с";
+    } else if (humans.length) {
+      document.getElementById("hudAbil").textContent = humans.map(f => {
+        const cd = Math.max(0, f.abilCd);
+        return "P" + f.humanSlot + ":" + (cd > 0 ? cd.toFixed(1) : "✨");
+      }).join(" ");
     }
   }
 
   window.addEventListener("keydown", e => {
     keys[e.code]=true;
     if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault();
-    if (e.code==="KeyR" && (running || !endOverlay.hidden) && selectedId) startMatch(selectedId);
+    if (e.code==="KeyR" && (running || !endOverlay.hidden) && selectedId) {
+      startMatch(selectedId, playerCountMode === 2 ? selectedId2 : null);
+    }
   });
   window.addEventListener("keyup", e => { keys[e.code]=false; });
   document.querySelectorAll(".pad button").forEach(btn => {
     const k = btn.getAttribute("data-k");
-    const on = v => e => { e.preventDefault(); hold[k]=v; };
+    const padN = Number(btn.closest("[data-pad]") && btn.closest("[data-pad]").getAttribute("data-pad")) || 1;
+    const bag = padN === 2 ? hold2 : hold;
+    const on = v => e => { e.preventDefault(); e.stopPropagation(); bag[k]=v; };
     btn.addEventListener("pointerdown", on(true));
     btn.addEventListener("pointerup", on(false));
     btn.addEventListener("pointerleave", on(false));
     btn.addEventListener("pointercancel", on(false));
   });
 
-  function inputDir() {
+  // P1: WASD + Space/J + E/K · pad1
+  // P2: arrows + Enter + Shift · pad2
+  function inputDirFor(slot) {
     let x=0,y=0;
-    if (keys.KeyA||keys.ArrowLeft||hold.left) x-=1;
-    if (keys.KeyD||keys.ArrowRight||hold.right) x+=1;
-    if (keys.KeyW||keys.ArrowUp||hold.up) y-=1;
-    if (keys.KeyS||keys.ArrowDown||hold.down) y+=1;
+    if (slot === 1) {
+      if (keys.KeyA||hold.left) x-=1;
+      if (keys.KeyD||hold.right) x+=1;
+      if (keys.KeyW||hold.up) y-=1;
+      if (keys.KeyS||hold.down) y+=1;
+    } else {
+      if (keys.ArrowLeft||hold2.left) x-=1;
+      if (keys.ArrowRight||hold2.right) x+=1;
+      if (keys.ArrowUp||hold2.up) y-=1;
+      if (keys.ArrowDown||hold2.down) y+=1;
+    }
     if (x&&y){x*=0.707;y*=0.707;}
     return {x,y};
   }
-  function wantAtk(){ return keys.Space||keys.KeyJ||hold.atk; }
-  function wantAbil(){ return keys.KeyE||keys.KeyK||hold.abil; }
+  function wantAtkFor(slot) {
+    if (slot === 1) return keys.Space||keys.KeyJ||hold.atk;
+    return keys.Enter||keys.NumpadEnter||hold2.atk;
+  }
+  function wantAbilFor(slot) {
+    if (slot === 1) return keys.KeyE||keys.KeyK||hold.abil;
+    return keys.ShiftLeft||keys.ShiftRight||hold2.abil;
+  }
 
   function circleRectPush(f,o){
     const cx=Math.max(o.x,Math.min(f.x,o.x+o.w));
@@ -1387,23 +1524,24 @@
       return;
     }
 
-    const p=fighters.find(f=>f.isPlayer);
-    if (p && !p.dead && p.stunT<=0){
-      if (p.shellSlide<=0){
-        const dir=inputDir();
-        let spd=p.def.speed*60;
-        if (p.powerT>0) spd*=1.35;
-        if (p.megaT>0) spd*=0.85;
-        p.vx=dir.x*spd; p.vy=dir.y*spd;
-        if (dir.x) p.facing=dir.x>0?1:-1;
+    // Управление людьми (1 или 2)
+    for (const p of fighters) {
+      if (!p.humanSlot || p.dead || p.stunT > 0) continue;
+      if (p.shellSlide <= 0) {
+        const dir = inputDirFor(p.humanSlot);
+        let spd = p.def.speed * 60;
+        if (p.powerT > 0) spd *= 1.35;
+        if (p.megaT > 0) spd *= 0.85;
+        p.vx = dir.x * spd; p.vy = dir.y * spd;
+        if (dir.x) p.facing = dir.x > 0 ? 1 : -1;
       }
-      if (wantAtk()) doAttack(p);
-      if (wantAbil()) doAbility(p);
+      if (wantAtkFor(p.humanSlot)) doAttack(p);
+      if (wantAbilFor(p.humanSlot)) doAbility(p);
     }
 
     for (const f of fighters){
       if (f.dead) continue;
-      if (!f.isPlayer) aiStep(f,dt);
+      if (!f.humanSlot) aiStep(f,dt);
 
       f.atkCd=Math.max(0,f.atkCd-dt);
       f.abilCd=Math.max(0,f.abilCd-dt);
@@ -1448,8 +1586,11 @@
       } else {
         if (f.stunT>0){ f.vx*=0.2; f.vy*=0.2; }
         f.x+=f.vx*dt; f.y+=f.vy*dt;
-        if (f.isPlayer && !inputDir().x && !inputDir().y && f.shellSlide<=0){
-          f.vx*=0.85; f.vy*=0.85;
+        if (f.humanSlot) {
+          const d = inputDirFor(f.humanSlot);
+          if (!d.x && !d.y && f.shellSlide <= 0) {
+            f.vx *= 0.85; f.vy *= 0.85;
+          }
         }
       }
 
@@ -1507,7 +1648,7 @@
     if (alive.length<=1){
       running=false;
       const winner=alive[0];
-      const pAlive=fighters.find(f=>f.isPlayer&&!f.dead);
+      const pAlive=fighters.find(f=>f.humanSlot&&!f.dead);
       // Топ по киллам (все против всех)
       const byKills = [...fighters].sort((a, b) => (b.kills || 0) - (a.kills || 0)).slice(0, 3);
       const killLine = byKills.map((f, i) => (i + 1) + ". " + f.def.emoji + " " + f.def.name + " — " + (f.kills || 0)).join(" · ");
@@ -1755,14 +1896,14 @@
     ctx.globalAlpha = f.dead ? 0.28 : 1;
     ctx.font="bold 11px Segoe UI, Arial";
     ctx.textAlign="center"; ctx.textBaseline="bottom";
-    ctx.fillStyle=f.isPlayer?"#ffcc00":"#eee";
-    ctx.fillText(f.def.name+(f.isPlayer?" ★":""), 0, -r-14);
+    ctx.fillStyle=f.humanSlot?(f.humanSlot===1?"#5eb0ff":"#fb923c"):"#eee";
+    ctx.fillText((f.humanSlot?("P"+f.humanSlot+" "):"")+f.def.name+(f.humanSlot?" ★":""), 0, -r-14);
     const bw=r*2;
     ctx.fillStyle="#222"; ctx.fillRect(-bw/2,-r-8,bw,4);
     ctx.fillStyle=f.hp/f.maxHp>0.35?"#4ade80":"#f87171";
     ctx.fillRect(-bw/2,-r-8,bw*(f.hp/f.maxHp),4);
 
-    if (f.isPlayer && f.abilCd<=0 && !f.dead){
+    if (f.humanSlot && f.abilCd<=0 && !f.dead){
       ctx.strokeStyle="rgba(255,204,0,.5)"; ctx.lineWidth=2;
       ctx.beginPath(); ctx.arc(0,0,r+5,0,Math.PI*2); ctx.stroke();
     }
@@ -1811,7 +1952,7 @@
     ctx.fillRect(W/2 - 170, 6, 340, 28);
     ctx.fillStyle = "#ffcc00";
     ctx.font = "bold 13px Segoe UI, Arial";
-    const me = fighters.find(f => f.isPlayer);
+    const me = fighters.find(f => f.humanSlot === 1) || fighters.find(f => f.humanSlot);
     const myK = me ? (me.kills || 0) : 0;
     ctx.fillText("⚔️ FFA " + aliveN + "/" + totalHeroes + " · твои киллы: " + myK, W/2, 20);
   }

@@ -44,7 +44,12 @@
       touch-action: none; -webkit-tap-highlight-color: transparent;
     }
     .pad button:active { background: rgba(255,204,0,.35); }
-    .pad button[data-k="fire"] { min-width: 88px; background: #c0392b; border-color: #ff6b6b; }
+    .pad button[data-k="fire"] { min-width: 64px; background: #c0392b; border-color: #ff6b6b; }
+    .pad { display: flex !important; }
+    .pad button {
+      min-width: 52px; height: 50px; border: 2px solid #9fcf4a; border-radius: 12px;
+      background: rgba(0,0,0,.55); color: #fff; font-weight: 800; font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -54,21 +59,40 @@
     <a class="ghost" href="../../index.html">Все игры</a>
   </div>
   <div class="hud">
-    <span>Ты: <b id="hp1">3</b> ❤️</span>
-    <span>Враг: <b id="hp2">3</b> ❤️</span>
+    <span>P1: <b id="hp1">3</b> ❤️</span>
+    <span>P2 / враг: <b id="hp2">3</b> ❤️</span>
     <span id="status">Стреляй!</span>
   </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+    <button type="button" id="mode1" style="padding:8px 14px;border-radius:10px;border:2px solid #ffcc00;background:#2a2a10;color:#ffcc00;font-weight:800">👤 1 игрок</button>
+    <button type="button" id="mode2" style="padding:8px 14px;border-radius:10px;border:2px solid #555;background:#1a1a1a;color:#ddd;font-weight:800">👥 2 игрока</button>
+  </div>
   <canvas id="c" width="640" height="420" tabindex="0"></canvas>
-  <p class="hint">
-    WASD / стрелки — езда · Пробел / Enter — выстрел · R — рестарт<br>
-    Уничтожь вражеский танк! Укрытия блокируют пули.
+  <p class="hint" id="hint">
+    <b>P1:</b> WASD · Пробел 🔥 · <b>P2:</b> стрелки · Enter 🔥 · R — рестарт<br>
+    📱 На телефоне: два блока кнопок внизу
   </p>
-  <div class="pad">
-    <button type="button" data-k="up">↑</button>
-    <button type="button" data-k="left">←</button>
-    <button type="button" data-k="down">↓</button>
-    <button type="button" data-k="right">→</button>
-    <button type="button" data-k="fire">🔥</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:min(640px,96vw)">
+    <div style="flex:1;min-width:140px;background:rgba(0,0,0,.4);border-radius:12px;padding:8px;border:1px solid #5a7a30">
+      <div style="text-align:center;font-size:12px;font-weight:800;color:#c8ff6a;margin-bottom:4px">P1</div>
+      <div class="pad" data-pad="1" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+        <button type="button" data-k="up">↑</button>
+        <button type="button" data-k="left">←</button>
+        <button type="button" data-k="down">↓</button>
+        <button type="button" data-k="right">→</button>
+        <button type="button" data-k="fire">🔥</button>
+      </div>
+    </div>
+    <div id="pad2wrap" style="flex:1;min-width:140px;background:rgba(0,0,0,.4);border-radius:12px;padding:8px;border:1px solid #a04030;display:none">
+      <div style="text-align:center;font-size:12px;font-weight:800;color:#ff8a70;margin-bottom:4px">P2</div>
+      <div class="pad" data-pad="2" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+        <button type="button" data-k="up">↑</button>
+        <button type="button" data-k="left">←</button>
+        <button type="button" data-k="down">↓</button>
+        <button type="button" data-k="right">→</button>
+        <button type="button" data-k="fire">🔥</button>
+      </div>
+    </div>
   </div>
 <script>
 (() => {
@@ -77,6 +101,8 @@
   const W = canvas.width, H = canvas.height;
   const keys = {};
   const hold = { up: false, down: false, left: false, right: false, fire: false };
+  const hold2 = { up: false, down: false, left: false, right: false, fire: false };
+  let twoPlayer = false;
 
   const walls = [
     { x: 200, y: 80, w: 40, h: 140 },
@@ -89,20 +115,35 @@
   let p, e, bullets, won, over, fireCd, eCd, status;
 
   function tank(x, y, ang, color, isPlayer) {
-    return { x, y, ang, color, isPlayer, hp: 3, r: 13, speed: isPlayer ? 2.1 : 1.45 };
+    return { x, y, ang, color, isPlayer, hp: 3, r: 13, speed: isPlayer || twoPlayer ? 2.1 : 1.45 };
   }
 
   function reset() {
     p = tank(80, H / 2, 0, "#6adf3a", true);
-    e = tank(W - 80, H / 2, Math.PI, "#e85d4c", false);
+    e = tank(W - 80, H / 2, Math.PI, "#e85d4c", twoPlayer);
+    if (twoPlayer) e.isPlayer = true; // P2 human flag via twoPlayer
     bullets = [];
     won = false; over = false;
     fireCd = 0; eCd = 0;
-    status = "Стреляй!";
+    status = twoPlayer ? "2 игрока! P1 vs P2" : "Стреляй по ИИ!";
     document.getElementById("hp1").textContent = "3";
     document.getElementById("hp2").textContent = "3";
     document.getElementById("status").textContent = status;
+    document.getElementById("pad2wrap").style.display = twoPlayer ? "block" : "none";
   }
+
+  document.getElementById("mode1").onclick = () => {
+    twoPlayer = false;
+    document.getElementById("mode1").style.borderColor = "#ffcc00";
+    document.getElementById("mode2").style.borderColor = "#555";
+    reset();
+  };
+  document.getElementById("mode2").onclick = () => {
+    twoPlayer = true;
+    document.getElementById("mode2").style.borderColor = "#ffcc00";
+    document.getElementById("mode1").style.borderColor = "#555";
+    reset();
+  };
 
   function hitWall(x, y, r) {
     for (const w of walls) {
@@ -140,25 +181,39 @@
     fireCd = Math.max(0, fireCd - 1);
     eCd = Math.max(0, eCd - 1);
 
+    // P1: WASD + Space + pad1
     let f = 0, tr = 0;
-    if (keys["ArrowUp"] || keys["w"] || keys["W"] || hold.up) f = 1;
-    if (keys["ArrowDown"] || keys["s"] || keys["S"] || hold.down) f = -1;
-    if (keys["ArrowLeft"] || keys["a"] || keys["A"] || hold.left) tr = -1;
-    if (keys["ArrowRight"] || keys["d"] || keys["D"] || hold.right) tr = 1;
+    if (keys["w"] || keys["W"] || hold.up) f = 1;
+    if (keys["s"] || keys["S"] || hold.down) f = -1;
+    if (keys["a"] || keys["A"] || hold.left) tr = -1;
+    if (keys["d"] || keys["D"] || hold.right) tr = 1;
     moveTank(p, f, tr);
-    if ((keys[" "] || keys["Enter"] || hold.fire) && fireCd === 0) {
+    if ((keys[" "] || hold.fire) && fireCd === 0) {
       shoot(p); fireCd = 18;
     }
 
-    // simple enemy AI
-    const dx = p.x - e.x, dy = p.y - e.y;
-    const want = Math.atan2(dy, dx);
-    let da = want - e.ang;
-    while (da > Math.PI) da -= Math.PI * 2;
-    while (da < -Math.PI) da += Math.PI * 2;
-    moveTank(e, 1, Math.max(-1, Math.min(1, da * 3)));
-    if (Math.abs(da) < 0.25 && eCd === 0 && Math.hypot(dx, dy) < 320) {
-      shoot(e); eCd = 28 + Math.floor(Math.random() * 20);
+    if (twoPlayer) {
+      // P2: arrows + Enter + pad2
+      let f2 = 0, tr2 = 0;
+      if (keys["ArrowUp"] || hold2.up) f2 = 1;
+      if (keys["ArrowDown"] || hold2.down) f2 = -1;
+      if (keys["ArrowLeft"] || hold2.left) tr2 = -1;
+      if (keys["ArrowRight"] || hold2.right) tr2 = 1;
+      moveTank(e, f2, tr2);
+      if ((keys["Enter"] || hold2.fire) && eCd === 0) {
+        shoot(e); eCd = 18;
+      }
+    } else {
+      // AI enemy
+      const dx = p.x - e.x, dy = p.y - e.y;
+      const want = Math.atan2(dy, dx);
+      let da = want - e.ang;
+      while (da > Math.PI) da -= Math.PI * 2;
+      while (da < -Math.PI) da += Math.PI * 2;
+      moveTank(e, 1, Math.max(-1, Math.min(1, da * 3)));
+      if (Math.abs(da) < 0.25 && eCd === 0 && Math.hypot(dx, dy) < 320) {
+        shoot(e); eCd = 28 + Math.floor(Math.random() * 20);
+      }
     }
 
     for (const b of bullets) {
@@ -168,11 +223,13 @@
       if (b.life > 0 && Math.hypot(b.x - target.x, b.y - target.y) < target.r) {
         b.life = 0;
         target.hp--;
-        document.getElementById(target.isPlayer ? "hp1" : "hp2").textContent = String(Math.max(0, target.hp));
+        document.getElementById(b.from === "p" ? "hp2" : "hp1").textContent = String(Math.max(0, target.hp));
         if (target.hp <= 0) {
           over = true;
-          won = !target.isPlayer;
-          status = won ? "Победа! R — ещё раз" : "Поражение. R — рестарт";
+          won = b.from === "p";
+          status = twoPlayer
+            ? (won ? "P1 победил! R" : "P2 победил! R")
+            : (won ? "Победа! R" : "Поражение. R");
           document.getElementById("status").textContent = status;
         }
       }
@@ -254,8 +311,10 @@
 
   document.querySelectorAll(".pad button").forEach(btn => {
     const k = btn.dataset.k;
-    const on = e => { e.preventDefault(); hold[k] = true; };
-    const off = e => { e.preventDefault(); hold[k] = false; };
+    const pad = Number(btn.closest("[data-pad]") && btn.closest("[data-pad]").getAttribute("data-pad")) || 1;
+    const bag = pad === 2 ? hold2 : hold;
+    const on = e => { e.preventDefault(); bag[k] = true; };
+    const off = e => { e.preventDefault(); bag[k] = false; };
     btn.addEventListener("pointerdown", on);
     btn.addEventListener("pointerup", off);
     btn.addEventListener("pointerleave", off);

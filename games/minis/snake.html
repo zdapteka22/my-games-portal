@@ -58,19 +58,40 @@
     <a class="ghost" href="../../index.html">Сайт</a>
   </div>
   <div class="hud">
-    <span>Счёт: <b id="score">0</b></span>
+    <span>P1: <b id="score">0</b></span>
+    <span>P2: <b id="score2">0</b></span>
     <span>Рекорд: <b id="best">0</b></span>
     <span id="status">Играй!</span>
   </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+    <button type="button" id="sMode1" style="padding:8px 12px;border-radius:10px;border:2px solid #ffcc00;background:#14301a;color:#7dff9a;font-weight:800">👤 1 игрок</button>
+    <button type="button" id="sMode2" style="padding:8px 12px;border-radius:10px;border:2px solid #555;background:#111;color:#ddd;font-weight:800">👥 2 игрока</button>
+  </div>
   <canvas id="c" width="400" height="400" tabindex="0"></canvas>
-  <p class="hint">Стрелки / WASD — движение · Пробел — пауза · R — заново<br>Собери еду, не врежься в себя и в стены!</p>
-  <div class="pad">
-    <span class="empty"></span>
-    <button type="button" data-d="0,-1">▲</button>
-    <span class="empty"></span>
-    <button type="button" data-d="-1,0">◀</button>
-    <button type="button" data-d="0,1">▼</button>
-    <button type="button" data-d="1,0">▶</button>
+  <p class="hint"><b>P1:</b> WASD · <b>P2:</b> стрелки · Пробел пауза · R заново<br>📱 Кнопки внизу · собери еду, не врежься!</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:min(480px,96vw)">
+    <div style="flex:1;min-width:130px;background:rgba(0,0,0,.35);border-radius:12px;padding:6px;border:1px solid #4caf50">
+      <div style="text-align:center;font-size:11px;font-weight:800;color:#7dff9a">P1</div>
+      <div class="pad" data-pad="1" style="display:grid!important;grid-template-columns:56px 56px 56px;gap:6px;justify-content:center;margin:4px auto">
+        <span class="empty"></span>
+        <button type="button" data-d="0,-1">▲</button>
+        <span class="empty"></span>
+        <button type="button" data-d="-1,0">◀</button>
+        <button type="button" data-d="0,1">▼</button>
+        <button type="button" data-d="1,0">▶</button>
+      </div>
+    </div>
+    <div id="sPad2" style="flex:1;min-width:130px;background:rgba(0,0,0,.35);border-radius:12px;padding:6px;border:1px solid #e85d4c;display:none">
+      <div style="text-align:center;font-size:11px;font-weight:800;color:#ff8a70">P2</div>
+      <div class="pad" data-pad="2" style="display:grid!important;grid-template-columns:56px 56px 56px;gap:6px;justify-content:center;margin:4px auto">
+        <span class="empty"></span>
+        <button type="button" data-d="0,-1">▲</button>
+        <span class="empty"></span>
+        <button type="button" data-d="-1,0">◀</button>
+        <button type="button" data-d="0,1">▼</button>
+        <button type="button" data-d="1,0">▶</button>
+      </div>
+    </div>
   </div>
 <script>
 (() => {
@@ -78,29 +99,45 @@
   const ctx = canvas.getContext("2d");
   const COLS = 20, ROWS = 20, CELL = canvas.width / COLS;
   const BEST_KEY = "miniSnake_best_v1";
-
-  let snake, dir, nextDir, food, score, best, alive, paused, tickMs, acc, last;
+  let twoPlayer = false;
+  let food, best, paused, tickMs, acc, last, overMsg;
+  let p1, p2;
   best = Number(localStorage.getItem(BEST_KEY) || 0);
   document.getElementById("best").textContent = best;
 
+  function makeSnake(body, dir, colorHead, colorBody) {
+    return {
+      body: body.map(b => ({ ...b })),
+      dir: { ...dir }, nextDir: { ...dir },
+      score: 0, alive: true, colorHead, colorBody
+    };
+  }
+
   function reset() {
-    snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
-    dir = { x: 1, y: 0 };
-    nextDir = { ...dir };
-    score = 0;
-    alive = true;
+    p1 = makeSnake([{ x: 6, y: 10 }, { x: 5, y: 10 }, { x: 4, y: 10 }], { x: 1, y: 0 }, "#b8ff6a", "40,200,70");
+    p2 = makeSnake([{ x: 13, y: 10 }, { x: 14, y: 10 }, { x: 15, y: 10 }], { x: -1, y: 0 }, "#ffb070", "200,100,60");
+    if (!twoPlayer) p2.alive = false;
     paused = false;
+    overMsg = "";
     tickMs = 140;
     placeFood();
     document.getElementById("score").textContent = "0";
-    document.getElementById("status").textContent = "Играй!";
+    document.getElementById("score2").textContent = twoPlayer ? "0" : "—";
+    document.getElementById("status").textContent = twoPlayer ? "2 змейки!" : "Играй!";
+    document.getElementById("sPad2").style.display = twoPlayer ? "block" : "none";
+  }
+
+  function allBodies() {
+    const a = p1.alive ? p1.body : [];
+    const b = (twoPlayer && p2.alive) ? p2.body : [];
+    return a.concat(b);
   }
 
   function placeFood() {
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 300; i++) {
       const x = Math.floor(Math.random() * COLS);
       const y = Math.floor(Math.random() * ROWS);
-      if (!snake.some(s => s.x === x && s.y === y)) {
+      if (!allBodies().some(s => s.x === x && s.y === y)) {
         food = { x, y };
         return;
       }
@@ -108,83 +145,88 @@
     food = { x: 0, y: 0 };
   }
 
-  function setDir(x, y) {
-    if (!alive) return;
-    if (x === -dir.x && y === -dir.y) return;
-    nextDir = { x, y };
+  function setDir(pl, x, y) {
+    if (!pl.alive) return;
+    if (x === -pl.dir.x && y === -pl.dir.y) return;
+    pl.nextDir = { x, y };
   }
 
-  function step() {
-    if (!alive || paused) return;
-    dir = nextDir;
-    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-    if (head.x < 0 || head.y < 0 || head.x >= COLS || head.y >= ROWS ||
-        snake.some(s => s.x === head.x && s.y === head.y)) {
-      alive = false;
-      document.getElementById("status").textContent = "Конец! R — заново";
+  function stepSnake(pl) {
+    if (!pl.alive || paused) return;
+    pl.dir = pl.nextDir;
+    const head = { x: pl.body[0].x + pl.dir.x, y: pl.body[0].y + pl.dir.y };
+    const hitWall = head.x < 0 || head.y < 0 || head.x >= COLS || head.y >= ROWS;
+    const hitSelf = pl.body.some(s => s.x === head.x && s.y === head.y);
+    const other = pl === p1 ? p2 : p1;
+    const hitOther = twoPlayer && other.alive && other.body.some(s => s.x === head.x && s.y === head.y);
+    if (hitWall || hitSelf || hitOther) {
+      pl.alive = false;
       return;
     }
-    snake.unshift(head);
+    pl.body.unshift(head);
     if (head.x === food.x && head.y === food.y) {
-      score++;
-      document.getElementById("score").textContent = score;
-      if (score > best) {
-        best = score;
+      pl.score++;
+      if (pl === p1) document.getElementById("score").textContent = pl.score;
+      else document.getElementById("score2").textContent = pl.score;
+      const top = Math.max(p1.score, twoPlayer ? p2.score : 0);
+      if (top > best) {
+        best = top;
         localStorage.setItem(BEST_KEY, String(best));
         document.getElementById("best").textContent = best;
       }
-      tickMs = Math.max(70, 140 - score * 3);
+      tickMs = Math.max(70, 140 - top * 3);
       placeFood();
-    } else {
-      snake.pop();
+    } else pl.body.pop();
+  }
+
+  function step() {
+    if (paused) return;
+    stepSnake(p1);
+    if (twoPlayer) stepSnake(p2);
+    if (!p1.alive && (!twoPlayer || !p2.alive)) {
+      if (twoPlayer) {
+        if (p1.score > p2.score) overMsg = "P1 победил!";
+        else if (p2.score > p1.score) overMsg = "P2 победил!";
+        else overMsg = "Ничья!";
+      } else overMsg = "ИГРА ОКОНЧЕНА";
+      document.getElementById("status").textContent = overMsg + " R";
+    } else if (twoPlayer && !p1.alive && p2.alive) {
+      /* p2 continues */
+    } else if (twoPlayer && p1.alive && !p2.alive) {
+      /* p1 continues */
     }
+  }
+
+  function drawSnake(pl) {
+    if (!pl.alive && pl.body.length === 0) return;
+    pl.body.forEach((s, i) => {
+      const t = i / Math.max(1, pl.body.length - 1);
+      ctx.fillStyle = i === 0 ? pl.colorHead : `rgb(${pl.colorBody})`;
+      if (i > 0) {
+        const parts = pl.colorBody.split(",").map(Number);
+        const g = Math.floor(parts[1] * (1 - t * 0.3));
+        ctx.fillStyle = `rgb(${parts[0]},${g},${parts[2]})`;
+      }
+      const pad = i === 0 ? 4 : 5;
+      roundRect(s.x * CELL + pad, s.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
+      ctx.fill();
+    });
   }
 
   function draw() {
     ctx.fillStyle = "#0d1f12";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "rgba(80,160,100,.12)";
-    ctx.lineWidth = 1;
     for (let i = 0; i <= COLS; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * CELL, 0);
-      ctx.lineTo(i * CELL, canvas.height);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(0, i * CELL);
-      ctx.lineTo(canvas.width, i * CELL);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(canvas.width, i * CELL); ctx.stroke();
     }
-    // food
-    const fx = food.x * CELL + CELL / 2;
-    const fy = food.y * CELL + CELL / 2;
-    ctx.beginPath();
-    ctx.fillStyle = "#ff4d6d";
-    ctx.arc(fx, fy, CELL * 0.35, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#2ecc71";
-    ctx.fillRect(fx - 2, fy - CELL * 0.45, 4, 6);
-
-    snake.forEach((s, i) => {
-      const t = i / Math.max(1, snake.length - 1);
-      const g = Math.floor(180 + (1 - t) * 75);
-      ctx.fillStyle = i === 0 ? "#b8ff6a" : `rgb(40,${g},70)`;
-      const pad = i === 0 ? 4 : 5;
-      roundRect(s.x * CELL + pad, s.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
-      ctx.fill();
-      if (i === 0) {
-        ctx.fillStyle = "#111";
-        const ex = dir.x !== 0 ? dir.x * 4 : 0;
-        const ey = dir.y !== 0 ? dir.y * 4 : 0;
-        ctx.beginPath();
-        ctx.arc(s.x * CELL + CELL * 0.35 + ex, s.y * CELL + CELL * 0.35 + ey, 2.2, 0, Math.PI * 2);
-        ctx.arc(s.x * CELL + CELL * 0.65 + ex, s.y * CELL + CELL * 0.35 + ey, 2.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
-
+    const fx = food.x * CELL + CELL / 2, fy = food.y * CELL + CELL / 2;
+    ctx.beginPath(); ctx.fillStyle = "#ff4d6d"; ctx.arc(fx, fy, CELL * 0.35, 0, Math.PI * 2); ctx.fill();
+    drawSnake(p1);
+    if (twoPlayer) drawSnake(p2);
     if (paused) overlay("ПАУЗА");
-    if (!alive) overlay("ИГРА ОКОНЧЕНА");
+    if (overMsg) overlay(overMsg);
   }
 
   function roundRect(x, y, w, h, r) {
@@ -196,38 +238,54 @@
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
   }
-
   function overlay(text) {
     ctx.fillStyle = "rgba(0,0,0,.55)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#ffcc00";
-    ctx.font = "bold 28px Segoe UI, Arial";
+    ctx.font = "bold 26px Segoe UI, Arial";
     ctx.textAlign = "center";
     ctx.fillText(text, canvas.width / 2, canvas.height / 2);
     ctx.fillStyle = "#fff";
-    ctx.font = "16px Segoe UI, Arial";
-    ctx.fillText("R — начать заново", canvas.width / 2, canvas.height / 2 + 32);
+    ctx.font = "15px Segoe UI, Arial";
+    ctx.fillText("R — заново", canvas.width / 2, canvas.height / 2 + 30);
   }
+
+  document.getElementById("sMode1").onclick = () => {
+    twoPlayer = false;
+    document.getElementById("sMode1").style.borderColor = "#ffcc00";
+    document.getElementById("sMode2").style.borderColor = "#555";
+    reset();
+  };
+  document.getElementById("sMode2").onclick = () => {
+    twoPlayer = true;
+    document.getElementById("sMode2").style.borderColor = "#ffcc00";
+    document.getElementById("sMode1").style.borderColor = "#555";
+    reset();
+  };
 
   document.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
-    if (k === "arrowup" || k === "w") { e.preventDefault(); setDir(0, -1); }
-    else if (k === "arrowdown" || k === "s") { e.preventDefault(); setDir(0, 1); }
-    else if (k === "arrowleft" || k === "a") { e.preventDefault(); setDir(-1, 0); }
-    else if (k === "arrowright" || k === "d") { e.preventDefault(); setDir(1, 0); }
+    if (k === "w") { e.preventDefault(); setDir(p1, 0, -1); }
+    else if (k === "s") { e.preventDefault(); setDir(p1, 0, 1); }
+    else if (k === "a") { e.preventDefault(); setDir(p1, -1, 0); }
+    else if (k === "d") { e.preventDefault(); setDir(p1, 1, 0); }
+    else if (k === "arrowup") { e.preventDefault(); setDir(twoPlayer ? p2 : p1, 0, -1); }
+    else if (k === "arrowdown") { e.preventDefault(); setDir(twoPlayer ? p2 : p1, 0, 1); }
+    else if (k === "arrowleft") { e.preventDefault(); setDir(twoPlayer ? p2 : p1, -1, 0); }
+    else if (k === "arrowright") { e.preventDefault(); setDir(twoPlayer ? p2 : p1, 1, 0); }
     else if (k === " " || k === "escape") {
       e.preventDefault();
-      if (alive) {
-        paused = !paused;
-        document.getElementById("status").textContent = paused ? "Пауза" : "Играй!";
-      }
+      paused = !paused;
+      document.getElementById("status").textContent = paused ? "Пауза" : (twoPlayer ? "2 змейки!" : "Играй!");
     } else if (k === "r") reset();
   });
 
   document.querySelectorAll(".pad button").forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
       const [x, y] = btn.dataset.d.split(",").map(Number);
-      setDir(x, y);
+      const pad = Number(btn.closest("[data-pad]") && btn.closest("[data-pad]").getAttribute("data-pad")) || 1;
+      setDir(pad === 2 ? p2 : p1, x, y);
     });
   });
 
