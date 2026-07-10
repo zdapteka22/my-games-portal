@@ -1,0 +1,4714 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Играть — Смешарики: Битва и Догонялки</title>
+    <!-- Yandex Games SDK (относительный путь — для загрузки архива на сервер Яндекса) -->
+    <script src="/sdk.js"></script>
+    <style>
+        html, body { margin:0; padding:0; width:100%; height:100%; background:#000; font-family:Arial, sans-serif; color:white; text-align:center; overflow:hidden; }
+        #wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; box-sizing:border-box; padding:8px; }
+        canvas { border:8px solid #ffcc00; border-radius:20px; box-shadow:0 0 50px #ff00ff; background:#f4e8c0; outline:none; cursor:pointer; max-width:100%; max-height:calc(100vh - 48px); width:auto; height:auto; touch-action:none; }
+        #hint { margin-top:6px; font-size:14px; color:#ffcc00; max-width:96vw; line-height:1.3; }
+        @media (max-width: 700px) {
+            canvas { border-width:4px; border-radius:12px; }
+            #hint { font-size:11px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="topbar" style="position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;gap:8px;padding:8px 12px;pointer-events:none;flex-wrap:wrap">
+        <a href="index.html" style="pointer-events:auto;color:#2a1200;text-decoration:none;font-weight:800;padding:6px 14px;border:1px solid #ffcc00;border-radius:999px;background:linear-gradient(135deg,#ffcc00,#ff9f1c)">☰ Об игре</a>
+        <a href="../../index.html" style="pointer-events:auto;color:#ffcc00;text-decoration:none;font-weight:700;padding:6px 12px;border:1px solid #ffcc00;border-radius:999px;background:rgba(0,0,0,.5)">← Портал</a>
+    </div>
+
+    <div id="wrap">
+        <canvas id="game" width="900" height="600" tabindex="0"></canvas>
+        <div id="hint">Кликни! 1 Битва · 2 Догонялки · 3 Голя · 4 Гонки · 5 Создать уровень → герой → играй! | M — музыка | Q — выйти</div>
+    </div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+canvas.focus();
+canvas.addEventListener('click', () => canvas.focus());
+
+// === Яндекс Игры SDK ===
+let ysdk = null;
+let ysdkReady = false;
+let gameplayActive = false;
+let lastFullscreenAdAt = 0;
+const FULLSCREEN_AD_COOLDOWN_MS = 65000;
+
+function ysdkSafe(fn) {
+    try { if (ysdk) return fn(ysdk); } catch (e) { console.warn('ysdk', e); }
+}
+
+function gameplayStart() {
+    if (gameplayActive) return;
+    gameplayActive = true;
+    ysdkSafe(s => s.features?.GameplayAPI?.start());
+}
+
+function gameplayStop() {
+    if (!gameplayActive) return;
+    gameplayActive = false;
+    ysdkSafe(s => s.features?.GameplayAPI?.stop());
+}
+
+function showFullscreenAd(onDone) {
+    const done = typeof onDone === 'function' ? onDone : () => {};
+    if (!ysdk || !ysdk.adv) { done(); return; }
+    const now = Date.now();
+    if (now - lastFullscreenAdAt < FULLSCREEN_AD_COOLDOWN_MS) { done(); return; }
+    lastFullscreenAdAt = now;
+    gameplayStop();
+    try {
+        ysdk.adv.showFullscreenAdv({
+            callbacks: {
+                onClose: () => { done(); },
+                onError: () => { done(); }
+            }
+        });
+    } catch (e) {
+        console.warn('fullscreen ad', e);
+        done();
+    }
+}
+
+function initYandexSDK() {
+    if (typeof YaGames === 'undefined') {
+        console.info('YaGames SDK не найден (локальный запуск). Игра работает без платформы.');
+        ysdkReady = true;
+        return Promise.resolve(null);
+    }
+    return YaGames.init()
+        .then((sdk) => {
+            ysdk = sdk;
+            ysdkReady = true;
+            try { ysdk.features?.LoadingAPI?.ready(); } catch (e) {}
+            return ysdk;
+        })
+        .catch((err) => {
+            console.warn('YaGames.init failed', err);
+            ysdkReady = true;
+            return null;
+        });
+}
+
+initYandexSDK();
+
+// === Фоновая музыка: плейлист (Железная няня + Город Омск) ===
+const musicTracks = [
+    'Smeshariki_-_ZHeleznaya_Nyanya_OST_ZHeleznaya_nyanya_78553816.mp3',
+    'Smeshariki_-_Gorod_Omsk_48225854.mp3'
+];
+let musicIndex = 0;
+const bgMusic = new Audio();
+bgMusic.loop = false;
+bgMusic.volume = 0.35;
+bgMusic.preload = 'auto';
+if (musicTracks.length) { try { bgMusic.src = musicTracks[0]; } catch (e) {} }
+let musicStarted = false;
+let musicMuted = false;
+
+function playCurrentTrack() {
+    if (!musicTracks.length) return;
+    bgMusic.src = musicTracks[musicIndex];
+    bgMusic.volume = 0.35;
+    bgMusic.load();
+    const p = bgMusic.play();
+    if (p && typeof p.catch === 'function') {
+        p.catch(() => { musicStarted = false; });
+    }
+}
+
+function nextMusicTrack() {
+    if (musicMuted || !musicTracks.length) return;
+    musicIndex = (musicIndex + 1) % musicTracks.length;
+    playCurrentTrack();
+}
+
+bgMusic.addEventListener('ended', nextMusicTrack);
+
+function startBgMusic() {
+    if (musicStarted || musicMuted || !musicTracks.length) return;
+    if (!bgMusic.src && musicTracks[0]) bgMusic.src = musicTracks[0];
+    musicStarted = true;
+    const p = bgMusic.play();
+    if (p && typeof p.catch === 'function') {
+        p.catch(() => { musicStarted = false; });
+    }
+}
+
+function toggleMusic() {
+    if (!musicTracks.length) { musicMuted = !musicMuted; return; }
+    musicMuted = !musicMuted;
+    if (musicMuted) {
+        bgMusic.pause();
+    } else {
+        musicStarted = true;
+        bgMusic.play().catch(() => { musicStarted = false; });
+    }
+}
+
+// Браузеры разрешают звук только после действия пользователя
+function unlockMusicOnce() {
+    startBgMusic();
+}
+document.addEventListener('click', unlockMusicOnce, { once: false });
+document.addEventListener('keydown', unlockMusicOnce, { once: false });
+
+const FIELD = { minX: 50, maxX: 850, minY: 50, maxY: 550 };
+const KNIFE_RESPAWN = 360;
+const KNIFE_HOLD_TIME = 30;
+const KNIFE_MAX_KILLS = 2;
+const FPS_EST = 60;
+const KNIFE_HOLD_FRAMES = KNIFE_HOLD_TIME * FPS_EST;
+
+// Режим 2: догонялки + морковь
+const CARROTS_TO_WIN = 10;       // цель гонки (1 место — кто первый набрал 10)
+const CARROTS_LEGEND = 90;       // легендарный счёт (если кто-то набрал 90)
+const CARROT_PICKUP_R = 32;
+const CATCH_RADIUS = 42;
+const MAX_CARROTS_ON_FIELD = 7;
+const CARROT_RESPAWN_CD = 55;
+
+// Режим 3: голя (салки) — водящий бежит за всеми, кого коснулся — тот стал голей
+const TAG_RADIUS = 44;
+const TAG_COOLDOWN = 90;         // ~1.5 сек после смены голи (нельзя сразу передать обратно)
+const TAG_ROUND_SEC = 60;        // раунд 60 сек: кто меньше всех был голей — победитель
+
+const images = {
+    krosh: new Image(), robonanny: new Image(), losyash: new Image(),
+    yozhik: new Image(), pin: new Image(), pacman: new Image(),
+    barash: new Image(), kopatych: new Image(), luntik: new Image()
+};
+images.krosh.src = 'images/krosh.png';
+images.robonanny.src = 'images/robonanny.png';
+images.losyash.src = 'images/losyash.png';
+images.yozhik.src = 'images/yozhik.png';
+images.pin.src = 'images/pin.png';
+images.pacman.src = 'images/pacman.png';
+images.barash.src = 'images/barash.png';
+images.kopatych.src = 'images/kopatych.png';
+images.luntik.src = 'images/luntik.webp';
+
+const CHARACTERS = [
+    {
+        id: 'krosh', name: 'Крош', img: 'krosh', color: '#4fc3f7',
+        desc: 'Быстрый и ловкий',
+        speed: 7.5, hp: 25, damage: 3, hitRadius: 40, attackCooldown: 15, size: 92
+    },
+    {
+        id: 'losyash', name: 'Лосяш', img: 'losyash', color: '#ffb74d',
+        desc: 'Умный, больше HP',
+        speed: 6.2, hp: 32, damage: 2, hitRadius: 38, attackCooldown: 18, size: 92
+    },
+    {
+        id: 'yozhik', name: 'Ёжик', img: 'yozhik', color: '#b39ddb',
+        desc: 'Сильный удар',
+        speed: 6.5, hp: 22, damage: 4, hitRadius: 42, attackCooldown: 20, size: 92
+    },
+    {
+        id: 'pin', name: 'Пин', img: 'pin', color: '#90a4ae',
+        desc: 'Броня и баланс',
+        speed: 6.0, hp: 28, damage: 3, hitRadius: 36, attackCooldown: 16, size: 92
+    },
+    {
+        id: 'barash', name: 'Бараш', img: 'barash', color: '#f48fb1',
+        desc: 'Поэт: средний бой',
+        speed: 6.4, hp: 26, damage: 3, hitRadius: 38, attackCooldown: 16, size: 92,
+        drawStyle: 'barash'
+    },
+    {
+        id: 'kopatych', name: 'Копатыч', img: 'kopatych', color: '#8d6e63',
+        desc: 'Силач: много HP',
+        speed: 5.4, hp: 36, damage: 3, hitRadius: 40, attackCooldown: 19, size: 96,
+        drawStyle: 'kopatych'
+    },
+    {
+        id: 'luntik', name: 'Лунтик', img: 'luntik', color: '#ab47bc',
+        desc: 'Мягкий, но шустрый',
+        speed: 7.0, hp: 27, damage: 3, hitRadius: 40, attackCooldown: 15, size: 94
+    },
+    {
+        id: 'robonanny', name: 'Няня', img: 'robonanny', color: '#ef5350',
+        desc: 'Босс: много HP',
+        speed: 5.5, hp: 40, damage: 3, hitRadius: 38, attackCooldown: 17, size: 96
+    },
+    {
+        id: 'pacman', name: 'Пакман', img: 'pacman', color: '#ffeb3b',
+        desc: 'Кусает! 2 жизни',
+        speed: 7.8, hp: 20, damage: 4, hitRadius: 44, attackCooldown: 12, size: 88,
+        isPacman: true, lives: 2
+    }
+];
+
+const keys = {};
+let paused = false, gameOver = false, gameWon = false;
+let playerDead = false;
+let showExitDialog = false;
+// mode = выбор режима | select = выбор персонажа | editor = редактор | game = бой
+let screen = 'mode';
+// battle = 1 | chase = 2 | tag = 3 | race = 4 | custom = свой уровень
+let gameMode = 'battle';
+// Гонки
+let raceFinishOrder = [];
+let raceCountdown = 0;
+let raceStarted = false;
+const RACE_START_X = 70;
+const RACE_FINISH_X = 830;
+const RACE_LANES_Y = [160, 250, 340, 430, 520];
+let selectedIndex = 0;
+let hoverIndex = -1;
+let selectPulse = 0;
+let deathOrder = [];
+let finalRanking = null;
+
+// === Создание уровней ===
+const LEVELS_KEY = 'smesh_custom_levels_v1';
+const CHAR_STORAGE_KEY = 'smesh_char_storage_v1';
+const EDITOR_GRID = 20;
+let editorTool = 'wall'; // wall | carrot | spawn | nanny | hero | stick | knife | erase
+let editorLevel = emptyEditorLevel();
+let wallDrag = null; // {x0,y0}
+let customLevel = null; // активный уровень в игре
+let editorMsg = '';
+let editorMsgT = 0;
+let levelsListOpen = false;
+let levelsListHover = -1;
+// Хранилище персонажей (палитра для расстановки NPC)
+let editorCharId = 'krosh';
+let editorNpcTeam = 'enemy'; // ally | enemy
+let charStorageHover = -1;
+// Предметы на земле в своём уровне (массивы)
+let groundSticks = []; // { x, y, pulse, onGround }
+let groundKnives = []; // { x, y, pulse, onGround }
+
+function emptyEditorLevel() {
+    return {
+        name: 'Мой уровень',
+        walls: [],
+        carrots: [],
+        playerSpawn: { x: 450, y: 300 },
+        nannySpawn: null,
+        knifeSpawn: null,
+        stickSpawn: null,
+        knives: [],
+        sticks: [],
+        npcs: [],
+        goalCarrots: 5,
+        nannySpeed: 4.2,
+        playMode: 'collect' // collect | team (командный бой)
+    };
+}
+
+function placeableCharacters() {
+    return CHARACTERS.filter(c => c.id !== 'robonanny');
+}
+
+function loadCharStorage() {
+    try {
+        const raw = localStorage.getItem(CHAR_STORAGE_KEY);
+        if (!raw) return { lastId: 'krosh', favorites: placeableCharacters().map(c => c.id) };
+        const o = JSON.parse(raw);
+        return {
+            lastId: o.lastId || 'krosh',
+            favorites: Array.isArray(o.favorites) && o.favorites.length
+                ? o.favorites
+                : placeableCharacters().map(c => c.id)
+        };
+    } catch (e) {
+        return { lastId: 'krosh', favorites: placeableCharacters().map(c => c.id) };
+    }
+}
+function saveCharStorage() {
+    try {
+        localStorage.setItem(CHAR_STORAGE_KEY, JSON.stringify({
+            lastId: editorCharId,
+            favorites: placeableCharacters().map(c => c.id)
+        }));
+    } catch (e) {}
+}
+function initCharStorage() {
+    const s = loadCharStorage();
+    editorCharId = s.lastId || 'krosh';
+    if (!placeableCharacters().some(c => c.id === editorCharId)) {
+        editorCharId = placeableCharacters()[0] ? placeableCharacters()[0].id : 'krosh';
+    }
+}
+
+/** Приводит уровень к новому формату (массивы ножей/палок/NPC) */
+function normalizeLevel(lv) {
+    if (!lv || typeof lv !== 'object') return emptyEditorLevel();
+    const out = emptyEditorLevel();
+    out.name = lv.name || out.name;
+    out.id = lv.id;
+    out.updated = lv.updated;
+    out.walls = Array.isArray(lv.walls) ? lv.walls : [];
+    out.carrots = Array.isArray(lv.carrots) ? lv.carrots : [];
+    out.playerSpawn = lv.playerSpawn || out.playerSpawn;
+    out.nannySpawn = lv.nannySpawn || null;
+    out.goalCarrots = Math.max(1, lv.goalCarrots || 5);
+    out.nannySpeed = lv.nannySpeed || 4.2;
+    // NPC
+    out.playMode = (lv.playMode === 'team') ? 'team' : 'collect';
+    out.npcs = Array.isArray(lv.npcs)
+        ? lv.npcs.filter(n => n && n.id && n.x != null && n.y != null).map(n => ({
+            id: n.id, x: n.x, y: n.y,
+            team: (n.team === 'ally') ? 'ally' : 'enemy'
+        }))
+        : [];
+    // Палки: массив + старый stickSpawn
+    out.sticks = Array.isArray(lv.sticks)
+        ? lv.sticks.filter(s => s && s.x != null && s.y != null).map(s => ({ x: s.x, y: s.y }))
+        : [];
+    if (!out.sticks.length && lv.stickSpawn) {
+        out.sticks.push({ x: lv.stickSpawn.x, y: lv.stickSpawn.y });
+    }
+    out.stickSpawn = out.sticks[0] || null;
+    // Ножи: массив + старый knifeSpawn
+    out.knives = Array.isArray(lv.knives)
+        ? lv.knives.filter(k => k && k.x != null && k.y != null).map(k => ({ x: k.x, y: k.y }))
+        : [];
+    if (!out.knives.length && lv.knifeSpawn) {
+        out.knives.push({ x: lv.knifeSpawn.x, y: lv.knifeSpawn.y });
+    }
+    out.knifeSpawn = out.knives[0] || null;
+    return out;
+}
+
+function loadSavedLevels() {
+    try {
+        const raw = localStorage.getItem(LEVELS_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(arr)) return [];
+        return arr.map(normalizeLevel);
+    } catch (e) { return []; }
+}
+function persistSavedLevels(list) {
+    try { localStorage.setItem(LEVELS_KEY, JSON.stringify(list.map(normalizeLevel))); } catch (e) {}
+}
+function showEditorMsg(t) {
+    editorMsg = t;
+    editorMsgT = 180;
+}
+function snapGrid(v) {
+    return Math.round(v / EDITOR_GRID) * EDITOR_GRID;
+}
+function cloneLevel(lv) {
+    return normalizeLevel(JSON.parse(JSON.stringify(lv)));
+}
+initCharStorage();
+
+function isCustomTeamMode() {
+    return gameMode === 'custom' && customLevel && customLevel.playMode === 'team';
+}
+function sameTeam(a, b) {
+    if (!a || !b) return false;
+    return (a.team || 'enemy') === (b.team || 'enemy');
+}
+function allCustomFighters() {
+    const l = [];
+    if (player && !player.dead && player.hp > 0) l.push(player);
+    if (nanny && !nanny.dead && nanny.hp > 0) l.push(nanny);
+    for (const n of (npcs || [])) {
+        if (n && !n.dead && n.hp > 0) l.push(n);
+    }
+    if (pacman && !pacman.dead && pacman.hp > 0) l.push(pacman);
+    return l;
+}
+function nearestTeamEnemy(ent) {
+    let best = null, bestD = Infinity;
+    for (const o of allCustomFighters()) {
+        if (o === ent || sameTeam(ent, o)) continue;
+        const d = dist(ent, o);
+        if (d < bestD) { bestD = d; best = o; }
+    }
+    return best;
+}
+function countTeamAlive(team) {
+    return allCustomFighters().filter(f => (f.team || 'enemy') === team).length;
+}
+
+
+// Догонялки (режим 2)
+let carrots = [];
+let carrotsCollected = 0;
+let carrotSpawnCD = 0;
+let chaseCaught = false; // няня поймала игрока
+let chasePulse = 0;
+
+// Голя (режим 3)
+let gola = null;           // кто сейчас «голя» (водящий)
+let tagCooldown = 0;       // защита после смены голи
+let tagTimer = 0;          // кадры раунда
+let tagTimeAsGola = {};    // сколько кадров каждый был голей (по name)
+let lastTagFlash = 0;      // вспышка «СМЕНА ГОЛИ!»
+
+// Кнопки UI
+const BTN_EXIT_SELECT = { x: 760, y: 20, w: 120, h: 40 };
+const BTN_RANDOM = { x: 190, y: 20, w: 160, h: 40 };
+const BTN_EXIT_GAME = { x: 760, y: 12, w: 120, h: 36 };
+const EXIT_YES = { x: 300, y: 320, w: 130, h: 48 };
+const EXIT_NO = { x: 470, y: 320, w: 130, h: 48 };
+const DEAD_RESTART = { x: 250, y: 530, w: 180, h: 42 };
+const DEAD_SELECT = { x: 450, y: 530, w: 200, h: 42 };
+const RES_RESTART = { x: 220, y: 545, w: 200, h: 40 };
+const RES_SELECT = { x: 480, y: 545, w: 200, h: 40 };
+// 5 режимов: 3 сверху + 2 снизу
+const BTN_MODE_BATTLE = { x: 20, y: 125, w: 280, h: 165 };
+const BTN_MODE_CHASE = { x: 310, y: 125, w: 280, h: 165 };
+const BTN_MODE_TAG = { x: 600, y: 125, w: 280, h: 165 };
+const BTN_MODE_RACE = { x: 80, y: 310, w: 360, h: 175 };
+const BTN_MODE_EDITOR = { x: 460, y: 310, w: 360, h: 175 };
+const BTN_BACK_MODE = { x: 20, y: 20, w: 160, h: 40 };
+
+// Редактор — панель инструментов (герои, палка, нож)
+const ED_TOOLS = [
+    { id: 'wall', label: '🧱', x: 10, y: 70, w: 40, h: 34 },
+    { id: 'carrot', label: '🥕', x: 54, y: 70, w: 40, h: 34 },
+    { id: 'spawn', label: '⭐', x: 98, y: 70, w: 40, h: 34 },
+    { id: 'nanny', label: '🤖', x: 142, y: 70, w: 40, h: 34 },
+    { id: 'hero', label: '👥', x: 186, y: 70, w: 40, h: 34 },
+    { id: 'stick', label: '🪵', x: 230, y: 70, w: 40, h: 34 },
+    { id: 'knife', label: '🔪', x: 274, y: 70, w: 40, h: 34 },
+    { id: 'erase', label: '🧹', x: 318, y: 70, w: 40, h: 34 }
+];
+const ED_BTN_PLAY = { x: 368, y: 70, w: 88, h: 34 };
+const ED_BTN_SAVE = { x: 462, y: 70, w: 46, h: 34 };
+const ED_BTN_LOAD = { x: 514, y: 70, w: 46, h: 34 };
+const ED_BTN_CLEAR = { x: 566, y: 70, w: 90, h: 34 };
+const ED_BTN_BACK = { x: 20, y: 20, w: 120, h: 36 };
+const ED_BTN_GOAL_M = { x: 750, y: 20, w: 40, h: 36 };
+const ED_BTN_GOAL_P = { x: 840, y: 20, w: 40, h: 36 };
+const ED_BTN_PLAYMODE = { x: 662, y: 70, w: 120, h: 34 };
+const ED_BTN_TEAM = { x: 788, y: 70, w: 100, h: 34 };
+const ED_FIELD = { x: 40, y: 120, w: 820, h: 450 }; // область редактирования
+
+const CARD_W = 88, CARD_H = 200, CARD_GAP = 6;
+function cardLayout() {
+    const total = CHARACTERS.length * CARD_W + (CHARACTERS.length - 1) * CARD_GAP;
+    const startX = (900 - total) / 2;
+    const y = 220;
+    return CHARACTERS.map((_, i) => ({
+        x: startX + i * (CARD_W + CARD_GAP),
+        y, w: CARD_W, h: CARD_H
+    }));
+}
+
+function makeFighter(cfg) {
+    return {
+        name: cfg.name, img: cfg.img || cfg.name, x: 0, y: 0,
+        speed: cfg.speed, radius: cfg.radius || 8, hp: cfg.hp, hpMax: cfg.hp,
+        damage: cfg.damage || 1, hitRadius: cfg.hitRadius || 30,
+        attackCooldown: cfg.attackCooldown || 28, size: cfg.size || 62,
+        angle: 0, swing: 0, hitCooldown: 0, wander: Math.random() * Math.PI * 2,
+        ai: cfg.ai !== false, upgraded: !!cfg.upgraded, hasKnife: false,
+        displayName: cfg.displayName || cfg.name,
+        isPacman: !!cfg.isPacman,
+        lives: cfg.lives || 0, livesMax: cfg.lives || 0,
+        biteCooldown: 0, invuln: 0, mouth: 0, dead: false,
+        drawStyle: cfg.drawStyle || null,
+        fleeAngle: Math.random() * Math.PI * 2,
+        carrots: 0,
+        isGola: false,
+        hasStick: false
+    };
+}
+
+let player, nanny, npcs, pacman, knife;
+// Палка на земле (свой уровень)
+let stickPickup = null; // { onGround, x, y, pulse }
+
+function randomFieldPos(margin = 50) {
+    return {
+        x: FIELD.minX + margin + Math.random() * (FIELD.maxX - FIELD.minX - margin * 2),
+        y: FIELD.minY + margin + Math.random() * (FIELD.maxY - FIELD.minY - margin * 2)
+    };
+}
+
+function randomSpawnAway(occupied, minDist = 90, margin = 50, tries = 40) {
+    let best = randomFieldPos(margin);
+    let bestMin = -1;
+    for (let t = 0; t < tries; t++) {
+        const p = randomFieldPos(margin);
+        let nearest = Infinity;
+        for (const o of occupied) {
+            const d = Math.hypot(p.x - o.x, p.y - o.y);
+            if (d < nearest) nearest = d;
+        }
+        if (nearest >= minDist || occupied.length === 0) return p;
+        if (nearest > bestMin) { bestMin = nearest; best = p; }
+    }
+    return best;
+}
+
+function pickRandomCharacter() {
+    selectedIndex = Math.floor(Math.random() * CHARACTERS.length);
+    return CHARACTERS[selectedIndex];
+}
+
+function placeAllFighters() {
+    const occupied = [];
+    const place = (ent) => {
+        if (!ent || ent.dead) return;
+        const p = randomSpawnAway(occupied, 100, 55);
+        ent.x = p.x;
+        ent.y = p.y;
+        occupied.push(p);
+    };
+    place(player);
+    place(nanny);
+    for (const n of npcs) place(n);
+    if (pacman && !pacman.dead) place(pacman);
+}
+
+function buildPlayerFromCfg(charCfg) {
+    player = makeFighter({
+        name: charCfg.id,
+        img: charCfg.img,
+        displayName: charCfg.name,
+        speed: charCfg.speed,
+        radius: charCfg.isPacman ? 14 : 8,
+        hp: charCfg.hp,
+        damage: charCfg.damage,
+        hitRadius: charCfg.hitRadius,
+        attackCooldown: charCfg.attackCooldown,
+        size: charCfg.size,
+        ai: false,
+        upgraded: true,
+        isPacman: !!charCfg.isPacman,
+        lives: charCfg.lives || 0,
+        drawStyle: charCfg.drawStyle || null
+    });
+    if (charCfg.isPacman) {
+        player.livesMax = charCfg.lives || 2;
+        player.lives = player.livesMax;
+    }
+}
+
+function buildNpcsAndBoss(charCfg, forChase) {
+    const playable = CHARACTERS.filter(c => c.id !== charCfg.id && c.id !== 'pacman');
+    let bossCfg, rest;
+    if (charCfg.id === 'robonanny') {
+        // В догонялках няня ВСЕГДА охотник
+        if (forChase) {
+            bossCfg = CHARACTERS.find(c => c.id === 'robonanny');
+            rest = playable.filter(c => c.id !== 'robonanny');
+            // игрок = няня, но охотник — отдельный босс-клоун? Нет: если выбрали няню,
+            // пусть охотник будет «злая няня» — используем robonanny как nanny,
+            // а игрока оставим няней (будет странно). Лучше: охотник = Крош-босс.
+            bossCfg = CHARACTERS.find(c => c.id === 'krosh');
+            rest = playable.filter(c => c.id !== 'krosh');
+        } else {
+            bossCfg = CHARACTERS.find(c => c.id === 'krosh');
+            rest = playable.filter(c => c.id !== 'krosh');
+        }
+    } else {
+        bossCfg = CHARACTERS.find(c => c.id === 'robonanny');
+        rest = playable.filter(c => c.id !== 'robonanny');
+    }
+
+    if (forChase) {
+        // Няня чуть медленнее игрока, но настойчивая
+        const playerSpd = charCfg.speed || 6.5;
+        nanny = makeFighter({
+            name: bossCfg.id,
+            img: bossCfg.img,
+            displayName: bossCfg.id === 'robonanny' ? 'Няня' : bossCfg.name,
+            speed: Math.max(3.8, playerSpd * 0.72),
+            radius: 10,
+            hp: 999,
+            damage: 0,
+            hitRadius: 40,
+            size: 90,
+            ai: true,
+            drawStyle: bossCfg.drawStyle || null
+        });
+        npcs = rest.map(c => makeFighter({
+            name: c.id,
+            img: c.img,
+            displayName: c.name,
+            // чуть быстрее, чтобы соревноваться за морковь
+            speed: 4.6 + Math.random() * 0.9,
+            hp: 1,
+            damage: 0,
+            size: 62,
+            ai: true,
+            drawStyle: c.drawStyle || null,
+            carrots: 0
+        }));
+        // Пакман тоже убегает и собирает морковь
+        if (charCfg.id !== 'pacman') {
+            pacman = {
+                name: 'pacman', img: 'pacman', x: 450, y: 300, speed: 5.4, radius: 14, size: 56, angle: 0,
+                lives: 1, livesMax: 1, hp: 1, hpMax: 1, damage: 0, biteCooldown: 0, invuln: 0,
+                mouth: 0, ai: true, dead: false, isPacman: true, hasKnife: false, displayName: 'Пакман',
+                fleeAngle: Math.random() * Math.PI * 2, wander: Math.random() * Math.PI * 2, carrots: 0
+            };
+        } else {
+            pacman = {
+                name: 'pacman', x: 0, y: 0, speed: 0, radius: 14, size: 52, angle: 0,
+                lives: 0, livesMax: 0, hp: 0, hpMax: 0, damage: 0, biteCooldown: 0, invuln: 0,
+                mouth: 0, ai: false, dead: true, isPacman: true, hasKnife: false, displayName: 'Пакман',
+                carrots: 0
+            };
+        }
+    } else {
+        nanny = makeFighter({
+            name: bossCfg.id,
+            img: bossCfg.img,
+            displayName: bossCfg.name,
+            speed: 3.6,
+            radius: 8,
+            hp: 15,
+            damage: 2,
+            hitRadius: 32,
+            size: 80,
+            ai: true,
+            drawStyle: bossCfg.drawStyle || null
+        });
+        npcs = rest.map(c => makeFighter({
+            name: c.id,
+            img: c.img,
+            displayName: c.name,
+            speed: 3.2 + Math.random() * 0.3,
+            hp: 10,
+            damage: 1,
+            size: 62,
+            ai: true,
+            drawStyle: c.drawStyle || null
+        }));
+        if (charCfg.id === 'pacman') {
+            pacman = {
+                name: 'pacman', x: 0, y: 0, speed: 0, radius: 14, size: 52, angle: 0,
+                lives: 0, livesMax: 0, hp: 0, hpMax: 0, damage: 0, biteCooldown: 0, invuln: 0,
+                mouth: 0, ai: false, dead: true, isPacman: true, hasKnife: false, displayName: 'Пакман'
+            };
+        } else {
+            pacman = {
+                name: 'pacman', img: 'pacman', x: 450, y: 300, speed: 5.2, radius: 14, size: 56, angle: 0,
+                lives: 2, livesMax: 2, hp: 1, hpMax: 1, damage: 2, biteCooldown: 0, invuln: 0,
+                mouth: 0, ai: true, dead: false, isPacman: true, hasKnife: false, displayName: 'Пакман'
+            };
+        }
+    }
+}
+
+function startGame(charCfg) {
+    if (gameMode === 'custom') {
+        startCustomGame(charCfg);
+        return;
+    }
+    if (gameMode === 'chase') {
+        startChaseGame(charCfg);
+        return;
+    }
+    if (gameMode === 'tag') {
+        startTagGame(charCfg);
+        return;
+    }
+    if (gameMode === 'race') {
+        startRaceGame(charCfg);
+        return;
+    }
+    buildPlayerFromCfg(charCfg);
+    buildNpcsAndBoss(charCfg, false);
+    knife = {
+        onGround: false, x: 0, y: 0, heldBy: null, spawnCD: 120, pulse: 0,
+        holdTimer: 0, holdMax: KNIFE_HOLD_FRAMES,
+        killsLeft: 0
+    };
+    placeAllFighters();
+    carrots = [];
+    carrotsCollected = 0;
+    chaseCaught = false;
+    paused = false;
+    gameOver = false;
+    gameWon = false;
+    playerDead = false;
+    showExitDialog = false;
+    deathOrder = [];
+    finalRanking = null;
+    screen = 'game';
+    gameplayStart();
+    document.getElementById('hint').textContent = charCfg.isPacman
+        ? 'WASD — ходить | Пробел — КУСЬ! | Shift — бег | Esc — пауза | Q — выйти | R — выбор'
+        : 'WASD — ходить | Пробел — удар | Shift — бег | Esc — пауза | Q — выйти | R — выбор';
+}
+
+function spawnCarrot(occupied) {
+    const occ = occupied || [];
+    // не рядом с игроком / няней
+    if (player) occ.push({ x: player.x, y: player.y });
+    if (nanny) occ.push({ x: nanny.x, y: nanny.y });
+    for (const c of carrots) occ.push({ x: c.x, y: c.y });
+    const p = randomSpawnAway(occ, 70, 45);
+    carrots.push({ x: p.x, y: p.y, pulse: Math.random() * Math.PI * 2, taken: false });
+}
+
+/** Режим 4: Гонки — кто первый до финиша */
+function startRaceGame(charCfg) {
+    buildPlayerFromCfg(charCfg);
+    player.x = RACE_START_X;
+    player.y = RACE_LANES_Y[0];
+    player.finished = false;
+    player.finishPlace = 0;
+    player.raceBoost = 0;
+    player.hp = 1;
+    player.hpMax = 1;
+    player.dead = false;
+
+    npcs = [];
+    pacman = null;
+    nanny = null;
+    knife = { onGround: false, x: 0, y: 0, heldBy: null, spawnCD: 99999, pulse: 0, holdTimer: 0, holdMax: 0, killsLeft: 0 };
+    carrots = [];
+    raceFinishOrder = [];
+    raceCountdown = 180; // 3 сек
+    raceStarted = false;
+
+    const pool = CHARACTERS.filter(c => c.id !== charCfg.id && c.id !== 'robonanny' && !c.isPacman);
+    // перемешать
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+    }
+    const racers = pool.slice(0, Math.min(4, pool.length));
+    racers.forEach((cfg, i) => {
+        const f = makeFighter({
+            name: cfg.id, img: cfg.img || cfg.id, displayName: cfg.name,
+            speed: cfg.speed, radius: cfg.radius || 8, hp: 1,
+            damage: 0, hitRadius: 20, attackCooldown: 99, size: cfg.size || 62, ai: true
+        });
+        f.x = RACE_START_X - Math.random() * 10;
+        f.y = RACE_LANES_Y[i + 1] || RACE_LANES_Y[RACE_LANES_Y.length - 1];
+        f.finished = false;
+        f.finishPlace = 0;
+        f.raceBoost = 0;
+        f.raceBase = (cfg.speed || 3.5) * (0.88 + Math.random() * 0.28);
+        f.wander = Math.random() * Math.PI * 2;
+        f.laneY = f.y;
+        npcs.push(f);
+    });
+
+    paused = false;
+    gameOver = false;
+    gameWon = false;
+    playerDead = false;
+    showExitDialog = false;
+    deathOrder = [];
+    finalRanking = null;
+    screen = 'game';
+    gameplayStart();
+    document.getElementById('hint').textContent =
+        '🏁 ГОНКИ! A/D или ←/→ — бег · Shift — ускорение · первый к финишу побеждает | Esc | Q';
+}
+
+function updateRace() {
+    if (gameOver) return;
+    if (raceCountdown > 0) {
+        raceCountdown--;
+        if (raceCountdown === 0) raceStarted = true;
+        return;
+    }
+    if (!raceStarted) raceStarted = true;
+
+    // игрок
+    if (player && !player.finished && !player.dead) {
+        const boost = (isDown('ShiftLeft') || isDown('ShiftRight')) ? 1.55 : 1;
+        let dx = 0;
+        if (isDown('ArrowLeft') || isDown('KeyA')) dx -= player.speed * boost;
+        if (isDown('ArrowRight') || isDown('KeyD')) dx += player.speed * boost * 1.08;
+        // лёгкое удержание на своей дорожке
+        let dy = 0;
+        if (isDown('ArrowUp') || isDown('KeyW')) dy -= player.speed * 0.45;
+        if (isDown('ArrowDown') || isDown('KeyS')) dy += player.speed * 0.45;
+        player.x = Math.max(40, Math.min(RACE_FINISH_X + 40, player.x + dx));
+        player.y = Math.max(120, Math.min(560, player.y + dy));
+        if (player.x >= RACE_FINISH_X && !player.finished) {
+            player.finished = true;
+            player.finishPlace = raceFinishOrder.length + 1;
+            raceFinishOrder.push(player);
+            if (player.finishPlace === 1) {
+                gameWon = true;
+                gameOver = true;
+                gameplayStop();
+                document.getElementById('hint').textContent =
+                    '🏆 Ты пришёл первым! Enter — заново | R — выбор';
+            }
+        }
+    }
+
+    // NPC AI — бегут вперёд с вариацией
+    for (const n of npcs) {
+        if (!n || n.finished) continue;
+        n.wander = (n.wander || 0) + 0.05;
+        const wobble = Math.sin(n.wander * 2.1) * 0.15;
+        const surge = 1 + Math.sin(n.wander * 0.7 + n.x * 0.01) * 0.12;
+        const spd = (n.raceBase || n.speed || 3.5) * surge + wobble;
+        n.x += Math.max(1.2, spd * 0.92);
+        // держатся своей дорожки
+        if (n.laneY != null) {
+            n.y += (n.laneY - n.y) * 0.08;
+        }
+        if (n.x >= RACE_FINISH_X && !n.finished) {
+            n.finished = true;
+            n.finishPlace = raceFinishOrder.length + 1;
+            raceFinishOrder.push(n);
+            if (n.finishPlace === 1 && !gameOver) {
+                gameWon = false;
+                gameOver = true;
+                gameplayStop();
+                document.getElementById('hint').textContent =
+                    '🏁 Победил ' + (n.displayName || n.name) + '! Enter — заново | R — выбор';
+            }
+        }
+    }
+
+    // все финишировали
+    const all = [player, ...npcs].filter(Boolean);
+    if (all.every(r => r.finished) && !gameOver) {
+        gameOver = true;
+        gameWon = player && player.finishPlace === 1;
+        gameplayStop();
+    }
+}
+
+function drawRaceTrack() {
+    // небо / трава
+    const sky = ctx.createLinearGradient(0, 0, 0, 600);
+    sky.addColorStop(0, '#4fc3f7');
+    sky.addColorStop(0.45, '#81d4fa');
+    sky.addColorStop(0.45, '#66bb6a');
+    sky.addColorStop(1, '#2e7d32');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 900, 600);
+
+    // трасса
+    ctx.fillStyle = '#5d4037';
+    ctx.fillRect(40, 120, 820, 440);
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(40, 120, 820, 440);
+
+    // полосы дорожек
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([12, 10]);
+    for (let i = 1; i < RACE_LANES_Y.length; i++) {
+        const y = (RACE_LANES_Y[i - 1] + RACE_LANES_Y[i]) / 2;
+        ctx.beginPath();
+        ctx.moveTo(50, y);
+        ctx.lineTo(850, y);
+        ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // старт / финиш
+    ctx.fillStyle = '#fff';
+    for (let y = 120; y < 560; y += 20) {
+        ctx.fillRect(RACE_START_X - 8, y, 10, 10);
+        if ((y / 20) % 2 === 0) ctx.fillStyle = '#222';
+        else ctx.fillStyle = '#fff';
+    }
+    // клетчатый финиш
+    for (let y = 120; y < 560; y += 16) {
+        for (let c = 0; c < 2; c++) {
+            ctx.fillStyle = ((Math.floor(y / 16) + c) % 2 === 0) ? '#111' : '#fff';
+            ctx.fillRect(RACE_FINISH_X + c * 12, y, 12, 16);
+        }
+    }
+
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('СТАРТ', RACE_START_X, 110);
+    ctx.fillText('ФИНИШ', RACE_FINISH_X + 12, 110);
+}
+
+function drawRaceUI() {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    roundRect(12, 8, 320, 70, 10);
+    ctx.fill();
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('🏁 ГОНКИ СМЕШАРИКОВ', 24, 34);
+    const place = player && player.finished
+        ? ('Место: ' + player.finishPlace)
+        : ('Прогресс: ' + Math.min(100, Math.round(((player ? player.x : 0) - RACE_START_X) / (RACE_FINISH_X - RACE_START_X) * 100)) + '%');
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px Arial';
+    ctx.fillText(place, 24, 58);
+
+    if (raceCountdown > 0) {
+        const sec = Math.ceil(raceCountdown / 60);
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, 900, 600);
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 90px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(sec), 450, 320);
+        ctx.font = 'bold 28px Arial';
+        ctx.fillText('Приготовьтесь…', 450, 380);
+    }
+
+    if (gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.72)';
+        ctx.fillRect(0, 0, 900, 600);
+        ctx.fillStyle = gameWon ? 'rgba(0,90,40,0.96)' : 'rgba(40,20,60,0.96)';
+        roundRect(160, 80, 580, 420, 18);
+        ctx.fill();
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(gameWon ? '🏆 ТЫ ПОБЕДИЛ!' : '🏁 ФИНИШ!', 450, 130);
+        let y = 180;
+        const ordered = raceFinishOrder.length
+            ? raceFinishOrder
+            : [player, ...npcs].filter(Boolean).sort((a, b) => (b.x || 0) - (a.x || 0));
+        ordered.forEach((r, i) => {
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.';
+            ctx.fillStyle = r === player ? '#7CFC00' : '#fff';
+            ctx.font = 'bold 22px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(medal + '  ' + (r.displayName || r.name || '?'), 220, y);
+            y += 42;
+        });
+        drawButton(RES_RESTART, 'ЗАНОВО', '#1565c0', '#64b5f6', '#fff');
+        drawButton(RES_SELECT, 'ВЫБОР', '#6a1b9a', '#ce93d8', '#fff');
+    }
+}
+
+/** Режим 5: свой уровень — стены, морковь, няня, герои, палка, нож, цель */
+function startCustomGame(charCfg) {
+    const lv = customLevel || cloneLevel(editorLevel);
+    customLevel = normalizeLevel(lv);
+    if (!customLevel.playerSpawn) customLevel.playerSpawn = { x: 450, y: 300 };
+    customLevel.goalCarrots = Math.max(1, customLevel.goalCarrots || 5);
+    const teamMode = customLevel.playMode === 'team';
+
+    buildPlayerFromCfg(charCfg);
+    player.team = 'ally';
+    player.carrots = 0;
+    player.hasKnife = false;
+    player.hasStick = false;
+    player.swing = 0;
+    player.hitCooldown = 0;
+    player.x = customLevel.playerSpawn.x;
+    player.y = customLevel.playerSpawn.y;
+    if (teamMode) {
+        player.hp = 5;
+        player.hpMax = 5;
+        player.damage = 2;
+        player.hitRadius = 34;
+        player.attackCooldown = 16;
+        player.hasStick = true;
+    } else {
+        player.hp = 1;
+        player.hpMax = 1;
+    }
+
+    const nKnives = (customLevel.knives || []).length;
+    const nSticks = (customLevel.sticks || []).length;
+    const hasWeapons = nKnives > 0 || nSticks > 0 || teamMode;
+
+    if (customLevel.nannySpawn) {
+        const nannyCfg = CHARACTERS.find(c => c.id === 'robonanny') || CHARACTERS[0];
+        const nhp = teamMode ? 6 : (hasWeapons ? 5 : 1);
+        nanny = makeFighter({
+            name: nannyCfg.id, img: nannyCfg.img, displayName: nannyCfg.name,
+            speed: customLevel.nannySpeed || (teamMode ? 4.0 : 4.2), radius: 8, hp: nhp,
+            damage: teamMode ? 2 : 1,
+            hitRadius: 32, attackCooldown: 18, size: 90, ai: true, upgraded: false
+        });
+        nanny.hpMax = nhp;
+        nanny.x = customLevel.nannySpawn.x;
+        nanny.y = customLevel.nannySpawn.y;
+        nanny.stun = 0;
+        nanny.team = 'enemy';
+        nanny.hasStick = teamMode;
+    } else {
+        nanny = null;
+    }
+
+    npcs = [];
+    pacman = null;
+    for (const slot of (customLevel.npcs || [])) {
+        const cfg = CHARACTERS.find(c => c.id === slot.id);
+        if (!cfg) continue;
+        const team = (slot.team === 'ally') ? 'ally' : 'enemy';
+        if (cfg.isPacman) {
+            const p = {
+                name: 'pacman', img: 'pacman', x: slot.x, y: slot.y, speed: 5.2, radius: 14, size: 56,
+                angle: 0, lives: 1, livesMax: 1, hp: teamMode ? 3 : 1, hpMax: teamMode ? 3 : 1,
+                damage: teamMode ? 1 : 0, biteCooldown: 0, invuln: 0,
+                mouth: 0, ai: true, dead: false, isPacman: true, hasKnife: false, hasStick: teamMode,
+                displayName: 'Пакман', fleeAngle: Math.random() * Math.PI * 2,
+                wander: Math.random() * Math.PI * 2, carrots: 0, swing: 0, hitCooldown: 0,
+                hitRadius: 42, attackCooldown: 12, team: team
+            };
+            if (!pacman) pacman = p;
+            else npcs.push(p);
+        } else {
+            const ent = makeFighter({
+                name: cfg.id, img: cfg.img, displayName: cfg.name,
+                speed: 4.6 + Math.random() * 0.8, radius: 8,
+                hp: teamMode ? 4 : 1,
+                damage: teamMode ? 2 : 0,
+                hitRadius: 32, attackCooldown: 16, size: 64, ai: true,
+                drawStyle: cfg.drawStyle || null
+            });
+            ent.x = slot.x;
+            ent.y = slot.y;
+            ent.carrots = 0;
+            ent.hasStick = teamMode;
+            ent.hasKnife = false;
+            ent.team = team;
+            npcs.push(ent);
+        }
+    }
+
+    groundKnives = (customLevel.knives || []).map(k => ({
+        x: k.x, y: k.y, pulse: Math.random() * 6, onGround: true
+    }));
+    knife = {
+        onGround: false, x: 0, y: 0, heldBy: null, spawnCD: 999999, pulse: 0,
+        holdTimer: 0, holdMax: KNIFE_HOLD_FRAMES, killsLeft: 0, custom: true
+    };
+
+    groundSticks = (customLevel.sticks || []).map(s => ({
+        x: s.x, y: s.y, pulse: Math.random() * 6, onGround: true
+    }));
+    stickPickup = groundSticks[0] || null;
+
+    carrots = customLevel.carrots.map(c => ({
+        x: c.x, y: c.y, pulse: Math.random() * Math.PI * 2, taken: false
+    }));
+    if (!teamMode && carrots.length === 0) {
+        for (let i = 0; i < customLevel.goalCarrots; i++) {
+            const p = randomFieldPos(60);
+            if (!circleHitsWall(p.x, p.y, 16, customLevel.walls)) {
+                carrots.push({ x: p.x, y: p.y, pulse: Math.random() * 6, taken: false });
+            }
+        }
+    }
+    if (teamMode) carrots = [];
+    carrotsCollected = 0;
+    carrotSpawnCD = 0;
+    chaseCaught = false;
+    chasePulse = 0;
+    paused = false;
+    gameOver = false;
+    gameWon = false;
+    playerDead = false;
+    showExitDialog = false;
+    deathOrder = [];
+    finalRanking = null;
+    screen = 'game';
+    gameplayStart();
+    const weaponHint = [
+        nSticks ? ('палки×' + nSticks) : '',
+        nKnives ? ('ножи×' + nKnives) : ''
+    ].filter(Boolean).join(' + ');
+    const allyN = (customLevel.npcs || []).filter(n => n.team === 'ally').length;
+    const enemyN = (customLevel.npcs || []).filter(n => n.team !== 'ally').length + (customLevel.nannySpawn ? 1 : 0);
+    if (teamMode) {
+        document.getElementById('hint').textContent =
+            '⚔️ Командный бой! Синие (ты + союзники) vs Красные' +
+            ' | союзн: ' + allyN + ' | враги: ' + enemyN +
+            ' | Пробел — удар | WASD | Shift | Esc | R';
+    } else {
+        const heroN = (customLevel.npcs || []).length;
+        document.getElementById('hint').textContent =
+            '🗺️ Свой уровень! Собери ' + customLevel.goalCarrots + ' 🥕' +
+            (nanny ? ' · убеги от няни' : '') +
+            (heroN ? ' · герои: ' + heroN : '') +
+            (weaponHint ? ' · оружие: ' + weaponHint + ' (пробел — удар)' : '') +
+            ' | WASD | Shift | Esc | Q | R';
+    }
+}
+
+function tryPickupStick(ent) {
+    if (!ent || ent.hp <= 0 || ent.dead) return;
+    if (ent.hasStick || ent.hasKnife) return;
+    for (const s of groundSticks) {
+        if (!s.onGround) continue;
+        if (dist(ent, s) < 40) {
+            s.onGround = false;
+            ent.hasStick = true;
+            return;
+        }
+    }
+    // совместимость со старым stickPickup
+    if (stickPickup && stickPickup.onGround && dist(ent, stickPickup) < 40) {
+        stickPickup.onGround = false;
+        ent.hasStick = true;
+    }
+}
+
+function tryPickupGroundKnife(ent) {
+    if (!ent || ent.hp <= 0 || ent.dead) return;
+    if (ent.hasKnife || ent.hasStick) return;
+    if (knife && knife.heldBy) return;
+    for (const k of groundKnives) {
+        if (!k.onGround) continue;
+        if (dist(ent, k) < 38) {
+            k.onGround = false;
+            knife.onGround = false;
+            knife.heldBy = ent;
+            knife.x = k.x;
+            knife.y = k.y;
+            ent.hasKnife = true;
+            knife.holdTimer = KNIFE_HOLD_FRAMES;
+            knife.killsLeft = KNIFE_MAX_KILLS;
+            knife.custom = true;
+            return;
+        }
+    }
+}
+
+function dropCustomKnife() {
+    const holder = knife.heldBy;
+    const hx = holder ? holder.x : knife.x;
+    const hy = holder ? holder.y : knife.y;
+    if (holder) holder.hasKnife = false;
+    knife.heldBy = null;
+    knife.holdTimer = 0;
+    knife.killsLeft = 0;
+    knife.onGround = false;
+    // вернуть нож на землю рядом с держателем
+    groundKnives.push({ x: hx, y: hy, pulse: 0, onGround: true });
+}
+
+/** AI друзей: убегают от няни, собирают морковь, могут взять оружие */
+function updateCustomNpcAI(ent) {
+    if (!ent || ent.dead || ent.hp <= 0) return;
+    if (ent.swing > 0) ent.swing--;
+    if (ent.hitCooldown > 0) ent.hitCooldown--;
+
+    tryPickupStick(ent);
+    tryPickupGroundKnife(ent);
+
+    if (isCustomTeamMode()) {
+        if (ent.hasKnife) {
+            const t = nearestTeamEnemy(ent);
+            if (t) {
+                const dx = t.x - ent.x, dy = t.y - ent.y;
+                const len = Math.hypot(dx, dy) || 1;
+                moveEntity(ent, (dx / len) * ent.speed * 1.35, (dy / len) * ent.speed * 1.35);
+                if (dist(ent, t) < 48) {
+                    t.hp = 0;
+                    t.dead = true;
+                    if (t === player) playerDead = true;
+                    if (knife.heldBy === ent) {
+                        knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
+                        if (knife.killsLeft <= 0) dropCustomKnife();
+                    }
+                }
+            }
+            if (ent.isPacman) ent.mouth = (ent.mouth + 0.25) % (Math.PI * 2);
+            return;
+        }
+        const foe = nearestTeamEnemy(ent);
+        if (foe) {
+            const dx = foe.x - ent.x, dy = foe.y - ent.y;
+            const len = Math.hypot(dx, dy) || 1;
+            const d = dist(ent, foe);
+            moveEntity(ent, (dx / len) * ent.speed * 1.1, (dy / len) * ent.speed * 1.1);
+            if (ent.isPacman) {
+                ent.mouth = (ent.mouth + 0.25) % (Math.PI * 2);
+                if (d < 48 && ent.biteCooldown <= 0) {
+                    ent.biteCooldown = ent.attackCooldown || 12;
+                    foe.hp -= ent.damage || 1;
+                    moveEntity(foe, Math.cos(ent.angle) * 14, Math.sin(ent.angle) * 14);
+                    if (foe.hp <= 0) {
+                        foe.hp = 0; foe.dead = true;
+                        if (foe === player) playerDead = true;
+                    }
+                }
+            } else if (ent.hasStick) {
+                if (d < 95) trySwing(ent);
+                if (ent.swing > 9 && ent.hitCooldown <= 0) {
+                    const tip = stickTip(ent);
+                    if (dist(tip, foe) < 50) {
+                        foe.hp -= ent.damage || 2;
+                        ent.hitCooldown = ent.attackCooldown || 16;
+                        ent.swing = 0;
+                        moveEntity(foe, Math.cos(ent.angle) * 16, Math.sin(ent.angle) * 16);
+                        if (foe.hp <= 0) {
+                            foe.hp = 0; foe.dead = true;
+                            if (foe === player) playerDead = true;
+                        }
+                    }
+                }
+            }
+            return;
+        }
+        ent.wander = (ent.wander || 0) + 0.04;
+        if (Math.random() < 0.02) ent.wander = Math.random() * Math.PI * 2;
+        moveEntity(ent, Math.cos(ent.wander) * ent.speed * 0.45, Math.sin(ent.wander) * ent.speed * 0.45);
+        if (ent.isPacman) ent.mouth = (ent.mouth + 0.25) % (Math.PI * 2);
+        return;
+    }
+
+    if (nanny && !nanny.dead && nanny.hp > 0) {
+        const dN = dist(ent, nanny);
+        if (dN < 180) {
+            const dx = ent.x - nanny.x, dy = ent.y - nanny.y;
+            const len = Math.hypot(dx, dy) || 1;
+            moveEntity(ent, (dx / len) * ent.speed * 1.15, (dy / len) * ent.speed * 1.15);
+            if (dN < CATCH_RADIUS) {
+                ent.hp = 0;
+                ent.dead = true;
+                if (knife.heldBy === ent) dropCustomKnife();
+                ent.hasStick = false;
+                return;
+            }
+        }
+    }
+
+    if (ent.hasKnife && nanny && !nanny.dead && nanny.hp > 0) {
+        const dx = nanny.x - ent.x, dy = nanny.y - ent.y;
+        const len = Math.hypot(dx, dy) || 1;
+        moveEntity(ent, (dx / len) * ent.speed * 1.3, (dy / len) * ent.speed * 1.3);
+        if (dist(ent, nanny) < 48) {
+            nanny.hp = 0;
+            nanny.dead = true;
+            if (knife.heldBy === ent) {
+                knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
+                if (knife.killsLeft <= 0) dropCustomKnife();
+            }
+        }
+        return;
+    }
+
+    if (ent.hasStick && nanny && !nanny.dead && nanny.hp > 0) {
+        const dx = nanny.x - ent.x, dy = nanny.y - ent.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const d = dist(ent, nanny);
+        moveEntity(ent, (dx / len) * ent.speed * 1.1, (dy / len) * ent.speed * 1.1);
+        if (d < 90) trySwing(ent);
+        if (ent.swing > 9 && ent.hitCooldown <= 0) {
+            const tip = stickTip(ent);
+            if (dist(tip, nanny) < 50) {
+                nanny.hp -= 2;
+                nanny.stun = 30;
+                ent.hitCooldown = 20;
+                ent.swing = 0;
+                moveEntity(nanny, Math.cos(ent.angle) * 18, Math.sin(ent.angle) * 18);
+                if (nanny.hp <= 0) { nanny.hp = 0; nanny.dead = true; }
+            }
+        }
+        return;
+    }
+
+    let best = null, bestD = Infinity;
+    for (const c of carrots) {
+        if (c.taken) continue;
+        const d = dist(ent, c);
+        if (d < bestD) { bestD = d; best = c; }
+    }
+    if (best) {
+        const dx = best.x - ent.x, dy = best.y - ent.y;
+        const len = Math.hypot(dx, dy) || 1;
+        moveEntity(ent, (dx / len) * ent.speed, (dy / len) * ent.speed);
+        if (bestD < CARROT_PICKUP_R) {
+            best.taken = true;
+            ent.carrots = (ent.carrots || 0) + 1;
+        }
+    } else {
+        ent.wander = (ent.wander || 0) + 0.04;
+        if (Math.random() < 0.02) ent.wander = Math.random() * Math.PI * 2;
+        moveEntity(ent, Math.cos(ent.wander) * ent.speed * 0.5, Math.sin(ent.wander) * ent.speed * 0.5);
+    }
+    if (ent.isPacman) ent.mouth = (ent.mouth + 0.25) % (Math.PI * 2);
+}
+
+function dealCustomTeamHit(att, vic, dmg, knock) {
+    if (!att || !vic || sameTeam(att, vic)) return false;
+    if (vic.hp <= 0 || vic.dead) return false;
+    vic.hp -= dmg;
+    if (knock) moveEntity(vic, Math.cos(att.angle) * knock, Math.sin(att.angle) * knock);
+    if (vic.hp <= 0) {
+        vic.hp = 0;
+        vic.dead = true;
+        if (vic === player) playerDead = true;
+        if (knife && knife.heldBy === vic) dropCustomKnife();
+        vic.hasStick = false;
+        vic.hasKnife = false;
+    }
+    return true;
+}
+
+function updateCustomLevel() {
+    if (showExitDialog || paused || gameOver) return;
+    chasePulse += 0.08;
+    if (knife) knife.pulse += 0.12;
+    for (const s of groundSticks) if (s.onGround) s.pulse += 0.1;
+    for (const k of groundKnives) if (k.onGround) k.pulse += 0.12;
+
+    if (player) {
+        if (player.swing > 0) player.swing--;
+        if (player.hitCooldown > 0) player.hitCooldown--;
+        if (player.invuln > 0) player.invuln--;
+        if (player.biteCooldown > 0) player.biteCooldown--;
+    }
+    if (nanny && nanny.stun > 0) nanny.stun--;
+
+    updatePlayer();
+
+    if (player && !player.dead) {
+        tryPickupStick(player);
+        tryPickupGroundKnife(player);
+    }
+
+    if (knife && knife.heldBy) {
+        const holder = knife.heldBy;
+        if (!holder || holder.hp <= 0 || holder.dead) {
+            dropCustomKnife();
+        } else if (knife.holdTimer > 0) {
+            knife.holdTimer--;
+            if (knife.holdTimer <= 0) dropCustomKnife();
+        }
+    }
+
+    for (const n of npcs) updateCustomNpcAI(n);
+    if (pacman && !pacman.dead) updateCustomNpcAI(pacman);
+
+    if (isCustomTeamMode()) {
+        if (nanny && !nanny.dead && nanny.hp > 0) {
+            if (!(nanny.stun > 0)) {
+                const t = nearestTeamEnemy(nanny);
+                if (t) {
+                    const dx = t.x - nanny.x, dy = t.y - nanny.y;
+                    const len = Math.hypot(dx, dy) || 1;
+                    moveEntity(nanny, (dx / len) * nanny.speed, (dy / len) * nanny.speed);
+                    if (dist(nanny, t) < 90 && nanny.hasStick) trySwing(nanny);
+                    if (nanny.swing > 9 && nanny.hitCooldown <= 0) {
+                        const tip = stickTip(nanny);
+                        if (dist(tip, t) < 52) {
+                            dealCustomTeamHit(nanny, t, nanny.damage || 2, 18);
+                            nanny.hitCooldown = nanny.attackCooldown || 18;
+                            nanny.swing = 0;
+                        }
+                    }
+                    if (dist(nanny, t) < CATCH_RADIUS && (t.invuln || 0) <= 0 && !t.hasKnife) {
+                        dealCustomTeamHit(nanny, t, 1, 12);
+                        t.invuln = (t === player) ? 40 : 20;
+                    }
+                }
+            }
+            if (nanny.swing > 0) nanny.swing--;
+            if (nanny.hitCooldown > 0) nanny.hitCooldown--;
+        }
+
+        if (player && !player.dead && player.hp > 0) {
+            if (player.hasKnife) {
+                const t = nearestTeamEnemy(player);
+                if (t && dist(player, t) < 48) {
+                    dealCustomTeamHit(player, t, 99, 10);
+                    if (knife.heldBy === player) {
+                        knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
+                        if (knife.killsLeft <= 0) dropCustomKnife();
+                    }
+                }
+            } else if (player.hasStick && player.swing > 9 && player.hitCooldown <= 0) {
+                const tip = stickTip(player);
+                for (const t of allCustomFighters()) {
+                    if (sameTeam(player, t)) continue;
+                    if (dist(tip, t) < (player.hitRadius || 34) + 10) {
+                        dealCustomTeamHit(player, t, player.damage || 2, 20);
+                        player.hitCooldown = player.attackCooldown || 16;
+                        player.swing = 0;
+                        break;
+                    }
+                }
+            } else if (player.isPacman && player.biteCooldown <= 0) {
+                for (const t of allCustomFighters()) {
+                    if (sameTeam(player, t)) continue;
+                    if (dist(player, t) < 48) {
+                        player.biteCooldown = player.attackCooldown || 12;
+                        dealCustomTeamHit(player, t, 1, 14);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (playerDead || (player && (player.hp <= 0 || player.dead))) {
+            finishCustom(false);
+            return;
+        }
+        if (countTeamAlive('enemy') <= 0) {
+            finishCustom(true);
+            return;
+        }
+        return;
+    }
+
+    if (nanny && !nanny.dead && nanny.hp > 0 && !playerDead && player && player.hp > 0) {
+        if (!(nanny.stun > 0)) {
+            const dx = player.x - nanny.x, dy = player.y - nanny.y;
+            const len = Math.hypot(dx, dy) || 1;
+            const spd = nanny.speed;
+            moveEntity(nanny, (dx / len) * spd, (dy / len) * spd);
+            if (Math.hypot(player.x - nanny.x, player.y - nanny.y) > 8) {
+                const side = Math.sin(chasePulse * 3) > 0 ? 1 : -1;
+                moveEntity(nanny, (-dy / len) * spd * 0.4 * side, (dx / len) * spd * 0.4 * side);
+            }
+        }
+        if (player.hasKnife && dist(player, nanny) < 48) {
+            nanny.hp = 0;
+            nanny.dead = true;
+            if (knife.heldBy === player) {
+                knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
+                if (knife.killsLeft <= 0) dropCustomKnife();
+            }
+        }
+        if (player.hasStick && !player.hasKnife && player.swing > 9 && player.hitCooldown <= 0) {
+            const tip = stickTip(player);
+            if (dist(tip, nanny) < (player.hitRadius || 40) + 10) {
+                nanny.hp -= player.damage || 3;
+                nanny.stun = 40;
+                player.hitCooldown = player.attackCooldown || 15;
+                player.swing = 0;
+                moveEntity(nanny, Math.cos(player.angle) * 22, Math.sin(player.angle) * 22);
+                if (nanny.hp <= 0) {
+                    nanny.hp = 0;
+                    nanny.dead = true;
+                }
+            }
+        }
+        if (!nanny.dead && nanny.hp > 0 && dist(player, nanny) < CATCH_RADIUS && player.invuln <= 0) {
+            if (!(player.hasKnife && dist(player, nanny) < 48)) {
+                player.hp = 0;
+                player.dead = true;
+                playerDead = true;
+                finishCustom(false);
+                return;
+            }
+        }
+    }
+
+    for (const c of carrots) {
+        if (c.taken) continue;
+        c.pulse += 0.1;
+        if (player && !player.dead && dist(player, c) < CARROT_PICKUP_R) {
+            c.taken = true;
+            carrotsCollected++;
+            player.carrots = carrotsCollected;
+        }
+    }
+    carrots = carrots.filter(c => !c.taken);
+
+    if (carrotsCollected >= customLevel.goalCarrots) {
+        finishCustom(true);
+    }
+}
+
+function drawOneStickOnGround(s) {
+    if (!s || !s.onGround) return;
+    const sc = 1 + Math.sin(s.pulse) * 0.12;
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(0.4 + Math.sin(s.pulse) * 0.15);
+    ctx.scale(sc, sc);
+    ctx.fillStyle = 'rgba(255,193,7,0.28)';
+    ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#6d4c41';
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-18, 10);
+    ctx.lineTo(18, -12);
+    ctx.stroke();
+    ctx.strokeStyle = '#a1887f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-16, 8);
+    ctx.lineTo(16, -10);
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = '#ffcc80';
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('ПАЛКА!', s.x, s.y + 36);
+}
+
+function drawOneKnifeOnGround(k) {
+    if (!k || !k.onGround) return;
+    const sc = 1 + Math.sin(k.pulse) * 0.15;
+    ctx.save();
+    ctx.translate(k.x, k.y);
+    ctx.rotate(k.pulse);
+    ctx.scale(sc, sc);
+    ctx.fillStyle = 'rgba(255,0,0,0.25)';
+    ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ccc'; ctx.fillRect(-4, -22, 8, 28);
+    ctx.fillStyle = '#8b0000';
+    ctx.beginPath(); ctx.moveTo(0, -22); ctx.lineTo(10, -8); ctx.lineTo(-10, -8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.fillRect(-7, 4, 14, 5);
+    ctx.restore();
+    ctx.fillStyle = '#ff2222';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('НОЖ!', k.x, k.y + 38);
+}
+
+function drawStickOnGround() {
+    for (const s of groundSticks) drawOneStickOnGround(s);
+    if (stickPickup && stickPickup.onGround && !groundSticks.includes(stickPickup)) {
+        drawOneStickOnGround(stickPickup);
+    }
+}
+
+function drawGroundKnives() {
+    for (const k of groundKnives) drawOneKnifeOnGround(k);
+}
+
+function drawEditorWeaponMarker(x, y, kind) {
+    ctx.save();
+    if (kind === 'knife') {
+        ctx.fillStyle = 'rgba(255,40,40,0.3)';
+        ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2); ctx.fill();
+        ctx.translate(x, y);
+        ctx.rotate(-0.5);
+        ctx.fillStyle = '#ccc'; ctx.fillRect(-3, -18, 6, 24);
+        ctx.fillStyle = '#c62828';
+        ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(8, -6); ctx.lineTo(-8, -6); ctx.closePath(); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = '#ff5252';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔪 НОЖ', x, y + 38);
+    } else {
+        ctx.fillStyle = 'rgba(255,193,7,0.3)';
+        ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2); ctx.fill();
+        ctx.translate(x, y);
+        ctx.rotate(0.5);
+        ctx.strokeStyle = '#6d4c41';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-16, 8); ctx.lineTo(16, -10); ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = '#ffcc80';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🪵 ПАЛКА', x, y + 38);
+    }
+}
+
+function finishCustom(won) {
+    if (gameOver) return;
+    gameOver = true;
+    gameWon = !!won;
+    playerDead = !won;
+    gameplayStop();
+    const teamMode = customLevel && customLevel.playMode === 'team';
+    if (teamMode) {
+        finalRanking = {
+            first: won
+                ? { displayName: 'Синие 🔵', img: player ? player.img : 'krosh' }
+                : { displayName: 'Красные 🔴', img: 'robonanny' },
+            second: { displayName: (player && player.displayName) || 'Ты', img: player ? player.img : 'krosh' },
+            third: { displayName: 'Союзников живо: ' + countTeamAlive('ally'), img: player ? player.img : 'krosh' },
+            last: { displayName: customLevel ? customLevel.name : 'Командный бой', img: player ? player.img : 'krosh' }
+        };
+        document.getElementById('hint').textContent = won
+            ? '⚔️ Синие победили! Enter — снова | R — редактор | Q — меню'
+            : '💀 Красные победили! Enter — снова | R — редактор';
+    } else {
+        finalRanking = {
+            first: won ? { displayName: player.displayName || 'Ты', img: player.img } : { displayName: 'Няня 🤖', img: 'robonanny' },
+            second: won ? { displayName: 'Уровень пройден 🏗️', img: player.img } : { displayName: player.displayName || 'Ты', img: player.img },
+            third: { displayName: '🥕 ' + carrotsCollected + ' / ' + (customLevel ? customLevel.goalCarrots : 0), img: player.img },
+            last: { displayName: customLevel ? customLevel.name : 'Уровень', img: player.img }
+        };
+        document.getElementById('hint').textContent = won
+            ? '🏆 Уровень пройден! Enter — снова | R — герои | Q — меню'
+            : '💀 Поймали! Enter — снова | R — герои | 4 — редактор';
+    }
+    showFullscreenAd(() => {});
+}
+
+function drawCustomWalls(walls) {
+    if (!walls) return;
+    for (const w of walls) {
+        const g = ctx.createLinearGradient(w.x, w.y, w.x + w.w, w.y + w.h);
+        g.addColorStop(0, '#5d4037');
+        g.addColorStop(1, '#3e2723');
+        ctx.fillStyle = g;
+        roundRect(w.x, w.y, w.w, w.h, 6);
+        ctx.fill();
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // кирпичики
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        for (let yy = w.y + 10; yy < w.y + w.h; yy += 14) {
+            ctx.beginPath();
+            ctx.moveTo(w.x + 2, yy);
+            ctx.lineTo(w.x + w.w - 2, yy);
+            ctx.stroke();
+        }
+    }
+}
+
+function openEditor() {
+    gameplayStop();
+    screen = 'editor';
+    gameMode = 'custom';
+    levelsListOpen = false;
+    wallDrag = null;
+    editorLevel = normalizeLevel(editorLevel || emptyEditorLevel());
+    document.getElementById('hint').textContent =
+        '🏗️ РЕДАКТОР: M — сбор/командный бой · T — союз/враг · ▶ играть · S сохранить · 1–8 инструменты';
+}
+
+function saveCurrentLevel() {
+    editorLevel = normalizeLevel(editorLevel);
+    const name = (editorLevel.name || 'Мой уровень').slice(0, 40);
+    editorLevel.name = name;
+    editorLevel.goalCarrots = Math.max(1, Math.min(99, editorLevel.goalCarrots || 5));
+    editorLevel.id = editorLevel.id || ('lv_' + Date.now());
+    editorLevel.updated = Date.now();
+    const list = loadSavedLevels().filter(x => x.id !== editorLevel.id);
+    list.unshift(cloneLevel(editorLevel));
+    if (list.length > 30) list.length = 30;
+    persistSavedLevels(list);
+    showEditorMsg('💾 Сохранено: ' + name);
+}
+
+function clearEditorLevel() {
+    editorLevel = emptyEditorLevel();
+    wallDrag = null;
+    groundSticks = [];
+    groundKnives = [];
+    showEditorMsg('🧹 Поле очищено');
+}
+
+function startCustomFromEditor() {
+    editorLevel = normalizeLevel(editorLevel);
+    if (editorLevel.playMode === 'team') {
+        const enemies = (editorLevel.npcs || []).filter(n => n.team !== 'ally').length
+            + (editorLevel.nannySpawn ? 1 : 0);
+        if (enemies < 1) {
+            showEditorMsg('⚔️ Нужен хотя бы 1 враг (🔴 герой или няня)!');
+            return;
+        }
+    } else {
+        const nCar = (editorLevel.carrots || []).length;
+        if (nCar > 0) {
+            editorLevel.goalCarrots = Math.min(editorLevel.goalCarrots || nCar, nCar);
+            if (editorLevel.goalCarrots < 1) editorLevel.goalCarrots = nCar;
+        } else {
+            editorLevel.goalCarrots = Math.max(1, editorLevel.goalCarrots || 5);
+        }
+    }
+    customLevel = cloneLevel(editorLevel);
+    gameMode = 'custom';
+    screen = 'select';
+    setHintSelect();
+    showEditorMsg('');
+}
+
+function editorCanvasToField(mx, my) {
+    // редактор рисует поле 1:1 в ED_FIELD, координаты уровня = координаты игры FIELD
+    // используем те же 50..850 / 50..550 как FIELD
+    return { x: mx, y: my };
+}
+
+function pointInEditorField(mx, my) {
+    return mx >= FIELD.minX && mx <= FIELD.maxX && my >= FIELD.minY && my <= FIELD.maxY && my >= 120;
+}
+
+function eraseAt(mx, my) {
+    const R = 28;
+    editorLevel = normalizeLevel(editorLevel);
+    const beforeW = editorLevel.walls.length;
+    editorLevel.walls = editorLevel.walls.filter(w =>
+        !(mx >= w.x && mx <= w.x + w.w && my >= w.y && my <= w.y + w.h)
+    );
+    const beforeC = editorLevel.carrots.length;
+    editorLevel.carrots = editorLevel.carrots.filter(c => Math.hypot(c.x - mx, c.y - my) > R);
+    const beforeN = (editorLevel.npcs || []).length;
+    editorLevel.npcs = (editorLevel.npcs || []).filter(n => Math.hypot(n.x - mx, n.y - my) > R);
+    const beforeS = (editorLevel.sticks || []).length;
+    editorLevel.sticks = (editorLevel.sticks || []).filter(s => Math.hypot(s.x - mx, s.y - my) > R);
+    const beforeK = (editorLevel.knives || []).length;
+    editorLevel.knives = (editorLevel.knives || []).filter(k => Math.hypot(k.x - mx, k.y - my) > R);
+    editorLevel.stickSpawn = editorLevel.sticks[0] || null;
+    editorLevel.knifeSpawn = editorLevel.knives[0] || null;
+    let removed = editorLevel.walls.length < beforeW
+        || editorLevel.carrots.length < beforeC
+        || editorLevel.npcs.length < beforeN
+        || editorLevel.sticks.length < beforeS
+        || editorLevel.knives.length < beforeK;
+    if (editorLevel.nannySpawn && Math.hypot(editorLevel.nannySpawn.x - mx, editorLevel.nannySpawn.y - my) < R) {
+        editorLevel.nannySpawn = null;
+        removed = true;
+    }
+    if (removed) showEditorMsg('Удалено');
+}
+
+function drawEditorScreen() {
+    selectPulse += 0.05;
+    if (editorMsgT > 0) editorMsgT--;
+
+    // фон
+    const g = ctx.createLinearGradient(0, 0, 900, 600);
+    g.addColorStop(0, '#1a0a2e');
+    g.addColorStop(1, '#0f3460');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 900, 600);
+
+    // поле
+    ctx.fillStyle = '#c8e6c9';
+    ctx.fillRect(FIELD.minX, FIELD.minY, FIELD.maxX - FIELD.minX, FIELD.maxY - FIELD.minY);
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 1;
+    for (let x = FIELD.minX; x <= FIELD.maxX; x += EDITOR_GRID) {
+        ctx.beginPath(); ctx.moveTo(x, FIELD.minY); ctx.lineTo(x, FIELD.maxY); ctx.stroke();
+    }
+    for (let y = FIELD.minY; y <= FIELD.maxY; y += EDITOR_GRID) {
+        ctx.beginPath(); ctx.moveTo(FIELD.minX, y); ctx.lineTo(FIELD.maxX, y); ctx.stroke();
+    }
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(FIELD.minX, FIELD.minY, FIELD.maxX - FIELD.minX, FIELD.maxY - FIELD.minY);
+
+    // объекты
+    drawCustomWalls(editorLevel.walls);
+    for (const c of editorLevel.carrots) {
+        drawCarrot({ x: c.x, y: c.y, pulse: selectPulse * 2 + c.x * 0.01 });
+    }
+    // спавн игрока
+    if (editorLevel.playerSpawn) {
+        ctx.fillStyle = 'rgba(255,204,0,0.35)';
+        ctx.beginPath();
+        ctx.arc(editorLevel.playerSpawn.x, editorLevel.playerSpawn.y, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('ТЫ', editorLevel.playerSpawn.x, editorLevel.playerSpawn.y + 5);
+    }
+    // няня
+    if (editorLevel.nannySpawn) {
+        ctx.fillStyle = 'rgba(239,83,80,0.35)';
+        ctx.beginPath();
+        ctx.arc(editorLevel.nannySpawn.x, editorLevel.nannySpawn.y, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ef5350';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        if (images.robonanny && images.robonanny.complete) {
+            try { ctx.drawImage(images.robonanny, editorLevel.nannySpawn.x - 28, editorLevel.nannySpawn.y - 28, 56, 56); }
+            catch (e) {}
+        }
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('НЯНЯ', editorLevel.nannySpawn.x, editorLevel.nannySpawn.y + 40);
+    }
+    // 👥 NPC из хранилища (в командном бою — цвет команды)
+    for (const n of (editorLevel.npcs || [])) {
+        const cfg = CHARACTERS.find(c => c.id === n.id);
+        const isAlly = n.team === 'ally';
+        const teamMode = editorLevel.playMode === 'team';
+        ctx.fillStyle = teamMode
+            ? (isAlly ? 'rgba(66,165,245,0.4)' : 'rgba(239,83,80,0.4)')
+            : 'rgba(100,180,255,0.3)';
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 26, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = teamMode ? (isAlly ? '#42a5f5' : '#ef5350') : ((cfg && cfg.color) || '#4fc3f7');
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        const imgKey = (cfg && cfg.img) || n.id;
+        if (images[imgKey] && images[imgKey].complete && images[imgKey].naturalWidth) {
+            try { ctx.drawImage(images[imgKey], n.x - 24, n.y - 24, 48, 48); } catch (e) {}
+        }
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Arial';
+        ctx.textAlign = 'center';
+        const tLabel = teamMode ? (isAlly ? ' 🔵' : ' 🔴') : '';
+        ctx.fillText(((cfg && cfg.name) || n.id) + tLabel, n.x, n.y + 38);
+    }
+    // спавны палок / ножей (несколько)
+    for (const s of (editorLevel.sticks || [])) {
+        drawEditorWeaponMarker(s.x, s.y, 'stick');
+    }
+    for (const k of (editorLevel.knives || [])) {
+        drawEditorWeaponMarker(k.x, k.y, 'knife');
+    }
+    if (!(editorLevel.sticks || []).length && editorLevel.stickSpawn) {
+        drawEditorWeaponMarker(editorLevel.stickSpawn.x, editorLevel.stickSpawn.y, 'stick');
+    }
+    if (!(editorLevel.knives || []).length && editorLevel.knifeSpawn) {
+        drawEditorWeaponMarker(editorLevel.knifeSpawn.x, editorLevel.knifeSpawn.y, 'knife');
+    }
+
+    // preview стены
+    if (wallDrag) {
+        const x = Math.min(wallDrag.x0, wallDrag.x1);
+        const y = Math.min(wallDrag.y0, wallDrag.y1);
+        const w = Math.abs(wallDrag.x1 - wallDrag.x0);
+        const h = Math.abs(wallDrag.y1 - wallDrag.y0);
+        ctx.fillStyle = 'rgba(93,64,55,0.5)';
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 2;
+        roundRect(x, y, Math.max(w, 4), Math.max(h, 4), 4);
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    // верхняя панель
+    ctx.fillStyle = 'rgba(0,0,0,0.72)';
+    ctx.fillRect(0, 0, 900, 115);
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('🏗️ РЕДАКТОР УРОВНЕЙ', 150, 42);
+    ctx.fillStyle = '#aaa';
+    ctx.font = '11px Arial';
+    const nSt = (editorLevel.sticks || []).length;
+    const nKn = (editorLevel.knives || []).length;
+    const nHero = (editorLevel.npcs || []).length;
+    const modeTag = editorLevel.playMode === 'team' ? '⚔️ бой' : '🥕 сбор';
+    const alliesN = (editorLevel.npcs || []).filter(n => n.team === 'ally').length;
+    const enemiesN = (editorLevel.npcs || []).filter(n => n.team !== 'ally').length;
+    ctx.fillText(editorLevel.name + ' · ' + modeTag +
+        (editorLevel.playMode === 'team'
+            ? (' · 🔵' + alliesN + ' 🔴' + enemiesN)
+            : (' · 🎯' + editorLevel.goalCarrots)) +
+        ' · 🧱' + editorLevel.walls.length +
+        (nHero ? ' · 👥' + nHero : '') +
+        (nSt ? ' · 🪵' + nSt : '') +
+        (nKn ? ' · 🔪' + nKn : ''), 150, 58);
+
+    drawButton(ED_BTN_BACK, '← МЕНЮ', '#333', '#ffcc00', '#ffcc00');
+    if (editorLevel.playMode !== 'team') {
+        drawButton(ED_BTN_GOAL_M, '−', '#222', '#4deeea', '#4deeea');
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎯' + editorLevel.goalCarrots, 815, 44);
+        drawButton(ED_BTN_GOAL_P, '+', '#222', '#4deeea', '#4deeea');
+    } else {
+        ctx.fillStyle = '#ff8a80';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚔️ БОЙ', 815, 44);
+    }
+
+    for (const t of ED_TOOLS) {
+        const on = editorTool === t.id;
+        drawButton(t, t.label, on ? '#6a1b9a' : '#222', on ? '#ffcc00' : '#888', '#fff');
+    }
+    drawButton(ED_BTN_PLAY, '▶ ИГРАТЬ', '#2e7d32', '#81c784', '#fff');
+    drawButton(ED_BTN_SAVE, '💾', '#1565c0', '#64b5f6', '#fff');
+    drawButton(ED_BTN_LOAD, '📂', '#6a1b9a', '#ce93d8', '#fff');
+    drawButton(ED_BTN_CLEAR, 'ОЧИСТИТЬ', '#5d4037', '#ffab91', '#fff');
+    const teamModeOn = editorLevel.playMode === 'team';
+    drawButton(ED_BTN_PLAYMODE, teamModeOn ? '⚔️ БОЙ' : '🥕 СБОР',
+        teamModeOn ? '#b71c1c' : '#1b5e20', teamModeOn ? '#ff8a80' : '#81c784', '#fff');
+    if (teamModeOn) {
+        const allyOn = editorNpcTeam === 'ally';
+        drawButton(ED_BTN_TEAM, allyOn ? '🔵 СОЮЗ' : '🔴 ВРАГ',
+            allyOn ? '#0d47a1' : '#b71c1c', allyOn ? '#64b5f6' : '#ef5350', '#fff');
+    }
+
+    if (editorMsg && editorMsgT > 0) {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        roundRect(250, 540, 400, 36, 10);
+        ctx.fill();
+        ctx.fillStyle = '#7cfc00';
+        ctx.font = 'bold 15px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(editorMsg, 450, 564);
+    }
+
+    // подсказка инструмента
+    const tips = {
+        wall: 'Зажми ЛКМ и тяни — стена (блокирует движение)',
+        carrot: 'Клик — поставить морковь',
+        spawn: 'Клик — где появишься ты',
+        nanny: 'Клик — где няня-охотник (ещё клик = убрать)',
+        hero: editorLevel.playMode === 'team'
+            ? ('Команда: ' + (editorNpcTeam === 'ally' ? '🔵 союзник' : '🔴 враг') + ' · клик = поставить · T = смена команды')
+            : 'Выбери героя внизу, клик по полю — поставить (ещё клик по нему — убрать)',
+        stick: 'Клик — спавн ПАЛКИ (можно несколько, подбери в игре, Пробел — удар)',
+        knife: 'Клик — спавн НОЖА (можно несколько, подбери — касание бьёт няню)',
+        erase: 'Клик — стереть стену / морковь / няню / героя / палку / нож'
+    };
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = '13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(tips[editorTool] || '', 450, editorTool === 'hero' ? 528 : 590);
+
+    // 👥 Хранилище персонажей (палитра внизу)
+    if (editorTool === 'hero') {
+        const list = placeableCharacters();
+        const cardW = 72, gap = 6;
+        const total = list.length * cardW + (list.length - 1) * gap;
+        const startX = (900 - total) / 2;
+        const y = 538;
+        ctx.fillStyle = 'rgba(0,0,0,0.78)';
+        roundRect(startX - 12, y - 8, total + 24, 58, 12);
+        ctx.fill();
+        ctx.strokeStyle = '#4deeea';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        list.forEach((ch, i) => {
+            const x = startX + i * (cardW + gap);
+            const on = editorCharId === ch.id;
+            const hover = charStorageHover === i;
+            ctx.fillStyle = on ? 'rgba(255,204,0,0.35)' : (hover ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.3)');
+            roundRect(x, y, cardW, 44, 8);
+            ctx.fill();
+            if (on) {
+                ctx.strokeStyle = '#ffcc00';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            if (images[ch.img] && images[ch.img].complete && images[ch.img].naturalWidth) {
+                try { ctx.drawImage(images[ch.img], x + 4, y + 4, 36, 36); } catch (e) {}
+            }
+            ctx.fillStyle = on ? '#ffcc00' : '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(ch.name.slice(0, 7), x + 42, y + 26);
+        });
+    }
+
+    // список сохранений
+    if (levelsListOpen) {
+        const list = loadSavedLevels();
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        roundRect(560, 115, 320, 360, 14);
+        ctx.fill();
+        ctx.strokeStyle = '#ce93d8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('📂 Сохранённые уровни', 580, 145);
+        if (!list.length) {
+            ctx.fillStyle = '#aaa';
+            ctx.font = '14px Arial';
+            ctx.fillText('Пока пусто — нажми 💾', 580, 180);
+        } else {
+            list.slice(0, 10).forEach((lv, i) => {
+                const y = 165 + i * 30;
+                ctx.fillStyle = levelsListHover === i ? 'rgba(255,204,0,0.2)' : 'transparent';
+                ctx.fillRect(575, y - 18, 290, 28);
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Arial';
+                ctx.fillText((i + 1) + '. ' + (lv.name || 'Уровень').slice(0, 28), 585, y);
+            });
+        }
+        ctx.fillStyle = '#888';
+        ctx.font = '12px Arial';
+        ctx.fillText('Клик — загрузить · Esc — закрыть', 580, 455);
+    }
+
+    if (showExitDialog) drawExitDialog();
+}
+
+function handleEditorClick(mx, my) {
+    if (levelsListOpen) {
+        const list = loadSavedLevels();
+        if (mx >= 560 && mx <= 880 && my >= 115 && my <= 475) {
+            list.slice(0, 10).forEach((lv, i) => {
+                const y = 165 + i * 30;
+                if (my >= y - 18 && my <= y + 10) {
+                    editorLevel = cloneLevel(lv);
+                    levelsListOpen = false;
+                    showEditorMsg('📂 Загружен: ' + (lv.name || 'уровень'));
+                }
+            });
+            return;
+        }
+        levelsListOpen = false;
+        return;
+    }
+
+    if (hitBtn(ED_BTN_BACK, mx, my)) { goModeSelect(); return; }
+    if (hitBtn(ED_BTN_CLEAR, mx, my)) { clearEditorLevel(); return; }
+    if (hitBtn(ED_BTN_PLAYMODE, mx, my)) {
+        editorLevel.playMode = editorLevel.playMode === 'team' ? 'collect' : 'team';
+        showEditorMsg(editorLevel.playMode === 'team'
+            ? '⚔️ Командный бой: ставь союзников 🔵 и врагов 🔴'
+            : '🥕 Режим сбора морковок');
+        return;
+    }
+    if (editorLevel.playMode === 'team' && hitBtn(ED_BTN_TEAM, mx, my)) {
+        editorNpcTeam = editorNpcTeam === 'ally' ? 'enemy' : 'ally';
+        showEditorMsg(editorNpcTeam === 'ally' ? '🔵 Ставим СОЮЗНИКОВ' : '🔴 Ставим ВРАГОВ');
+        return;
+    }
+    if (hitBtn(ED_BTN_GOAL_M, mx, my)) {
+        if (editorLevel.playMode === 'team') return;
+        editorLevel.goalCarrots = Math.max(1, (editorLevel.goalCarrots || 5) - 1);
+        return;
+    }
+    if (hitBtn(ED_BTN_GOAL_P, mx, my)) {
+        if (editorLevel.playMode === 'team') return;
+        editorLevel.goalCarrots = Math.min(99, (editorLevel.goalCarrots || 5) + 1);
+        return;
+    }
+    if (hitBtn(ED_BTN_PLAY, mx, my)) { startCustomFromEditor(); return; }
+    if (hitBtn(ED_BTN_SAVE, mx, my)) {
+        const n = prompt('Название уровня:', editorLevel.name || 'Мой уровень');
+        if (n) editorLevel.name = n.slice(0, 40);
+        saveCurrentLevel();
+        return;
+    }
+    if (hitBtn(ED_BTN_LOAD, mx, my)) { levelsListOpen = !levelsListOpen; return; }
+    for (const t of ED_TOOLS) {
+        if (hitBtn(t, mx, my)) {
+            editorTool = t.id;
+            if (t.id === 'hero') showEditorMsg('👥 Хранилище: выбери героя внизу');
+            return;
+        }
+    }
+
+    // клик по палитре хранилища персонажей
+    if (editorTool === 'hero' && my >= 530) {
+        const list = placeableCharacters();
+        const cardW = 72, gap = 6;
+        const total = list.length * cardW + (list.length - 1) * gap;
+        const startX = (900 - total) / 2;
+        const y = 538;
+        list.forEach((ch, i) => {
+            const x = startX + i * (cardW + gap);
+            if (mx >= x && mx <= x + cardW && my >= y && my <= y + 44) {
+                editorCharId = ch.id;
+                saveCharStorage();
+                showEditorMsg('👥 Выбран: ' + ch.name + ' — кликни по полю');
+            }
+        });
+        return;
+    }
+
+    // клик по полю
+    if (my < 120) return;
+    if (mx < FIELD.minX || mx > FIELD.maxX || my < FIELD.minY || my > FIELD.maxY) return;
+
+    editorLevel = normalizeLevel(editorLevel);
+
+    if (editorTool === 'erase') { eraseAt(mx, my); return; }
+    if (editorTool === 'carrot') {
+        editorLevel.carrots.push({ x: snapGrid(mx), y: snapGrid(my) });
+        showEditorMsg('🥕 +1 морковь');
+        return;
+    }
+    if (editorTool === 'spawn') {
+        editorLevel.playerSpawn = { x: snapGrid(mx), y: snapGrid(my) };
+        showEditorMsg('⭐ Спавн игрока');
+        return;
+    }
+    if (editorTool === 'nanny') {
+        const sx = snapGrid(mx), sy = snapGrid(my);
+        if (editorLevel.nannySpawn && Math.hypot(editorLevel.nannySpawn.x - sx, editorLevel.nannySpawn.y - sy) < 40) {
+            editorLevel.nannySpawn = null;
+            showEditorMsg('Няня убрана');
+        } else {
+            editorLevel.nannySpawn = { x: sx, y: sy };
+            showEditorMsg('🤖 Няня поставлена');
+        }
+        return;
+    }
+    if (editorTool === 'hero') {
+        const sx = snapGrid(mx), sy = snapGrid(my);
+        // клик по уже стоящему — убрать
+        const near = (editorLevel.npcs || []).findIndex(n => Math.hypot(n.x - sx, n.y - sy) < 36);
+        if (near >= 0) {
+            const removed = editorLevel.npcs.splice(near, 1)[0];
+            const cfg = CHARACTERS.find(c => c.id === removed.id);
+            showEditorMsg('👥 Убран: ' + ((cfg && cfg.name) || removed.id));
+            return;
+        }
+        if ((editorLevel.npcs || []).length >= 12) {
+            showEditorMsg('Максимум 12 героев на уровне');
+            return;
+        }
+        const team = editorLevel.playMode === 'team' ? editorNpcTeam : 'enemy';
+        editorLevel.npcs.push({ id: editorCharId, x: sx, y: sy, team: team });
+        const cfg = CHARACTERS.find(c => c.id === editorCharId);
+        const teamMark = editorLevel.playMode === 'team' ? (team === 'ally' ? ' 🔵' : ' 🔴') : '';
+        showEditorMsg('👥 +' + ((cfg && cfg.name) || editorCharId) + teamMark);
+        return;
+    }
+    if (editorTool === 'stick') {
+        const sx = snapGrid(mx), sy = snapGrid(my);
+        if (!editorLevel.sticks) editorLevel.sticks = [];
+        const near = editorLevel.sticks.findIndex(s => Math.hypot(s.x - sx, s.y - sy) < 36);
+        if (near >= 0) {
+            editorLevel.sticks.splice(near, 1);
+            editorLevel.stickSpawn = editorLevel.sticks[0] || null;
+            showEditorMsg('🪵 Палка убрана');
+        } else {
+            editorLevel.sticks.push({ x: sx, y: sy });
+            editorLevel.stickSpawn = editorLevel.sticks[0];
+            showEditorMsg('🪵 Спавн палки ×' + editorLevel.sticks.length);
+        }
+        return;
+    }
+    if (editorTool === 'knife') {
+        const sx = snapGrid(mx), sy = snapGrid(my);
+        if (!editorLevel.knives) editorLevel.knives = [];
+        const near = editorLevel.knives.findIndex(k => Math.hypot(k.x - sx, k.y - sy) < 36);
+        if (near >= 0) {
+            editorLevel.knives.splice(near, 1);
+            editorLevel.knifeSpawn = editorLevel.knives[0] || null;
+            showEditorMsg('🔪 Нож убран');
+        } else {
+            editorLevel.knives.push({ x: sx, y: sy });
+            editorLevel.knifeSpawn = editorLevel.knives[0];
+            showEditorMsg('🔪 Спавн ножа ×' + editorLevel.knives.length);
+        }
+        return;
+    }
+    // wall starts on mousedown — handled separately
+}
+
+function handleEditorMouseDown(mx, my) {
+    if (levelsListOpen || my < 120) return;
+    if (editorTool !== 'wall') return;
+    if (mx < FIELD.minX || mx > FIELD.maxX || my < FIELD.minY || my > FIELD.maxY) return;
+    wallDrag = { x0: snapGrid(mx), y0: snapGrid(my), x1: snapGrid(mx), y1: snapGrid(my) };
+}
+
+function handleEditorMouseMove(mx, my) {
+    if (wallDrag) {
+        wallDrag.x1 = Math.max(FIELD.minX, Math.min(FIELD.maxX, snapGrid(mx)));
+        wallDrag.y1 = Math.max(FIELD.minY, Math.min(FIELD.maxY, snapGrid(my)));
+    }
+    if (levelsListOpen) {
+        levelsListHover = -1;
+        const list = loadSavedLevels();
+        list.slice(0, 10).forEach((lv, i) => {
+            const y = 165 + i * 30;
+            if (mx >= 575 && mx <= 865 && my >= y - 18 && my <= y + 10) levelsListHover = i;
+        });
+    }
+    // hover палитры героев
+    charStorageHover = -1;
+    if (editorTool === 'hero') {
+        const list = placeableCharacters();
+        const cardW = 72, gap = 6;
+        const total = list.length * cardW + (list.length - 1) * gap;
+        const startX = (900 - total) / 2;
+        const y = 538;
+        list.forEach((ch, i) => {
+            const x = startX + i * (cardW + gap);
+            if (mx >= x && mx <= x + cardW && my >= y && my <= y + 44) charStorageHover = i;
+        });
+    }
+}
+
+function handleEditorMouseUp(mx, my) {
+    if (!wallDrag) return;
+    const x = Math.min(wallDrag.x0, wallDrag.x1);
+    const y = Math.min(wallDrag.y0, wallDrag.y1);
+    const w = Math.abs(wallDrag.x1 - wallDrag.x0);
+    const h = Math.abs(wallDrag.y1 - wallDrag.y0);
+    wallDrag = null;
+    if (w >= 20 && h >= 20) {
+        editorLevel.walls.push({ x, y, w, h });
+        showEditorMsg('🧱 Стена ' + w + '×' + h);
+    }
+}
+
+function startChaseGame(charCfg) {
+    buildPlayerFromCfg(charCfg);
+    // в догонялках не нужны жизни/урон
+    player.hp = 1;
+    player.hpMax = 1;
+    player.carrots = 0;
+    buildNpcsAndBoss(charCfg, true);
+    knife = {
+        onGround: false, x: 0, y: 0, heldBy: null, spawnCD: 99999, pulse: 0,
+        holdTimer: 0, holdMax: 0, killsLeft: 0
+    };
+    placeAllFighters();
+    // няню ставим подальше от игрока
+    if (player && nanny) {
+        let best = null, bestD = -1;
+        for (let i = 0; i < 30; i++) {
+            const p = randomFieldPos(60);
+            const d = Math.hypot(p.x - player.x, p.y - player.y);
+            if (d > bestD) { bestD = d; best = p; }
+        }
+        if (best) { nanny.x = best.x; nanny.y = best.y; }
+    }
+    carrots = [];
+    carrotsCollected = 0;
+    carrotSpawnCD = 0;
+    chaseCaught = false;
+    chasePulse = 0;
+    for (let i = 0; i < 4; i++) spawnCarrot();
+    paused = false;
+    gameOver = false;
+    gameWon = false;
+    playerDead = false;
+    showExitDialog = false;
+    deathOrder = [];
+    finalRanking = null;
+    screen = 'game';
+    gameplayStart();
+    document.getElementById('hint').textContent =
+        '🥕 Гонка до ' + CARROTS_TO_WIN + ' (★' + CARROTS_LEGEND + ')! Друзья тоже собирают | WASD | Shift | Esc | Q — выйти';
+}
+
+/** Режим 3: Голя — выбранный персонаж начинает водящим, кого коснулся — тот стал голей */
+function startTagGame(charCfg) {
+    buildPlayerFromCfg(charCfg);
+    player.hp = 1;
+    player.hpMax = 1;
+    player.carrots = 0;
+    player.isGola = true; // ты выбрал голю — начинаешь водящим
+
+    // остальные — убегают (как в chase, без моркови)
+    buildNpcsAndBoss(charCfg, true);
+    if (nanny) {
+        nanny.isGola = false;
+        nanny.hp = 1;
+        nanny.hpMax = 1;
+        // няня в режиме голи — обычный участник (убегает / становится голей)
+        nanny.speed = Math.max(4.2, (charCfg.speed || 6.5) * 0.78);
+    }
+    for (const n of npcs) {
+        if (!n) continue;
+        n.isGola = false;
+        n.hp = 1;
+        n.hpMax = 1;
+        n.speed = 4.8 + Math.random() * 0.8;
+    }
+    if (pacman) {
+        pacman.isGola = false;
+        if (!pacman.dead) {
+            pacman.hp = 1;
+            pacman.hpMax = 1;
+            pacman.speed = 5.5;
+        }
+    }
+
+    knife = {
+        onGround: false, x: 0, y: 0, heldBy: null, spawnCD: 99999, pulse: 0,
+        holdTimer: 0, holdMax: 0, killsLeft: 0
+    };
+    placeAllFighters();
+    // остальных разбросать подальше от голи (игрока)
+    if (player) {
+        const others = [nanny, ...(npcs || []), pacman].filter(e => e && !e.dead);
+        for (const o of others) {
+            let best = null, bestD = -1;
+            for (let i = 0; i < 20; i++) {
+                const p = randomFieldPos(55);
+                const d = Math.hypot(p.x - player.x, p.y - player.y);
+                if (d > bestD) { bestD = d; best = p; }
+            }
+            if (best) { o.x = best.x; o.y = best.y; }
+        }
+    }
+
+    carrots = [];
+    carrotsCollected = 0;
+    chaseCaught = false;
+    chasePulse = 0;
+    gola = player;
+    tagCooldown = TAG_COOLDOWN; // старт: нельзя сразу кого-то задеть
+    tagTimer = TAG_ROUND_SEC * FPS_EST;
+    tagTimeAsGola = {};
+    lastTagFlash = 0;
+    // учёт времени «в голях»
+    for (const e of tagParticipants()) {
+        if (e && e.name) tagTimeAsGola[e.name] = 0;
+    }
+
+    paused = false;
+    gameOver = false;
+    gameWon = false;
+    playerDead = false;
+    showExitDialog = false;
+    deathOrder = [];
+    finalRanking = null;
+    screen = 'game';
+    gameplayStart();
+    document.getElementById('hint').textContent =
+        '🔴 Ты ГОЛЯ! Догони кого-нибудь — он станет голей | WASD | Shift | ' + TAG_ROUND_SEC + 'с | Q — выйти';
+}
+
+/** Все участники салок (живые) */
+function tagParticipants() {
+    const list = [];
+    if (player && !player.dead && player.hp > 0) list.push(player);
+    if (nanny && !nanny.dead && nanny.hp > 0) list.push(nanny);
+    if (npcs) {
+        for (const n of npcs) {
+            if (n && !n.dead && n.hp > 0) list.push(n);
+        }
+    }
+    if (pacman && !pacman.dead && pacman.hp > 0) list.push(pacman);
+    return list;
+}
+
+function setGola(ent) {
+    if (!ent) return;
+    for (const e of tagParticipants()) {
+        e.isGola = false;
+    }
+    ent.isGola = true;
+    gola = ent;
+    tagCooldown = TAG_COOLDOWN;
+    lastTagFlash = 50;
+    // лёгкий отскок, чтобы не залипать
+    if (player && ent !== player && gola) {
+        // nothing
+    }
+    const name = ent.displayName || ent.name || '???';
+    if (ent === player) {
+        document.getElementById('hint').textContent =
+            '🔴 Ты ГОЛЯ! Догоняй всех | WASD | Shift | Esc | Q';
+    } else {
+        document.getElementById('hint').textContent =
+            '🔴 Голя: ' + name + ' — убегай! | WASD | Shift | Esc | Q';
+    }
+}
+
+function tryTransferGola() {
+    if (!gola || gameOver || tagCooldown > 0) return;
+    const targets = tagParticipants().filter(e => e !== gola);
+    for (const t of targets) {
+        if (dist(gola, t) < TAG_RADIUS) {
+            // оттолкнуть старую голю чуть назад
+            const dx = t.x - gola.x;
+            const dy = t.y - gola.y;
+            const len = Math.hypot(dx, dy) || 1;
+            moveEntity(gola, -(dx / len) * 28, -(dy / len) * 28);
+            moveEntity(t, (dx / len) * 18, (dy / len) * 18);
+            setGola(t);
+            return;
+        }
+    }
+}
+
+/** AI: голя бежит к ближайшему, остальные убегают от голи */
+function updateTagAI() {
+    if (!gola || gameOver) return;
+    const all = tagParticipants();
+    for (const ent of all) {
+        if (ent === player) continue; // игрока двигает updatePlayer
+        if (ent === gola) {
+            // голя (AI) — к ближайшей жертве
+            let best = null, bestD = Infinity;
+            for (const v of all) {
+                if (v === ent) continue;
+                const d = dist(ent, v);
+                if (d < bestD) { bestD = d; best = v; }
+            }
+            if (best) {
+                const dx = best.x - ent.x;
+                const dy = best.y - ent.y;
+                const len = Math.hypot(dx, dy) || 1;
+                const boost = len < 140 ? 1.15 : 1.0;
+                moveEntity(ent, (dx / len) * ent.speed * boost, (dy / len) * ent.speed * boost);
+            }
+        } else {
+            // убегать от голи
+            const d = dist(ent, gola);
+            const dx = ent.x - gola.x;
+            const dy = ent.y - gola.y;
+            const len = Math.hypot(dx, dy) || 1;
+            ent.fleeAngle = (ent.fleeAngle || 0) + (Math.random() - 0.5) * 0.2;
+            const nx = dx / len + Math.cos(ent.fleeAngle) * 0.4;
+            const ny = dy / len + Math.sin(ent.fleeAngle) * 0.4;
+            const nlen = Math.hypot(nx, ny) || 1;
+            const panic = d < 100 ? 1.35 : (d < 200 ? 1.15 : 0.9);
+            if (d < 220) {
+                moveEntity(ent, (nx / nlen) * ent.speed * panic, (ny / nlen) * ent.speed * panic);
+            } else {
+                ent.wander = (ent.wander || 0) + 0.05;
+                if (Math.random() < 0.02) ent.wander = Math.random() * Math.PI * 2;
+                moveEntity(ent, Math.cos(ent.wander) * ent.speed * 0.6, Math.sin(ent.wander) * ent.speed * 0.6);
+            }
+        }
+        if (ent.isPacman) {
+            ent.mouth = (ent.mouth + 0.25) % (Math.PI * 2);
+        }
+    }
+}
+
+function updateTagRound() {
+    if (gameOver) return;
+    if (tagCooldown > 0) tagCooldown--;
+    if (lastTagFlash > 0) lastTagFlash--;
+    chasePulse += 0.08;
+
+    // считаем время в роли голи
+    if (gola && gola.name) {
+        tagTimeAsGola[gola.name] = (tagTimeAsGola[gola.name] || 0) + 1;
+    }
+
+    if (tagTimer > 0) {
+        tagTimer--;
+        if (tagTimer <= 0) {
+            finishTag();
+        }
+    }
+}
+
+function finishTag() {
+    if (gameOver) return;
+    gameOver = true;
+    gameplayStop();
+    showFullscreenAd();
+    // меньше всего был голей — лучше (1 место)
+    const all = tagParticipants();
+    // добавить всех, кто был в tagTimeAsGola
+    const names = new Set(Object.keys(tagTimeAsGola));
+    for (const e of all) if (e && e.name) names.add(e.name);
+
+    const ranked = [];
+    for (const name of names) {
+        let ent = all.find(e => e && e.name === name);
+        if (!ent) {
+            // выбывших нет — ищем среди известных
+            if (player && player.name === name) ent = player;
+            else if (nanny && nanny.name === name) ent = nanny;
+            else if (pacman && pacman.name === name) ent = pacman;
+            else if (npcs) ent = npcs.find(n => n && n.name === name);
+        }
+        if (!ent) continue;
+        ranked.push({
+            name: ent.name,
+            displayName: ent.displayName || ent.name,
+            img: ent.img || ent.name,
+            carrots: 0,
+            golaFrames: tagTimeAsGola[name] || 0,
+            golaSec: Math.round((tagTimeAsGola[name] || 0) / FPS_EST)
+        });
+    }
+    ranked.sort((a, b) => {
+        if (a.golaFrames !== b.golaFrames) return a.golaFrames - b.golaFrames;
+        return String(a.displayName).localeCompare(String(b.displayName), 'ru');
+    });
+
+    finalRanking = {
+        first: ranked[0] || null,
+        second: ranked[1] || null,
+        third: ranked[2] || null,
+        last: ranked.length ? ranked[ranked.length - 1] : null,
+        all: ranked,
+        winner: ranked[0] || null
+    };
+    gameWon = !!(ranked[0] && player && ranked[0].name === player.name);
+    playerDead = false;
+    const wName = ranked[0] ? ranked[0].displayName : '???';
+    document.getElementById('hint').textContent =
+        '🏁 Голя окончена! Меньше всех водящим: ' + wName + ' | Enter — заново | R — выбор';
+}
+
+function fighterRankEntry(ent) {
+    if (!ent) return null;
+    return {
+        name: ent.name,
+        displayName: ent.displayName || ent.name || '???',
+        img: ent.img || ent.name,
+        carrots: ent.carrots || 0
+    };
+}
+
+/** Все, кто может собирать морковь (не няня) */
+function carrotCollectors() {
+    const list = [];
+    if (player && !player.dead && player.hp > 0 && !playerDead) list.push(player);
+    if (npcs) {
+        for (const n of npcs) {
+            if (n && !n.dead && n.hp > 0) list.push(n);
+        }
+    }
+    if (pacman && !pacman.dead && pacman.hp > 0) list.push(pacman);
+    return list;
+}
+
+function nearestCarrot(ent) {
+    let best = null, bestD = Infinity;
+    for (const c of carrots) {
+        if (c.taken) continue;
+        const d = dist(ent, c);
+        if (d < bestD) { bestD = d; best = c; }
+    }
+    return best;
+}
+
+/** Итог гонки: места 1…10 по числу морковок (больше — выше) */
+function buildChaseRanking(winner) {
+    const all = [];
+    if (player) all.push(player);
+    if (npcs) for (const n of npcs) if (n) all.push(n);
+    if (pacman && (pacman.livesMax > 0 || (pacman.carrots || 0) > 0 || !pacman.dead)) all.push(pacman);
+
+    const ranked = all
+        .filter(Boolean)
+        .map(e => fighterRankEntry(e))
+        .sort((a, b) => {
+            if (b.carrots !== a.carrots) return b.carrots - a.carrots;
+            // кто первым добежал до 10 — выше при равном счёте
+            if (winner && a.name === winner.name) return -1;
+            if (winner && b.name === winner.name) return 1;
+            return String(a.displayName).localeCompare(String(b.displayName), 'ru');
+        });
+
+    finalRanking = {
+        first: ranked[0] || null,
+        second: ranked[1] || null,
+        third: ranked[2] || null,
+        last: ranked.length ? ranked[ranked.length - 1] : null,
+        all: ranked,
+        winner: winner ? fighterRankEntry(winner) : null
+    };
+}
+
+function recordDeath(ent) {
+    if (!ent || ent._recordedDeath) return;
+    if (ent.isPacman && (ent.lives || 0) > 0 && !ent.dead) return;
+    const reallyDead = ent.dead || ent.hp <= 0;
+    if (!reallyDead) return;
+    if (ent.isPacman && (ent.lives || 0) > 0) return;
+    ent._recordedDeath = true;
+    deathOrder.push(fighterRankEntry(ent));
+}
+
+function trackDeaths() {
+    const all = [player, nanny, ...(npcs || [])];
+    if (pacman) all.push(pacman);
+    for (const f of all) {
+        if (!f) continue;
+        if (f.isPacman) {
+            if (f.dead || ((f.lives || 0) <= 0 && f.hp <= 0)) recordDeath(f);
+        } else if (f.hp <= 0 || f.dead) {
+            f.dead = true;
+            recordDeath(f);
+        }
+    }
+}
+
+function buildFinalRanking(winner) {
+    const ranked = [];
+    if (winner) ranked.push(fighterRankEntry(winner));
+    for (let i = deathOrder.length - 1; i >= 0; i--) {
+        const e = deathOrder[i];
+        if (winner && e.name === winner.name) continue;
+        ranked.push(e);
+    }
+    const last = ranked.length > 1 ? ranked[ranked.length - 1] : (ranked[0] || null);
+    finalRanking = {
+        first: ranked[0] || null,
+        second: ranked[1] || null,
+        third: ranked[2] || null,
+        last: last,
+        all: ranked
+    };
+}
+
+function finishMatch(winner) {
+    if (gameOver) return;
+    trackDeaths();
+    buildFinalRanking(winner || null);
+    gameOver = true;
+    gameplayStop();
+    showFullscreenAd();
+    gameWon = !!(winner && player && winner === player && !playerDead && player.hp > 0);
+    const wName = finalRanking && finalRanking.first
+        ? finalRanking.first.displayName
+        : '???';
+    document.getElementById('hint').textContent =
+        '🏁 Конец! 1 место: ' + wName + ' | Enter — заново | R — выбор';
+}
+
+function finishChase(won, winnerEnt) {
+    if (gameOver) return;
+    gameOver = true;
+    gameplayStop();
+    showFullscreenAd();
+    const winner = winnerEnt || (won ? player : null);
+    gameWon = !!(won && winner && player && winner === player);
+    playerDead = !!(player && (player.dead || player.hp <= 0));
+    chaseCaught = !won && playerDead;
+    // синхронизируем счёт игрока для UI
+    if (player) carrotsCollected = player.carrots || 0;
+    buildChaseRanking(winner);
+    const wName = finalRanking && finalRanking.first
+        ? finalRanking.first.displayName
+        : '???';
+    const wCar = finalRanking && finalRanking.first ? finalRanking.first.carrots : 0;
+    document.getElementById('hint').textContent = won
+        ? '🥕 1 место: ' + wName + ' (' + wCar + ' 🥕)! Enter — заново | R — выбор'
+        : 'Няня поймала! Места по моркови | Enter — заново | R — выбор';
+}
+
+function clampToField(ent) {
+    ent.x = Math.max(FIELD.minX + ent.radius, Math.min(FIELD.maxX - ent.radius, ent.x));
+    ent.y = Math.max(FIELD.minY + ent.radius, Math.min(FIELD.maxY - ent.radius, ent.y));
+}
+function circleHitsWall(x, y, r, walls) {
+    if (!walls || !walls.length) return false;
+    for (const w of walls) {
+        const nx = Math.max(w.x, Math.min(x, w.x + w.w));
+        const ny = Math.max(w.y, Math.min(y, w.y + w.h));
+        if (Math.hypot(x - nx, y - ny) < r + 1) return true;
+    }
+    return false;
+}
+function activeWalls() {
+    if (gameMode === 'custom' && customLevel) return customLevel.walls;
+    return null;
+}
+function canMove(x, y, r) {
+    if (!(x - r >= FIELD.minX && x + r <= FIELD.maxX && y - r >= FIELD.minY && y + r <= FIELD.maxY)) return false;
+    if (circleHitsWall(x, y, r, activeWalls())) return false;
+    return true;
+}
+function allFighters() {
+    const l = [player, nanny, ...(npcs || [])].filter(f => f && f.hp > 0 && !f.dead);
+    if (pacman && !pacman.dead && pacman.hp > 0) l.push(pacman);
+    return l;
+}
+function moveEntity(ent, dx, dy) {
+    if (dx === 0 && dy === 0) return false;
+    const ox = ent.x, oy = ent.y;
+    if (canMove(ent.x + dx, ent.y, ent.radius)) ent.x += dx;
+    if (canMove(ent.x, ent.y + dy, ent.radius)) ent.y += dy;
+    clampToField(ent);
+    if (ent.x !== ox || ent.y !== oy) { ent.angle = Math.atan2(ent.y - oy, ent.x - ox); return true; }
+    return false;
+}
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function isDown(c) { return !!keys[c]; }
+
+// ——— Нож (режим битвы) ———
+function spawnKnife() {
+    knife.onGround = true;
+    knife.heldBy = null;
+    knife.holdTimer = 0;
+    knife.killsLeft = 0;
+    knife.x = FIELD.minX + 60 + Math.random() * (FIELD.maxX - FIELD.minX - 120);
+    knife.y = FIELD.minY + 60 + Math.random() * (FIELD.maxY - FIELD.minY - 120);
+    knife.pulse = 0;
+}
+function dropKnifeFromHolder() {
+    const holder = knife.heldBy;
+    if (holder) holder.hasKnife = false;
+    knife.heldBy = null;
+    knife.holdTimer = 0;
+    knife.killsLeft = 0;
+    knife.onGround = false;
+    knife.spawnCD = KNIFE_RESPAWN;
+}
+function moveTowardKnife(ent, mult = 1.4) {
+    const dx = knife.x - ent.x, dy = knife.y - ent.y, len = Math.hypot(dx, dy) || 1;
+    moveEntity(ent, (dx / len) * ent.speed * mult, (dy / len) * ent.speed * mult);
+}
+function tryPickupKnife(ent) {
+    if (!knife.onGround || ent.hp <= 0 || (ent.isPacman && ent.dead)) return;
+    if (dist(ent, { x: knife.x, y: knife.y }) < 38) {
+        knife.onGround = false;
+        knife.heldBy = ent;
+        ent.hasKnife = true;
+        knife.holdTimer = KNIFE_HOLD_FRAMES;
+        knife.killsLeft = KNIFE_MAX_KILLS;
+    }
+}
+function knifeKill(att, vic) {
+    if (vic.isPacman) { vic.lives = 0; vic.hp = 0; vic.dead = true; }
+    else { vic.hp = 0; }
+    vic.hasKnife = false;
+    knife.killsLeft = Math.max(0, (knife.killsLeft || 0) - 1);
+    if (knife.killsLeft <= 0) dropKnifeFromHolder();
+    else {
+        att.hasKnife = true;
+        knife.heldBy = att;
+    }
+}
+function updateKnifeSpawn() {
+    knife.pulse += 0.12;
+    if (knife.heldBy) {
+        const holder = knife.heldBy;
+        if (holder.hp <= 0 || holder.dead) {
+            dropKnifeFromHolder();
+            return;
+        }
+        if (knife.holdTimer > 0) {
+            knife.holdTimer--;
+            if (knife.holdTimer <= 0) {
+                dropKnifeFromHolder();
+                return;
+            }
+        }
+        return;
+    }
+    if (knife.onGround) return;
+    if (knife.spawnCD > 0) knife.spawnCD--; else spawnKnife();
+}
+function knifeHoldSecondsLeft() {
+    if (!knife.heldBy || knife.holdTimer <= 0) return 0;
+    return Math.ceil(knife.holdTimer / FPS_EST);
+}
+function checkKnifeCombat() {
+    const att = knife.heldBy;
+    if (!att || att.hp <= 0 || (att.isPacman && att.dead)) return;
+    const targets = [player, nanny, ...npcs];
+    if (!pacman.dead && pacman.hp > 0) targets.push(pacman);
+    for (const vic of targets) {
+        if (vic === att || vic.hp <= 0 || (vic.isPacman && vic.dead)) continue;
+        if (dist(att, vic) < 48) { knifeKill(att, vic); return; }
+    }
+}
+function chaseWithKnife(ent) {
+    const t = nearestEnemy(ent); if (!t) return;
+    const dx = t.x - ent.x, dy = t.y - ent.y, len = Math.hypot(dx, dy) || 1;
+    moveEntity(ent, (dx / len) * ent.speed * 1.5, (dy / len) * ent.speed * 1.5);
+}
+
+function trySwing(ent) {
+    if (ent.hp <= 0 || ent.hasKnife) return;
+    // в своём уровне бить можно только с палкой
+    if (gameMode === 'custom' && !ent.hasStick && !isCustomTeamMode()) return;
+    if (ent.isPacman) {
+        if (ent.biteCooldown > 0 || ent.dead) return;
+        ent.biteCooldown = ent.attackCooldown || 12;
+        for (const v of allFighters()) {
+            if (v === ent || v.hp <= 0) continue;
+            if (dist(ent, v) < (ent.hitRadius || 42)) {
+                if (v.isPacman && v !== ent) hurtPacmanEntity(v, ent);
+                else {
+                    v.hp -= ent.damage;
+                    moveEntity(v, Math.cos(ent.angle) * 20, Math.sin(ent.angle) * 20);
+                }
+            }
+        }
+        return;
+    }
+    if (ent.swing > 0 || ent.hitCooldown > 0) return;
+    ent.swing = 20;
+}
+function stickTip(ent) {
+    const len = ent.swing > 9 ? (ent.upgraded ? 72 : 58) : (ent.upgraded ? 48 : 38);
+    const off = ent.swing > 0 ? Math.sin((20 - ent.swing) / 20 * Math.PI) * 0.9 : 0;
+    const a = ent.angle + off;
+    return { x: ent.x + Math.cos(a) * len, y: ent.y + Math.sin(a) * len };
+}
+function nearestEnemy(ent) {
+    let b = null, d = Infinity;
+    for (const o of allFighters()) {
+        if (o === ent) continue;
+        const t = dist(ent, o);
+        if (t < d) { d = t; b = o; }
+    }
+    return b;
+}
+
+function respawnPacmanEntity(ent) {
+    ent.x = 200 + Math.random() * 500;
+    ent.y = 100 + Math.random() * 400;
+    if (ent === pacman) { ent.hp = 1; }
+    else { ent.hp = Math.max(1, Math.floor(ent.hpMax * 0.5)); }
+    ent.invuln = 90; ent.biteCooldown = 0; ent.dead = false;
+    clampToField(ent);
+}
+function hurtPacmanEntity(ent, att) {
+    if (ent.dead || ent.hp <= 0 || ent.invuln > 0) return;
+    ent.lives--;
+    if (ent.lives > 0) respawnPacmanEntity(ent);
+    else { ent.hp = 0; ent.dead = true; }
+    if (att) moveEntity(ent, Math.cos(att.angle) * 22, Math.sin(att.angle) * 22);
+}
+function hurtPacman(att) { hurtPacmanEntity(pacman, att); }
+
+function updatePacman() {
+    if (pacman.dead || pacman.hp <= 0) return;
+    if (pacman.invuln > 0) pacman.invuln--;
+    pacman.mouth = (pacman.mouth + 0.25) % (Math.PI * 2);
+    if (knife.onGround) { moveTowardKnife(pacman, 1.5); tryPickupKnife(pacman); }
+    else if (pacman.hasKnife) chaseWithKnife(pacman);
+    else {
+        const t = nearestEnemy(pacman);
+        if (t) {
+            const dx = t.x - pacman.x, dy = t.y - pacman.y, len = Math.hypot(dx, dy) || 1;
+            moveEntity(pacman, (dx / len) * pacman.speed, (dy / len) * pacman.speed);
+        } else moveEntity(pacman, Math.cos(pacman.angle) * pacman.speed * 0.5, Math.sin(pacman.angle) * pacman.speed * 0.5);
+    }
+    if (pacman.biteCooldown > 0) pacman.biteCooldown--;
+    if (!pacman.hasKnife) {
+        for (const v of [player, nanny, ...npcs]) {
+            if (v.hp <= 0 || pacman.biteCooldown > 0) continue;
+            if (dist(pacman, v) < 42) {
+                if (v.isPacman) hurtPacmanEntity(v, pacman);
+                else {
+                    v.hp -= pacman.damage;
+                    moveEntity(v, Math.cos(pacman.angle) * 20, Math.sin(pacman.angle) * 20);
+                }
+                pacman.biteCooldown = 40;
+            }
+        }
+    }
+}
+
+function updateAI(ent) {
+    if (!ent.ai || ent.hp <= 0 || ent.isPacman) return;
+    if (knife.onGround) { moveTowardKnife(ent); tryPickupKnife(ent); return; }
+    if (ent.hasKnife) { chaseWithKnife(ent); return; }
+    const t = nearestEnemy(ent); if (!t) return;
+    const dx = t.x - ent.x, dy = t.y - ent.y, len = Math.hypot(dx, dy) || 1, d = dist(ent, t);
+    if (d > 60) moveEntity(ent, (dx / len) * ent.speed, (dy / len) * ent.speed);
+    else if (d < 35) moveEntity(ent, -(dx / len) * ent.speed * 0.6, -(dy / len) * ent.speed * 0.6);
+    else moveEntity(ent, (dx / len) * ent.speed * 0.4, (dy / len) * ent.speed * 0.4);
+    if (d < 95) trySwing(ent);
+}
+
+// ——— Режим 2: AI ———
+/** Все (кроме игрока) убегают от няни и собирают морковь */
+function fleeFromNanny(ent, speedMult = 1) {
+    if (!nanny || ent === nanny || ent.hp <= 0 || ent.dead) return;
+    const d = dist(ent, nanny);
+    const danger = d < 200;
+    if (danger) {
+        // бежать от няни
+        const dx = ent.x - nanny.x;
+        const dy = ent.y - nanny.y;
+        const len = Math.hypot(dx, dy) || 1;
+        ent.fleeAngle = (ent.fleeAngle || 0) + (Math.random() - 0.5) * 0.15;
+        const nx = dx / len + Math.cos(ent.fleeAngle) * 0.35;
+        const ny = dy / len + Math.sin(ent.fleeAngle) * 0.35;
+        const nlen = Math.hypot(nx, ny) || 1;
+        const panic = d < 90 ? 1.35 : 1.1;
+        moveEntity(ent, (nx / nlen) * ent.speed * speedMult * panic, (ny / nlen) * ent.speed * speedMult * panic);
+    } else {
+        // бегут к ближайшей морковке (Крош, Лосяш, Пин, Ёжик, Лунтик, Пакман…)
+        const carrot = nearestCarrot(ent);
+        if (carrot) {
+            const dx = carrot.x - ent.x;
+            const dy = carrot.y - ent.y;
+            const len = Math.hypot(dx, dy) || 1;
+            const greed = 0.85 + Math.random() * 0.2;
+            moveEntity(ent, (dx / len) * ent.speed * speedMult * greed, (dy / len) * ent.speed * speedMult * greed);
+        } else {
+            ent.wander = (ent.wander || 0) + 0.04;
+            if (Math.random() < 0.02) ent.wander = Math.random() * Math.PI * 2;
+            moveEntity(ent, Math.cos(ent.wander) * ent.speed * 0.55, Math.sin(ent.wander) * ent.speed * 0.55);
+        }
+    }
+}
+
+/** Все живые жертвы няни: игрок, NPC, пакман */
+function chaseVictims() {
+    const list = [];
+    if (player && !player.dead && player.hp > 0 && !playerDead) list.push(player);
+    if (npcs) {
+        for (const n of npcs) {
+            if (n && !n.dead && n.hp > 0) list.push(n);
+        }
+    }
+    if (pacman && !pacman.dead && pacman.hp > 0) list.push(pacman);
+    return list;
+}
+
+/** Ближайшая живая жертва для няни */
+function nearestChaseVictim() {
+    if (!nanny) return null;
+    let best = null, bestD = Infinity;
+    for (const v of chaseVictims()) {
+        const d = dist(nanny, v);
+        if (d < bestD) {
+            bestD = d;
+            best = v;
+        }
+    }
+    return best;
+}
+
+/** Няня бежит за ближайшей жертвой (не только за игроком) */
+function updateNannyChase() {
+    if (!nanny || gameOver) return;
+    const target = nearestChaseVictim();
+    if (!target) return;
+    const dx = target.x - nanny.x;
+    const dy = target.y - nanny.y;
+    const len = Math.hypot(dx, dy) || 1;
+    // ускоряется, если близко
+    const boost = len < 150 ? 1.12 : 1.0;
+    moveEntity(nanny, (dx / len) * nanny.speed * boost, (dy / len) * nanny.speed * boost);
+}
+
+function updateChaseNPCs() {
+    for (const n of npcs) {
+        if (n.hp <= 0 || n.dead) continue;
+        fleeFromNanny(n, 1);
+        // если няня догнала NPC — «выбывает» (убежал с поля)
+        if (dist(n, nanny) < CATCH_RADIUS) {
+            n.hp = 0;
+            n.dead = true;
+        }
+    }
+    if (pacman && !pacman.dead && pacman.hp > 0) {
+        fleeFromNanny(pacman, 1.05);
+        pacman.mouth = (pacman.mouth + 0.25) % (Math.PI * 2);
+        if (dist(pacman, nanny) < CATCH_RADIUS) {
+            pacman.hp = 0;
+            pacman.dead = true;
+        }
+    }
+}
+
+function updateCarrots() {
+    if (gameOver) return;
+    // подбор: игрок + все друзья (пин, крош, лосяш, пакман, лунтик, ёжик…)
+    const collectors = carrotCollectors();
+    for (const c of carrots) {
+        if (c.taken) continue;
+        c.pulse += 0.1;
+        for (const ent of collectors) {
+            if (c.taken) break;
+            if (dist(ent, c) < CARROT_PICKUP_R) {
+                c.taken = true;
+                ent.carrots = (ent.carrots || 0) + 1;
+                if (ent === player) carrotsCollected = ent.carrots;
+            }
+        }
+    }
+    carrots = carrots.filter(c => !c.taken);
+    // спавн новых
+    if (carrots.length < MAX_CARROTS_ON_FIELD) {
+        if (carrotSpawnCD > 0) carrotSpawnCD--;
+        else {
+            spawnCarrot();
+            carrotSpawnCD = CARROT_RESPAWN_CD;
+        }
+    }
+    // побеждает первый, кто набрал CARROTS_TO_WIN (10)
+    for (const ent of collectors) {
+        if ((ent.carrots || 0) >= CARROTS_TO_WIN) {
+            finishChase(true, ent);
+            return;
+        }
+    }
+    // легендарный счёт 90 — тоже мгновенная победа (на всякий)
+    for (const ent of collectors) {
+        if ((ent.carrots || 0) >= CARROTS_LEGEND) {
+            finishChase(true, ent);
+            return;
+        }
+    }
+}
+
+function checkNannyCatch() {
+    if (!player || !nanny || playerDead || gameOver) return;
+    if (player.invuln > 0) return;
+    if (dist(player, nanny) < CATCH_RADIUS) {
+        player.hp = 0;
+        player.dead = true;
+        playerDead = true;
+        // игра заканчивается, места — по собранной моркови
+        finishChase(false, null);
+    }
+}
+
+function updatePlayer() {
+    if (player.hp <= 0 || player.dead || playerDead) return;
+    if (player.invuln > 0) player.invuln--;
+    if (player.isPacman) {
+        player.mouth = (player.mouth + 0.25) % (Math.PI * 2);
+        if (player.biteCooldown > 0) player.biteCooldown--;
+    }
+    if (gameMode === 'battle' && isDown('Space')) trySwing(player);
+    // свой уровень: удар палкой (Пробел), если подобрал
+    if (gameMode === 'custom' && isDown('Space') && !player.hasKnife && (player.hasStick || isCustomTeamMode())) trySwing(player);
+    const spd = isDown('ShiftLeft') || isDown('ShiftRight') ? player.speed * 1.5 : player.speed;
+    let dx = 0, dy = 0;
+    if (isDown('ArrowLeft') || isDown('KeyA')) dx -= spd;
+    if (isDown('ArrowRight') || isDown('KeyD')) dx += spd;
+    if (isDown('ArrowUp') || isDown('KeyW')) dy -= spd;
+    if (isDown('ArrowDown') || isDown('KeyS')) dy += spd;
+    if (dx && dy) { dx *= 0.707; dy *= 0.707; }
+    moveEntity(player, dx, dy);
+    if (gameMode === 'battle' && knife.onGround) tryPickupKnife(player);
+}
+
+function checkCombat() {
+    const fighters = [player, nanny, ...npcs];
+    for (const att of fighters) {
+        if (att.hp <= 0 || att.isPacman || att.swing <= 9 || att.hitCooldown > 0 || att.hasKnife) continue;
+        const tip = stickTip(att);
+        for (const vic of fighters) {
+            if (vic === att || vic.hp <= 0 || vic.dead) continue;
+            if (dist(tip, vic) < att.hitRadius) {
+                if (vic.isPacman) hurtPacmanEntity(vic, att);
+                else vic.hp -= att.damage;
+                att.hitCooldown = att.attackCooldown;
+                att.swing = 0;
+                moveEntity(vic, Math.cos(att.angle) * 16, Math.sin(att.angle) * 16);
+            }
+        }
+        if (!pacman.dead && pacman.hp > 0 && dist(tip, pacman) < att.hitRadius + 10) {
+            hurtPacman(att); att.hitCooldown = att.attackCooldown; att.swing = 0;
+        }
+    }
+}
+function updateTimers() {
+    for (const f of [player, nanny, ...npcs]) {
+        if (f.swing > 0) f.swing--;
+        if (f.hitCooldown > 0) f.hitCooldown--;
+    }
+}
+function checkGameEnd() {
+    trackDeaths();
+    if ((player.hp <= 0 || player.dead) && !playerDead) {
+        playerDead = true;
+        player.hp = 0;
+        player.dead = true;
+        recordDeath(player);
+        if (knife.heldBy === player) dropKnifeFromHolder();
+        else player.hasKnife = false;
+        document.getElementById('hint').textContent =
+            'Ты умер — бой продолжается! | R — выбор | Enter — заново | Выйти';
+    }
+    const alive = allFighters();
+    if (alive.length <= 1) {
+        finishMatch(alive[0] || null);
+    }
+}
+
+function hitBtn(btn, mx, my) {
+    return mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h;
+}
+
+function canvasMouse(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        mx: (e.clientX - rect.left) * (canvas.width / rect.width),
+        my: (e.clientY - rect.top) * (canvas.height / rect.height)
+    };
+}
+
+function drawButton(btn, label, fill, stroke, textColor) {
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 3;
+    roundRect(btn.x, btn.y, btn.w, btn.h, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = textColor || '#fff';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, btn.x + btn.w / 2, btn.y + btn.h / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
+}
+
+function drawExitDialog() {
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(0, 0, 900, 600);
+    ctx.fillStyle = 'rgba(40,20,60,0.98)';
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth = 5;
+    roundRect(220, 180, 460, 230, 20);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Хотите выйти?', 450, 260);
+    ctx.fillStyle = '#ccc';
+    ctx.font = '16px Arial';
+    ctx.fillText('Игра будет закрыта', 450, 295);
+    drawButton(EXIT_YES, 'ДА', '#c62828', '#ff8a80', '#fff');
+    drawButton(EXIT_NO, 'НЕТ', '#2e7d32', '#81c784', '#fff');
+}
+
+function doExit() {
+    gameplayStop();
+    try { window.close(); } catch (_) {}
+    showExitDialog = false;
+    paused = false;
+    screen = 'mode';
+    playerDead = false;
+    gameOver = false;
+    gameWon = false;
+    document.getElementById('hint').textContent =
+        'Выбери режим: 1 — Битва | 2 — Догонялки | 3 — Голя | 4 — Создать уровень';
+    setTimeout(() => {
+        if (!window.closed) {
+            document.getElementById('hint').textContent =
+                'Можешь закрыть вкладку. Или выбери режим и играй!';
+        }
+    }, 100);
+}
+
+function setHintSelect() {
+    const modeName = gameMode === 'chase' ? 'Догонялки 🥕'
+        : gameMode === 'tag' ? 'Голя 🔴'
+        : gameMode === 'race' ? 'Гонки 🏁'
+        : gameMode === 'custom'
+            ? ((customLevel && customLevel.playMode === 'team') ? 'Командный бой ⚔️' : 'Свой уровень 🏗️')
+        : 'Битва ⚔️';
+    document.getElementById('hint').textContent =
+        'Режим: ' + modeName + ' | ← → выбор | 🎲 Рандом | Enter — играть | Esc — режимы';
+}
+
+// ——— Экран выбора режима ———
+function drawModeScreen() {
+    selectPulse += 0.05;
+    const g = ctx.createLinearGradient(0, 0, 900, 600);
+    g.addColorStop(0, '#1a0a2e');
+    g.addColorStop(0.5, '#16213e');
+    g.addColorStop(1, '#0f3460');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 900, 600);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    for (let i = 0; i < 35; i++) {
+        const sx = (i * 97 + 30) % 900;
+        const sy = (i * 53 + Math.sin(selectPulse + i) * 8 + 20) % 600;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 1.5 + (i % 3) * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 40px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#ff00ff';
+    ctx.shadowBlur = 18;
+    ctx.fillText('СМЕШАРИКИ', 450, 52);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('Выбери режим · 1 / 2 / 3 / 4 / 5 или клик', 450, 88);
+    ctx.fillStyle = '#bbb';
+    ctx.font = '13px Arial';
+    ctx.fillText('Потом герой → Enter. Режим 5 — создай свой уровень!', 450, 112);
+
+    drawButton(BTN_EXIT_SELECT, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+
+    function drawModeCard(btn, title, sub, lines, fill, stroke, keyHint, phase) {
+        const pulse = 1 + Math.sin(selectPulse * 2 + phase) * 0.012;
+        ctx.save();
+        ctx.translate(btn.x + btn.w / 2, btn.y + btn.h / 2);
+        ctx.scale(pulse, pulse);
+        ctx.translate(-(btn.x + btn.w / 2), -(btn.y + btn.h / 2));
+        ctx.fillStyle = fill;
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 4;
+        roundRect(btn.x, btn.y, btn.w, btn.h, 16);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(title, btn.x + btn.w / 2, btn.y + 40);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 13px Arial';
+        ctx.fillText(sub, btn.x + btn.w / 2, btn.y + 66);
+        ctx.font = '13px Arial';
+        ctx.fillStyle = '#eee';
+        lines.forEach((t, i) => ctx.fillText(t, btn.x + btn.w / 2, btn.y + 96 + i * 20));
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 15px Arial';
+        ctx.fillText(keyHint, btn.x + btn.w / 2, btn.y + btn.h - 18);
+        ctx.restore();
+    }
+
+    drawModeCard(BTN_MODE_BATTLE, '⚔️ БИТВА', 'Режим 1 · все против всех',
+        ['Палка, нож, HP', 'Последний выживший'],
+        'rgba(180,40,40,0.55)', '#ff6666', 'НАЖМИ 1', 0);
+    drawModeCard(BTN_MODE_CHASE, '🥕 ДОГОНЯЛКИ', 'Режим 2 · гонка за морковкой',
+        ['Собери ' + CARROTS_TO_WIN + ' 🥕', 'Няня ловит — беги!'],
+        'rgba(40,120,40,0.55)', '#81c784', 'НАЖМИ 2', 1);
+    drawModeCard(BTN_MODE_TAG, '🔴 ГОЛЯ', 'Режим 3 · салки',
+        ['Водящий ловит всех', 'Меньше быть голей'],
+        'rgba(120,30,140,0.55)', '#ce93d8', 'НАЖМИ 3', 2);
+    drawModeCard(BTN_MODE_RACE, '🏁 ГОНКИ', 'Режим 4 · кто быстрее',
+        ['Беги к финишу!', 'Shift — ускорение · 5 гонщиков'],
+        'rgba(230,120,20,0.6)', '#ffb74d', 'НАЖМИ 4', 3);
+    drawModeCard(BTN_MODE_EDITOR, '🏗️ СОЗДАТЬ УРОВЕНЬ', 'Режим 5 · редактор + режимы',
+        ['🥕 Сбор или ⚔️ командный бой', 'Союзники 🔵 vs враги 🔴 + оружие'],
+        'rgba(20,80,120,0.6)', '#4deeea', 'НАЖМИ 5', 4);
+
+    if (showExitDialog) drawExitDialog();
+}
+
+// ——— Отрисовка выбора персонажа ———
+function drawSelectScreen() {
+    selectPulse += 0.06;
+    const g = ctx.createLinearGradient(0, 0, 900, 600);
+    g.addColorStop(0, '#1a0a2e');
+    g.addColorStop(0.5, '#16213e');
+    g.addColorStop(1, '#0f3460');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 900, 600);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (let i = 0; i < 40; i++) {
+        const sx = (i * 97 + 30) % 900;
+        const sy = (i * 53 + Math.sin(selectPulse + i) * 8 + 20) % 600;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 1.5 + (i % 3) * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    const modeTitle = gameMode === 'chase' ? 'ДОГОНЯЛКИ — ВЫБОР'
+        : gameMode === 'tag' ? 'ГОЛЯ — ВЫБОР ВОДЯЩЕГО'
+        : gameMode === 'race' ? 'ГОНКИ — ВЫБОР ГОНЩИКА'
+        : gameMode === 'custom' ? 'СВОЙ УРОВЕНЬ — ГЕРОЙ'
+        : 'БИТВА — ВЫБОР';
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#ff00ff';
+    ctx.shadowBlur = 18;
+    ctx.fillText(modeTitle, 450, 70);
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px Arial';
+    ctx.fillText('← → выбрать  |  Enter / клик — играть  |  T — рандом  |  Esc — режимы', 450, 110);
+
+    drawButton(BTN_BACK_MODE, '← РЕЖИМЫ', '#37474f', '#90a4ae', '#fff');
+    drawButton(BTN_RANDOM, '🎲 РАНДОМ', '#6a1b9a', '#ce93d8', '#fff');
+    drawButton(BTN_EXIT_SELECT, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+
+    // Бейдж режима
+    ctx.fillStyle = gameMode === 'chase' ? 'rgba(46,125,50,0.9)'
+        : gameMode === 'tag' ? 'rgba(123,31,162,0.95)'
+        : gameMode === 'race' ? 'rgba(230,120,20,0.95)'
+        : gameMode === 'custom' ? 'rgba(20,90,130,0.95)'
+        : 'rgba(183,28,28,0.9)';
+    roundRect(350, 130, 200, 32, 10);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px Arial';
+    ctx.fillText(gameMode === 'chase' ? '🥕 Догонялки'
+        : gameMode === 'tag' ? '🔴 Голя (салки)'
+        : gameMode === 'race' ? '🏁 Гонки'
+        : gameMode === 'custom' ? '🏗️ Свой уровень'
+        : '⚔️ Битва', 450, 152);
+
+    const cards = cardLayout();
+    CHARACTERS.forEach((ch, i) => {
+        const c = cards[i];
+        const selected = i === selectedIndex;
+        const hovered = i === hoverIndex;
+        const scale = selected ? 1.06 + Math.sin(selectPulse * 2) * 0.02 : (hovered ? 1.03 : 1);
+        const cx = c.x + c.w / 2;
+
+        ctx.save();
+        ctx.translate(cx, c.y + c.h / 2);
+        ctx.scale(scale, scale);
+        ctx.translate(-cx, -(c.y + c.h / 2));
+
+        ctx.fillStyle = selected ? 'rgba(255,204,0,0.25)' : 'rgba(0,0,0,0.45)';
+        ctx.strokeStyle = selected ? ch.color : (hovered ? '#fff' : '#555');
+        ctx.lineWidth = selected ? 5 : 2;
+        roundRect(c.x, c.y, c.w, c.h, 16);
+        ctx.fill();
+        ctx.stroke();
+
+        const img = images[ch.img];
+        const imgSize = ch.isPacman ? 70 : 72;
+        if (img && img.complete && img.naturalWidth) {
+            ctx.drawImage(img, cx - imgSize / 2, c.y + 18, imgSize, imgSize);
+        } else if (ch.drawStyle) {
+            const fake = { x: cx, y: c.y + 54, size: imgSize, drawStyle: ch.drawStyle };
+            drawFallbackSprite(fake);
+        } else {
+            ctx.fillStyle = ch.color;
+            ctx.beginPath();
+            ctx.arc(cx, c.y + 54, 32, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = selected ? '#ffcc00' : '#fff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(ch.name, cx, c.y + 120);
+
+        ctx.fillStyle = '#ccc';
+        ctx.font = '10px Arial';
+        ctx.fillText(ch.desc, cx, c.y + 140);
+
+        ctx.fillStyle = ch.color;
+        ctx.font = '9px Arial';
+        if (gameMode === 'chase' || gameMode === 'tag' || gameMode === 'custom' || gameMode === 'race') {
+            ctx.fillText('Скорость ' + ch.speed, cx, c.y + 162);
+        } else {
+            ctx.fillText('HP ' + ch.hp + ' · Урон ' + ch.damage, cx, c.y + 162);
+        }
+
+        if (selected) {
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 13px Arial';
+            ctx.fillText('★ ВЫБРАН', cx, c.y + c.h - 12);
+        }
+        ctx.restore();
+    });
+
+    const cur = CHARACTERS[selectedIndex];
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    roundRect(160, 440, 580, 140, 14);
+    ctx.fill();
+    ctx.fillStyle = cur.color;
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(cur.name + (gameMode === 'chase' ? ' — БЕГИ ЗА 🥕!'
+        : gameMode === 'tag' ? ' — СТАРТУЕТ ГОЛЕЙ!'
+        : gameMode === 'race' ? ' — НА СТАРТ!'
+        : gameMode === 'custom' ? ' — ПРОЙДИ УРОВЕНЬ!'
+        : ' — В БОЙ!'), 450, 478);
+    ctx.fillStyle = '#ffeeaa';
+    ctx.font = '14px Arial';
+    ctx.fillText('Описание: ' + cur.desc, 450, 505);
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px Arial';
+    if (gameMode === 'chase') {
+        ctx.fillText('Режим Догонялки: собери ' + CARROTS_TO_WIN + ' 🥕 первым. Няня ловит — скорость ' + cur.speed, 450, 528);
+    } else if (gameMode === 'tag') {
+        ctx.fillText('Режим Голя: ты водящий ' + TAG_ROUND_SEC + ' сек. Кого коснёшься — тот станет голей', 450, 528);
+    } else if (gameMode === 'race') {
+        ctx.fillText('Гонки: беги вправо к финишу! Shift — ускорение. Скорость героя ' + cur.speed, 450, 528);
+    } else if (gameMode === 'custom') {
+        const g = customLevel ? customLevel.goalCarrots : 5;
+        ctx.fillText('Свой уровень: собери ' + g + ' 🥕, стены мешают, няня (если есть) ловит. Скорость ' + cur.speed, 450, 528);
+    } else {
+        ctx.fillText('Режим Битва: HP ' + cur.hp + ' · Урон ' + cur.damage + ' · Скорость ' + cur.speed + ' · бей и выживи', 450, 528);
+    }
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 18px Arial';
+    ctx.fillText('Enter / клик — начать  ·  Esc — к режимам', 450, 558);
+
+    if (showExitDialog) drawExitDialog();
+}
+
+function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+}
+
+function pickAt(mx, my) {
+    const cards = cardLayout();
+    for (let i = 0; i < cards.length; i++) {
+        const c = cards[i];
+        if (mx >= c.x && mx <= c.x + c.w && my >= c.y && my <= c.y + c.h) return i;
+    }
+    return -1;
+}
+
+// ——— Игровая отрисовка ———
+function drawField() {
+    ctx.fillStyle = gameMode === 'chase' || gameMode === 'custom' ? '#c8e6c9'
+        : gameMode === 'tag' ? '#e1bee7'
+        : '#f4e8c0';
+    ctx.fillRect(0, 0, 900, 600);
+    ctx.fillStyle = gameMode === 'chase' || gameMode === 'custom' ? '#a5d6a7'
+        : gameMode === 'tag' ? '#ce93d8'
+        : '#e8d9a8';
+    for (let i = 0; i < 12; i++) {
+        ctx.beginPath();
+        ctx.arc(80 + i * 70, 80 + (i % 3) * 40, 30, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    // грядки в догонялках / своём уровне
+    if (gameMode === 'chase' || gameMode === 'custom') {
+        ctx.strokeStyle = 'rgba(76,120,40,0.25)';
+        ctx.lineWidth = 2;
+        for (let y = 80; y < 560; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(60, y);
+            ctx.lineTo(840, y);
+            ctx.stroke();
+        }
+    }
+    if (gameMode === 'tag') {
+        ctx.strokeStyle = 'rgba(123,31,162,0.2)';
+        ctx.lineWidth = 2;
+        for (let y = 80; y < 560; y += 45) {
+            ctx.beginPath();
+            ctx.moveTo(60, y);
+            ctx.lineTo(840, y);
+            ctx.stroke();
+        }
+    }
+    if (gameMode === 'custom' && customLevel) {
+        drawCustomWalls(customLevel.walls);
+    }
+}
+
+function drawCarrot(c) {
+    const s = 1 + Math.sin(c.pulse) * 0.12;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.scale(s, s);
+    // свечение
+    ctx.fillStyle = 'rgba(255,152,0,0.25)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 26, 0, Math.PI * 2);
+    ctx.fill();
+    // тело моркови
+    ctx.fillStyle = '#ff6d00';
+    ctx.beginPath();
+    ctx.moveTo(0, 18);
+    ctx.quadraticCurveTo(12, 4, 8, -10);
+    ctx.lineTo(-8, -10);
+    ctx.quadraticCurveTo(-12, 4, 0, 18);
+    ctx.closePath();
+    ctx.fill();
+    // полоски
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-5, 0); ctx.lineTo(5, 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4, 8); ctx.lineTo(4, 10); ctx.stroke();
+    // ботва
+    ctx.fillStyle = '#43a047';
+    ctx.beginPath();
+    ctx.moveTo(-4, -10);
+    ctx.quadraticCurveTo(-10, -22, -2, -26);
+    ctx.quadraticCurveTo(0, -16, 0, -10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0, -10);
+    ctx.quadraticCurveTo(2, -24, 8, -28);
+    ctx.quadraticCurveTo(6, -16, 4, -10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(2, -10);
+    ctx.quadraticCurveTo(12, -20, 10, -26);
+    ctx.quadraticCurveTo(4, -18, 4, -10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
+
+function drawAllCarrots() {
+    for (const c of carrots) drawCarrot(c);
+}
+
+function drawKnifeOnGround() {
+    if (!knife.onGround) return;
+    const s = 1 + Math.sin(knife.pulse) * 0.15;
+    ctx.save();
+    ctx.translate(knife.x, knife.y);
+    ctx.rotate(knife.pulse);
+    ctx.scale(s, s);
+    ctx.fillStyle = 'rgba(255,0,0,0.25)';
+    ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ccc'; ctx.fillRect(-4, -22, 8, 28);
+    ctx.fillStyle = '#8b0000';
+    ctx.beginPath(); ctx.moveTo(0, -22); ctx.lineTo(10, -8); ctx.lineTo(-10, -8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.fillRect(-7, 4, 14, 5);
+    ctx.restore();
+    ctx.fillStyle = '#ff2222';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('НОЖ!', knife.x, knife.y + 38);
+}
+function drawKnifeHeld(ent) {
+    if (!ent.hasKnife || ent.hp <= 0 || (ent.isPacman && ent.dead)) return;
+    const a = ent.angle, kx = ent.x + Math.cos(a) * 22, ky = ent.y + Math.sin(a) * 22;
+    ctx.save();
+    ctx.translate(kx, ky);
+    ctx.rotate(a + Math.PI / 4);
+    ctx.fillStyle = '#ccc'; ctx.fillRect(-3, -16, 6, 20);
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(8, -4); ctx.lineTo(-8, -4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    if (knife.heldBy === ent) {
+        const sec = knifeHoldSecondsLeft();
+        const urgent = sec <= 5;
+        ctx.fillStyle = urgent ? '#ff2222' : '#ffcc00';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        const kills = knife.killsLeft || 0;
+        const label = '🔪 ' + sec + 'с · ×' + kills;
+        ctx.strokeText(label, ent.x, ent.y - ent.size / 2 - 28);
+        ctx.fillText(label, ent.x, ent.y - ent.size / 2 - 28);
+        const barW = 50, barH = 6;
+        const bx = ent.x - barW / 2, by = ent.y - ent.size / 2 - 22;
+        const t = knife.holdMax > 0 ? knife.holdTimer / knife.holdMax : 0;
+        ctx.fillStyle = '#333';
+        ctx.fillRect(bx, by, barW, barH);
+        ctx.fillStyle = urgent ? '#ff2222' : '#ff9800';
+        ctx.fillRect(bx, by, barW * t, barH);
+    }
+}
+
+function drawFallbackSprite(ent) {
+    const r = ent.size / 2;
+    const style = ent.drawStyle;
+    ctx.save();
+    ctx.translate(ent.x, ent.y);
+    if (style === 'barash') {
+        ctx.fillStyle = '#f8bbd0';
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#f48fb1';
+        for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.arc(Math.cos(a) * r * 0.7, Math.sin(a) * r * 0.7, r * 0.28, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(-r * 0.28, -r * 0.1, r * 0.18, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(r * 0.28, -r * 0.1, r * 0.18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#222';
+        ctx.beginPath(); ctx.arc(-r * 0.28, -r * 0.1, r * 0.08, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(r * 0.28, -r * 0.1, r * 0.08, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#c2185b';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, r * 0.2, r * 0.25, 0.1, Math.PI - 0.1); ctx.stroke();
+    } else if (style === 'kopatych') {
+        ctx.fillStyle = '#8d6e63';
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.9, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#6d4c41';
+        ctx.beginPath(); ctx.arc(-r * 0.55, -r * 0.55, r * 0.32, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(r * 0.55, -r * 0.55, r * 0.32, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffcc80';
+        ctx.beginPath(); ctx.ellipse(0, r * 0.15, r * 0.45, r * 0.38, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#222';
+        ctx.beginPath(); ctx.arc(-r * 0.22, -r * 0.15, r * 0.09, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(r * 0.22, -r * 0.15, r * 0.09, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#3e2723';
+        ctx.beginPath(); ctx.ellipse(0, r * 0.22, r * 0.12, r * 0.08, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#43a047';
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.5, -r * 0.5);
+        ctx.lineTo(0, -r * 1.05);
+        ctx.lineTo(r * 0.5, -r * 0.5);
+        ctx.closePath();
+        ctx.fill();
+    } else {
+        ctx.fillStyle = '#888';
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold ' + Math.floor(r) + 'px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', 0, 0);
+        ctx.textBaseline = 'alphabetic';
+    }
+    ctx.restore();
+}
+function drawStick(ent) {
+    if (gameMode === 'chase' || gameMode === 'tag') return;
+    if (ent.hp <= 0 || ent.hasKnife) return;
+    const tip = stickTip(ent);
+    ctx.strokeStyle = ent.upgraded ? '#ffd700' : '#5c3317';
+    ctx.lineWidth = ent.upgraded ? 10 : 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(ent.x + Math.cos(ent.angle) * 8, ent.y + Math.sin(ent.angle) * 8);
+    ctx.lineTo(tip.x, tip.y);
+    ctx.stroke();
+}
+function drawHpBar(ent) {
+    if (gameMode === 'chase' || gameMode === 'tag') return;
+    if (ent.hp <= 0) return;
+    const w = ent.upgraded ? 60 : 44, bx = ent.x - w / 2, by = ent.y - ent.size / 2 - 18;
+    ctx.fillStyle = '#333'; ctx.fillRect(bx, by, w, 7);
+    ctx.fillStyle = ent.upgraded ? '#ffd700' : (ent === nanny ? '#ff4444' : '#44cc44');
+    ctx.fillRect(bx, by, w * (ent.hp / ent.hpMax), 7);
+}
+function drawPacmanSprite(ent) {
+    if (ent.dead || ent.hp <= 0) return;
+    if (ent.invuln > 0 && Math.floor(ent.invuln / 8) % 2 === 0) return;
+    // голя-свечение для пакмана
+    if (gameMode === 'tag' && ent.isGola) {
+        const pulse = 0.25 + Math.sin(chasePulse * 2) * 0.12;
+        ctx.fillStyle = 'rgba(233,30,99,' + pulse + ')';
+        ctx.beginPath(); ctx.arc(ent.x, ent.y, ent.size / 2 + 20, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#e91e63';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(ent.x, ent.y, ent.size / 2 + 16, 0, Math.PI * 2); ctx.stroke();
+    }
+    const r = ent.size / 2;
+    const img = images.pacman || images[ent.img];
+    ctx.save();
+    ctx.translate(ent.x, ent.y);
+    ctx.rotate(ent.angle);
+    const chomp = 1 + Math.sin(ent.mouth || 0) * 0.06;
+    ctx.scale(chomp, 1 / chomp);
+    if (img && img.complete && img.naturalWidth) {
+        ctx.drawImage(img, -r, -r, ent.size, ent.size);
+    } else {
+        const mo = 0.35 + Math.abs(Math.sin(ent.mouth || 0)) * 0.35;
+        ctx.fillStyle = '#ffff00';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, r, mo, -mo, true);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(r * 0.25, -r * 0.35, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+    if (gameMode === 'tag' && ent.isGola) {
+        ctx.fillStyle = '#e91e63';
+        ctx.font = 'bold 15px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('ГОЛЯ!', ent.x, ent.y + r + 16);
+    }
+    if (gameMode === 'battle') drawKnifeHeld(ent);
+    if (gameMode === 'battle' && ent.livesMax > 0) {
+        for (let i = 0; i < ent.livesMax; i++) {
+            ctx.fillStyle = i < ent.lives ? '#ffff00' : '#555';
+            ctx.beginPath();
+            ctx.arc(ent.x - 12 + i * 24, ent.y - r - 14, 7, 0.2, Math.PI * 2 - 0.2);
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
+    if (ent.upgraded && gameMode === 'battle') {
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('ПРОКАЧАН', ent.x, ent.y + r + 16);
+    }
+}
+function drawPacman() {
+    drawPacmanSprite(pacman);
+}
+function drawCharacter(ent) {
+    if (ent.hp <= 0 || ent.dead) return;
+    if (ent.isPacman) {
+        drawPacmanSprite(ent);
+        return;
+    }
+    if (ent.upgraded) {
+        ctx.fillStyle = gameMode === 'chase' || gameMode === 'tag' ? 'rgba(255,152,0,0.25)' : 'rgba(255,215,0,0.25)';
+        ctx.beginPath(); ctx.arc(ent.x, ent.y, ent.size / 2 + 12, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = gameMode === 'chase' || gameMode === 'tag' ? '#ff9800' : '#ffd700';
+        ctx.lineWidth = 3; ctx.stroke();
+    }
+    // няня в chase — красное свечение
+    if (gameMode === 'chase' && ent === nanny) {
+        const pulse = 0.2 + Math.sin(chasePulse) * 0.1;
+        ctx.fillStyle = 'rgba(244,67,54,' + pulse + ')';
+        ctx.beginPath(); ctx.arc(ent.x, ent.y, ent.size / 2 + 18, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#f44336';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(ent.x, ent.y, ent.size / 2 + 14, 0, Math.PI * 2); ctx.stroke();
+    }
+    // голя — яркое красно-фиолетовое свечение
+    if (gameMode === 'tag' && ent.isGola) {
+        const pulse = 0.25 + Math.sin(chasePulse * 2) * 0.12;
+        ctx.fillStyle = 'rgba(233,30,99,' + pulse + ')';
+        ctx.beginPath(); ctx.arc(ent.x, ent.y, ent.size / 2 + 20, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#e91e63';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(ent.x, ent.y, ent.size / 2 + 16, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (gameMode === 'battle') {
+        drawStick(ent); drawKnifeHeld(ent); drawHpBar(ent);
+    }
+    const img = images[ent.img], half = ent.size / 2;
+    if (img && img.complete && img.naturalWidth) {
+        ctx.drawImage(img, ent.x - half, ent.y - half - 5, ent.size, ent.size);
+    } else if (ent.drawStyle) {
+        drawFallbackSprite(ent);
+    } else {
+        ctx.font = (ent.size - 10) + 'px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000';
+        ctx.fillText('?', ent.x, ent.y + 10);
+    }
+    if (ent.upgraded) {
+        ctx.fillStyle = gameMode === 'chase' || gameMode === 'tag' || gameMode === 'custom' ? '#ff9800' : '#ffd700';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(gameMode === 'chase' || gameMode === 'tag' || gameMode === 'custom' ? 'ТЫ' : 'ПРОКАЧАН', ent.x, ent.y + ent.size / 2 + 14);
+    }
+    if ((gameMode === 'chase' || gameMode === 'custom') && ent === nanny) {
+        ctx.fillStyle = '#f44336';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('ЛОВИТ!', ent.x, ent.y + ent.size / 2 + 14);
+    }
+    if (gameMode === 'tag' && ent.isGola) {
+        ctx.fillStyle = '#e91e63';
+        ctx.font = 'bold 15px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('ГОЛЯ!', ent.x, ent.y + ent.size / 2 + (ent.upgraded ? 28 : 14));
+    }
+}
+function fighterLabel(f) {
+    if (f === player) return player.displayName || 'Игрок';
+    if (f === nanny) return nanny.displayName || 'Враг';
+    if (f && f.isPacman) return 'Пакман';
+    return (f && f.displayName) || (f && f.name) || '?';
+}
+
+function drawUIBattle() {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(8, 8, 520, 100);
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 22px Arial';
+    ctx.textAlign = 'left';
+    const pname = player.displayName || player.name;
+    if (playerDead) {
+        ctx.fillStyle = '#ff6666';
+        ctx.fillText(pname + ' — УМЕР (смотришь бой)', 20, 35);
+        ctx.fillStyle = '#fff';
+        ctx.font = '18px Arial';
+        ctx.fillText('Игра продолжается! NPC дерутся дальше', 20, 60);
+    } else if (player.isPacman) {
+        ctx.fillText(pname + '  HP: ' + Math.max(0, player.hp) + '/' + player.hpMax + '  ♥' + player.lives, 20, 35);
+        ctx.fillStyle = '#fff';
+        ctx.font = '18px Arial';
+        ctx.fillText('Урон x' + player.damage + ' | КУСЬ (Пробел) | Очень быстрый', 20, 60);
+    } else {
+        ctx.fillText(pname + ' ПРОКАЧАН  HP: ' + Math.max(0, player.hp) + '/' + player.hpMax, 20, 35);
+        ctx.fillStyle = '#fff';
+        ctx.font = '18px Arial';
+        ctx.fillText('Урон x' + player.damage + ' | Быстрый | Большая палка', 20, 60);
+    }
+    if (knife.onGround) ctx.fillText('НОЖ! 30 сек в руках, 2 убийства = смерть с 1 удара', 20, 85);
+    else if (knife.heldBy) {
+        const n = fighterLabel(knife.heldBy);
+        const sec = knifeHoldSecondsLeft();
+        const kills = knife.killsLeft || 0;
+        ctx.fillStyle = sec <= 5 ? '#ff2222' : '#ff6666';
+        ctx.fillText('Нож у ' + n + '! ⏱ ' + sec + 'с  |  убийств: ' + kills + '/2', 20, 85);
+    } else ctx.fillText('Скоро появится нож...', 20, 85);
+
+    drawButton(BTN_EXIT_GAME, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+
+    let y = 120;
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'left';
+    const list = [
+        [nanny.displayName || 'Враг', nanny],
+        ...npcs.map(n => [n.displayName || n.name, n])
+    ];
+    if (!pacman.dead || pacman.livesMax > 0) {
+        if (!(player.isPacman && pacman.dead && pacman.livesMax === 0)) {
+            list.push(['Пакман', { label: pacman.dead ? '0 жизней' : pacman.lives + ' жизни', isPacLabel: true }]);
+        }
+    }
+    for (const [label, f] of list) {
+        ctx.fillStyle = f.isPacLabel ? (pacman.dead ? '#888' : '#ffeb3b') : (f.hp <= 0 ? '#888' : '#fff');
+        ctx.fillText(f.label ? label + ': ' + f.label : label + ': ' + Math.max(0, f.hp) + ' HP', 20, y);
+        y += 22;
+    }
+}
+
+function drawUIChase() {
+    // таблица мест по моркови (живой рейтинг)
+    const board = [];
+    if (player) board.push(player);
+    if (npcs) for (const n of npcs) if (n) board.push(n);
+    if (pacman && !pacman.dead) board.push(pacman);
+    board.sort((a, b) => (b.carrots || 0) - (a.carrots || 0));
+
+    const panelH = 100 + board.length * 20;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(8, 8, 280, Math.min(panelH, 340));
+
+    ctx.fillStyle = '#ff9800';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'left';
+    const myCar = player ? (player.carrots || 0) : carrotsCollected;
+    ctx.fillText('🥕 Цель: ' + CARROTS_TO_WIN + '  (★' + CARROTS_LEGEND + ')', 16, 32);
+    ctx.fillStyle = '#fff';
+    ctx.font = '15px Arial';
+    ctx.fillText('Ты: ' + myCar + ' / ' + CARROTS_TO_WIN, 16, 54);
+
+    // прогресс-бар игрока
+    const barW = 250, barH = 10;
+    ctx.fillStyle = '#333';
+    ctx.fillRect(16, 62, barW, barH);
+    const pct = Math.min(1, myCar / CARROTS_TO_WIN);
+    ctx.fillStyle = '#ff6d00';
+    ctx.fillRect(16, 62, barW * pct, barH);
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(16, 62, barW, barH);
+
+    // места 1..N
+    let y = 92;
+    ctx.font = 'bold 13px Arial';
+    ctx.fillStyle = '#ffcc00';
+    ctx.fillText('МЕСТА (морковь)', 16, y);
+    y += 18;
+    ctx.font = '13px Arial';
+    board.forEach((ent, i) => {
+        const place = i + 1;
+        const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : place + '.';
+        const isMe = ent === player;
+        const caught = ent.hp <= 0 || ent.dead;
+        ctx.fillStyle = caught ? '#666' : (isMe ? '#4fc3f7' : '#eee');
+        const name = (ent.displayName || ent.name) + (isMe ? ' (ты)' : '') + (caught ? ' ✕' : '');
+        ctx.fillText(medal + ' ' + name, 16, y);
+        ctx.fillStyle = caught ? '#666' : '#ffab40';
+        ctx.fillText((ent.carrots || 0) + ' 🥕', 210, y);
+        y += 18;
+    });
+
+    // предупреждение о няне
+    if (player && nanny && !gameOver && !playerDead) {
+        const d = dist(player, nanny);
+        if (d < 180) {
+            const flash = Math.sin(chasePulse * 3) > 0;
+            ctx.fillStyle = flash ? 'rgba(244,67,54,0.9)' : 'rgba(183,28,28,0.85)';
+            roundRect(300, 8, 300, 40, 10);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(d < 90 ? '⚠ НЯНЯ РЯДОМ!!!' : 'Няня близко!', 450, 36);
+        }
+    }
+
+    drawButton(BTN_EXIT_GAME, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+
+    // кто охотится
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#f44336';
+    const hunt = nearestChaseVictim();
+    const huntName = hunt
+        ? (hunt === player ? 'тебя' : (hunt.displayName || hunt.name || 'жертву'))
+        : '…';
+    ctx.fillText((nanny.displayName || 'Няня') + ' — за ' + huntName, 300, 70);
+}
+
+function drawUITag() {
+    ctx.fillStyle = 'rgba(0,0,0,0.72)';
+    ctx.fillRect(8, 8, 300, 150);
+
+    ctx.fillStyle = '#e91e63';
+    ctx.font = 'bold 22px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('🔴 РЕЖИМ: ГОЛЯ', 16, 34);
+
+    const gName = gola ? (gola.displayName || gola.name) : '???';
+    const iAmGola = gola === player;
+    ctx.fillStyle = iAmGola ? '#ff5252' : '#fff';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText(iAmGola ? 'Ты — ГОЛЯ! Догоняй!' : 'Голя: ' + gName, 16, 60);
+
+    const secLeft = Math.ceil(Math.max(0, tagTimer) / FPS_EST);
+    ctx.fillStyle = secLeft <= 10 ? '#ff5252' : '#ffcc00';
+    ctx.font = '15px Arial';
+    ctx.fillText('⏱ Осталось: ' + secLeft + ' с', 16, 86);
+
+    // сколько ты был голей
+    const myFrames = (player && player.name) ? (tagTimeAsGola[player.name] || 0) : 0;
+    const mySec = Math.round(myFrames / FPS_EST);
+    ctx.fillStyle = '#ce93d8';
+    ctx.fillText('Ты был голей: ' + mySec + ' с', 16, 110);
+
+    if (tagCooldown > 0) {
+        ctx.fillStyle = '#90a4ae';
+        ctx.font = '13px Arial';
+        ctx.fillText('Защита после смены…', 16, 134);
+    } else {
+        ctx.fillStyle = '#81c784';
+        ctx.font = '13px Arial';
+        ctx.fillText(iAmGola ? 'Можно пятнать!' : 'Не дай себя поймать!', 16, 134);
+    }
+
+    // вспышка смены
+    if (lastTagFlash > 0) {
+        const a = Math.min(1, lastTagFlash / 30);
+        ctx.fillStyle = 'rgba(233,30,99,' + (0.55 * a) + ')';
+        roundRect(280, 200, 340, 70, 14);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 28px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('СМЕНА ГОЛИ!', 450, 245);
+    }
+
+    // предупреждение если голя близко
+    if (gola && player && gola !== player && !gameOver) {
+        const d = dist(player, gola);
+        if (d < 180) {
+            const flash = Math.sin(chasePulse * 3) > 0;
+            ctx.fillStyle = flash ? 'rgba(233,30,99,0.9)' : 'rgba(123,31,162,0.85)';
+            roundRect(320, 8, 280, 40, 10);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(d < 90 ? '⚠ ГОЛЯ РЯДОМ!!!' : 'Голя близко!', 460, 36);
+        }
+    }
+
+    drawButton(BTN_EXIT_GAME, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+}
+
+function drawTagResults() {
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.fillRect(0, 0, 900, 600);
+    const panelY = 30;
+    const panelH = 500;
+    ctx.fillStyle = gameWon ? 'rgba(60,20,90,0.96)' : 'rgba(40,10,60,0.96)';
+    roundRect(100, panelY, 700, panelH, 18);
+    ctx.fill();
+    ctx.strokeStyle = '#e91e63';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 34px Arial';
+    ctx.fillText(gameWon ? '🏆 ТЫ МЕНЬШЕ ВСЕХ БЫЛ ГОЛЕЙ!' : '🏁 ИТОГ: ГОЛЯ', 450, panelY + 42);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '15px Arial';
+    ctx.fillText('Кто МЕНЬШЕ всего был водящим — тот 1 место', 450, panelY + 72);
+    ctx.fillStyle = '#ce93d8';
+    ctx.font = '13px Arial';
+    ctx.fillText('Раунд: ' + TAG_ROUND_SEC + ' секунд', 450, panelY + 94);
+
+    const r = finalRanking || { all: [] };
+    const rows = (r.all && r.all.length) ? r.all : [];
+    const maxShow = Math.min(rows.length, 10);
+    let y = panelY + 120;
+    for (let i = 0; i < maxShow; i++) {
+        const who = rows[i];
+        const place = i + 1;
+        const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : (place + '.');
+        const color = place === 1 ? '#ffd700' : place === 2 ? '#c0c0c0' : place === 3 ? '#cd7f32' : '#b0bec5';
+        const isMe = player && who.name === player.name;
+
+        ctx.fillStyle = isMe ? 'rgba(233,30,99,0.25)' : 'rgba(0,0,0,0.35)';
+        roundRect(140, y - 18, 620, 34, 8);
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = color;
+        ctx.fillText(medal + '  ' + place + ' МЕСТО', 155, y + 5);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = isMe ? 'bold 17px Arial' : '16px Arial';
+        ctx.fillText((who.displayName || '???') + (isMe ? ' ★' : ''), 320, y + 5);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#f48fb1';
+        ctx.font = 'bold 16px Arial';
+        const sec = who.golaSec != null ? who.golaSec : Math.round((who.golaFrames || 0) / FPS_EST);
+        ctx.fillText(sec + ' с голей', 740, y + 5);
+
+        if (who.img && images[who.img] && images[who.img].complete && images[who.img].naturalWidth) {
+            try { ctx.drawImage(images[who.img], 750, y - 14, 28, 28); } catch (e) { /* ignore */ }
+        }
+        y += 38;
+    }
+
+    drawButton(RES_RESTART, 'ЗАНОВО', '#1565c0', '#64b5f6', '#fff');
+    drawButton(RES_SELECT, 'ВЫБОР', '#6a1b9a', '#ce93d8', '#fff');
+}
+
+function drawUICustom() {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(8, 8, 520, 108);
+    ctx.fillStyle = '#4deeea';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('🏗️ ' + ((customLevel && customLevel.name) || 'Уровень'), 20, 32);
+
+    if (isCustomTeamMode()) {
+        const a = countTeamAlive('ally');
+        const e = countTeamAlive('enemy');
+        ctx.fillStyle = '#64b5f6';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('🔵 Синие: ' + a + '   🔴 Красные: ' + e, 20, 58);
+        ctx.fillStyle = '#fff';
+        ctx.font = '13px Arial';
+        let weapon = 'палка · пробел — удар';
+        if (player && player.hasKnife) weapon = '🔪 нож!';
+        else if (player && player.hasStick) weapon = '🪵 палка · пробел — удар';
+        const php = player ? Math.max(0, player.hp) + '/' + (player.hpMax || player.hp) : '0';
+        ctx.fillText('HP ' + php + ' · ' + weapon + ' · цель: выбить красных', 20, 82);
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = '12px Arial';
+        ctx.fillText('Союзники помогают · без friendly-fire', 20, 100);
+    } else {
+        const goal = customLevel ? customLevel.goalCarrots : 5;
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('🥕 ' + carrotsCollected + ' / ' + goal, 20, 58);
+        const sticksLeft = groundSticks.filter(s => s.onGround).length;
+        const knivesLeft = groundKnives.filter(k => k.onGround).length;
+        let weapon = 'без оружия';
+        if (player && player.hasKnife) weapon = '🔪 НОЖ в руках!';
+        else if (player && player.hasStick) weapon = '🪵 ПАЛКА · Пробел — удар';
+        else if (sticksLeft || knivesLeft) {
+            weapon = [
+                sticksLeft ? ('🪵×' + sticksLeft) : '',
+                knivesLeft ? ('🔪×' + knivesLeft) : ''
+            ].filter(Boolean).join(' ');
+        }
+        const aliveHeroes = (npcs || []).filter(n => n && !n.dead && n.hp > 0).length
+            + (pacman && !pacman.dead && pacman.hp > 0 ? 1 : 0);
+        ctx.fillStyle = '#fff';
+        ctx.font = '13px Arial';
+        const nannyTxt = (nanny && !nanny.dead && nanny.hp > 0)
+            ? ('Няня HP ' + Math.max(0, nanny.hp) + '/' + (nanny.hpMax || nanny.hp))
+            : (nanny && nanny.dead ? 'Няня побеждена!' : 'Без няни');
+        ctx.fillText(nannyTxt + ' · ' + weapon, 20, 82);
+        if (aliveHeroes > 0) {
+            ctx.fillStyle = '#81d4fa';
+            ctx.font = '12px Arial';
+            ctx.fillText('👥 Герои: ' + aliveHeroes + ' (тоже собирают 🥕)', 20, 100);
+        }
+    }
+    drawButton(BTN_EXIT_GAME, 'ВЫЙТИ', '#8b0000', '#ff6666', '#fff');
+}
+
+function drawUI() {
+    if (gameMode === 'race') {
+        drawRaceUI();
+        if (showExitDialog) drawExitDialog();
+        return;
+    }
+    if (gameMode === 'chase') drawUIChase();
+    else if (gameMode === 'tag') drawUITag();
+    else if (gameMode === 'custom') drawUICustom();
+    else drawUIBattle();
+
+    if (playerDead && !gameOver && gameMode === 'battle') {
+        ctx.fillStyle = 'rgba(0,0,0,0.72)';
+        roundRect(180, 470, 540, 120, 14);
+        ctx.fill();
+        ctx.strokeStyle = '#ff6666';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#ff8888';
+        ctx.font = 'bold 28px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('ТЫ УМЕР — ИГРА ПРОДОЛЖАЕТСЯ', 450, 510);
+        drawButton(DEAD_RESTART, 'ЗАНОВО', '#1565c0', '#64b5f6', '#fff');
+        drawButton(DEAD_SELECT, 'ВЫБОР', '#6a1b9a', '#ce93d8', '#fff');
+    }
+
+    if (gameOver) {
+        if (gameMode === 'chase') drawChaseResults();
+        else if (gameMode === 'tag') drawTagResults();
+        else drawResultsScreen();
+    } else if (paused && !showExitDialog) {
+        ctx.fillStyle = 'rgba(255,220,0,0.9)';
+        ctx.fillRect(180, 200, 540, 200);
+        ctx.fillStyle = '#d32f2f';
+        ctx.font = 'bold 65px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('ПАУЗА', 450, 290);
+        ctx.font = '20px Arial';
+        ctx.fillStyle = '#333';
+        ctx.fillText('Esc — продолжить  |  Q — выйти', 450, 350);
+    }
+
+    if (showExitDialog) drawExitDialog();
+}
+
+function drawChaseResults() {
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.fillRect(0, 0, 900, 600);
+    const panelY = 30;
+    const panelH = 500;
+    ctx.fillStyle = gameWon ? 'rgba(0,90,40,0.96)' : 'rgba(50,10,30,0.96)';
+    roundRect(100, panelY, 700, panelH, 18);
+    ctx.fill();
+    ctx.strokeStyle = gameWon ? '#ffd700' : '#ff66aa';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 36px Arial';
+    ctx.fillText(gameWon ? '🥕 ПОБЕДА!' : '🏁 ИТОГ ГОНКИ', 450, panelY + 42);
+
+    const r = finalRanking || { all: [] };
+    const top = r.first;
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px Arial';
+    if (gameWon && top) {
+        ctx.fillText(top.displayName + ' первым набрал ' + top.carrots + ' морковок!', 450, panelY + 72);
+    } else if (chaseCaught) {
+        ctx.fillText('Няня поймала тебя — места по собранной моркови', 450, panelY + 72);
+    } else {
+        ctx.fillText('Кто больше собрал моркови — тот выше!', 450, panelY + 72);
+    }
+    ctx.fillStyle = '#ffcc80';
+    ctx.font = '13px Arial';
+    ctx.fillText('Цель гонки: ' + CARROTS_TO_WIN + ' 🥕   |   Легенда: ' + CARROTS_LEGEND + ' 🥕', 450, panelY + 94);
+
+    // таблица мест
+    const rows = (r.all && r.all.length) ? r.all : [];
+    const maxShow = Math.min(rows.length, 10);
+    let y = panelY + 120;
+    for (let i = 0; i < maxShow; i++) {
+        const who = rows[i];
+        const place = i + 1;
+        const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : (place + '.');
+        const color = place === 1 ? '#ffd700' : place === 2 ? '#c0c0c0' : place === 3 ? '#cd7f32' : '#b0bec5';
+        const isMe = player && who.name === player.name;
+
+        ctx.fillStyle = isMe ? 'rgba(79,195,247,0.25)' : 'rgba(0,0,0,0.35)';
+        roundRect(140, y - 18, 620, 34, 8);
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = color;
+        ctx.fillText(medal + '  ' + place + ' МЕСТО', 155, y + 5);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = isMe ? 'bold 17px Arial' : '16px Arial';
+        ctx.fillText((who.displayName || '???') + (isMe ? ' ★' : ''), 320, y + 5);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#ffab40';
+        ctx.font = 'bold 17px Arial';
+        const car = who.carrots || 0;
+        let label = car + ' 🥕';
+        if (car >= CARROTS_LEGEND) label += ' ★90';
+        else if (car >= CARROTS_TO_WIN) label += ' ✓10';
+        ctx.fillText(label, 740, y + 5);
+
+        if (who.img && images[who.img] && images[who.img].complete && images[who.img].naturalWidth) {
+            try { ctx.drawImage(images[who.img], 750, y - 14, 28, 28); } catch (e) { /* ignore */ }
+        }
+        y += 38;
+    }
+
+    if (!rows.length) {
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#aaa';
+        ctx.font = '18px Arial';
+        ctx.fillText('Никто не собрал морковь…', 450, panelY + 200);
+    }
+
+    drawButton(RES_RESTART, 'ЗАНОВО', '#1565c0', '#64b5f6', '#fff');
+    drawButton(RES_SELECT, 'ВЫБОР', '#6a1b9a', '#ce93d8', '#fff');
+}
+
+function drawGame() {
+    if (gameMode === 'race') {
+        drawRaceTrack();
+        for (const n of npcs) {
+            if (n) drawCharacter(n);
+        }
+        if (player) drawCharacter(player);
+        drawUI();
+        return;
+    }
+    drawField();
+    if (gameMode === 'custom') {
+        if (!isCustomTeamMode()) drawAllCarrots();
+        drawStickOnGround();
+        drawGroundKnives();
+        function drawTeamRing(ent) {
+            if (!isCustomTeamMode() || !ent) return;
+            ctx.beginPath();
+            ctx.arc(ent.x, ent.y, (ent.size || 64) * 0.42, 0, Math.PI * 2);
+            ctx.strokeStyle = ent.team === 'ally' ? 'rgba(66,165,245,0.95)' : 'rgba(239,83,80,0.95)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+        for (const n of npcs) {
+            if (n && !n.dead && n.hp > 0) {
+                drawTeamRing(n);
+                if (n.isPacman) drawPacmanSprite(n);
+                else drawCharacter(n);
+                if (n.hasKnife) drawKnifeHeld(n);
+                else if (n.hasStick) drawStick(n);
+            }
+        }
+        if (pacman && !pacman.dead && pacman.hp > 0) {
+            drawTeamRing(pacman);
+            drawPacmanSprite(pacman);
+            if (pacman.hasKnife) drawKnifeHeld(pacman);
+            else if (pacman.hasStick) drawStick(pacman);
+        }
+        if (nanny && !nanny.dead && nanny.hp > 0) {
+            drawTeamRing(nanny);
+            drawCharacter(nanny);
+            if (nanny.hasStick) drawStick(nanny);
+        }
+        if (player) {
+            drawTeamRing(player);
+            drawCharacter(player);
+            if (player.hasKnife) drawKnifeHeld(player);
+            else if (player.hasStick) drawStick(player);
+        }
+    } else if (gameMode === 'chase') {
+        drawAllCarrots();
+        for (const n of npcs) drawCharacter(n);
+        if (pacman && !pacman.dead) drawPacman();
+        if (nanny) drawCharacter(nanny);
+        drawCharacter(player);
+    } else if (gameMode === 'tag') {
+        for (const n of npcs) drawCharacter(n);
+        if (pacman && !pacman.dead) drawPacman();
+        if (nanny) drawCharacter(nanny);
+        drawCharacter(player);
+    } else {
+        drawKnifeOnGround();
+        if (pacman) {
+            drawPacman();
+            if (!pacman.dead && pacman.hp > 0) drawKnifeHeld(pacman);
+        }
+        for (const n of npcs) drawCharacter(n);
+        if (nanny) drawCharacter(nanny);
+        drawCharacter(player);
+    }
+    drawUI();
+}
+
+function updateGame() {
+    if (showExitDialog || paused) return;
+    if (gameOver) return;
+
+    if (gameMode === 'custom') {
+        updateCustomLevel();
+        return;
+    }
+
+    if (gameMode === 'race') {
+        updateRace();
+        return;
+    }
+
+    if (gameMode === 'chase') {
+        chasePulse += 0.08;
+        updatePlayer();
+        updateNannyChase();
+        updateChaseNPCs();
+        updateCarrots();
+        checkNannyCatch();
+        return;
+    }
+
+    if (gameMode === 'tag') {
+        updatePlayer();
+        updateTagAI();
+        tryTransferGola();
+        updateTagRound();
+        return;
+    }
+
+    updatePlayer();
+    updatePacman();
+    updateAI(nanny);
+    for (const n of npcs) updateAI(n);
+    updateKnifeSpawn();
+    updateTimers();
+    checkCombat();
+    checkKnifeCombat();
+    checkGameEnd();
+}
+
+function restartSameChar() {
+    if (!player) return;
+    const cfg = CHARACTERS.find(c => c.id === player.name) || CHARACTERS[selectedIndex];
+    startGame(cfg);
+}
+
+function goSelect() {
+    gameplayStop();
+    screen = 'select';
+    showExitDialog = false;
+    playerDead = false;
+    gameOver = false;
+    gameWon = false;
+    deathOrder = [];
+    finalRanking = null;
+    paused = false;
+    setHintSelect();
+}
+
+function goModeSelect() {
+    gameplayStop();
+    screen = 'mode';
+    showExitDialog = false;
+    playerDead = false;
+    gameOver = false;
+    gameWon = false;
+    deathOrder = [];
+    finalRanking = null;
+    paused = false;
+    wallDrag = null;
+    levelsListOpen = false;
+    document.getElementById('hint').textContent =
+        'Выбери режим: 1 — Битва | 2 — Догонялки | 3 — Голя | 4 — Гонки | 5 — Создать уровень';
+}
+
+function chooseMode(mode) {
+    if (mode === 'custom') {
+        openEditor();
+        return;
+    }
+    gameMode = mode;
+    screen = 'select';
+    showExitDialog = false;
+    setHintSelect();
+}
+
+function drawResultsScreen() {
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.fillRect(0, 0, 900, 600);
+
+    const panelY = 70;
+    const panelH = 460;
+    ctx.fillStyle = gameWon ? 'rgba(0,100,40,0.95)' : 'rgba(40,10,50,0.96)';
+    roundRect(120, panelY, 660, panelH, 18);
+    ctx.fill();
+    ctx.strokeStyle = gameWon ? '#ffd700' : '#ff66aa';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText(gameWon ? '🏆 ПОБЕДА!' : '🏁 КТО ПОБЕДИЛ', 450, panelY + 50);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '18px Arial';
+    if (gameWon) {
+        ctx.fillText((player.displayName || 'Герой') + ' остался последним!', 450, panelY + 82);
+    } else if (playerDead) {
+        ctx.fillText('Ты выбыл — смотри итоговые места', 450, panelY + 82);
+    } else {
+        ctx.fillText('Бой окончен', 450, panelY + 82);
+    }
+
+    const r = finalRanking || { first: null, second: null, third: null, last: null };
+    const rows = [
+        { medal: '🥇', title: '1 МЕСТО', who: r.first, color: '#ffd700' },
+        { medal: '🥈', title: '2 МЕСТО', who: r.second, color: '#c0c0c0' },
+        { medal: '🥉', title: '3 МЕСТО', who: r.third, color: '#cd7f32' },
+        { medal: '💀', title: 'ПОСЛЕДНИЙ', who: r.last, color: '#ff5555' }
+    ];
+
+    let y = panelY + 120;
+    for (const row of rows) {
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        roundRect(170, y - 28, 560, 56, 10);
+        ctx.fill();
+        ctx.strokeStyle = row.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = row.color;
+        ctx.fillText(row.medal + '  ' + row.title, 190, y + 6);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px Arial';
+        const name = row.who ? row.who.displayName : '—';
+        ctx.fillText(name, 700, y + 6);
+
+        if (row.who && images[row.who.img] && images[row.who.img].complete && images[row.who.img].naturalWidth) {
+            try {
+                ctx.drawImage(images[row.who.img], 710, y - 22, 40, 40);
+            } catch (e) { /* ignore */ }
+        }
+        y += 70;
+    }
+
+    drawButton(RES_RESTART, 'ЗАНОВО', '#1565c0', '#64b5f6', '#fff');
+    drawButton(RES_SELECT, 'ВЫБОР', '#6a1b9a', '#ce93d8', '#fff');
+}
+
+// Ввод
+document.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if (e.code === 'Space') e.preventDefault();
+
+    // M — вкл/выкл фоновой музыки
+    if (e.code === 'KeyM') {
+        toggleMusic();
+        return;
+    }
+
+    // Q — выход (диалог подтверждения)
+    if (e.code === 'KeyQ') {
+        if (!showExitDialog) {
+            showExitDialog = true;
+            if (screen === 'game') paused = true;
+        }
+        return;
+    }
+
+    if (showExitDialog) {
+        if (e.code === 'Enter' || e.code === 'KeyY') { doExit(); return; }
+        if (e.code === 'Escape' || e.code === 'KeyN') { showExitDialog = false; return; }
+        return;
+    }
+
+    if (screen === 'mode') {
+        if (e.code === 'Digit1' || e.code === 'Numpad1') { chooseMode('battle'); return; }
+        if (e.code === 'Digit2' || e.code === 'Numpad2') { chooseMode('chase'); return; }
+        if (e.code === 'Digit3' || e.code === 'Numpad3') { chooseMode('tag'); return; }
+        if (e.code === 'Digit4' || e.code === 'Numpad4') { chooseMode('race'); return; }
+        if (e.code === 'Digit5' || e.code === 'Numpad5') { openEditor(); return; }
+        if (e.code === 'Escape') { showExitDialog = true; return; }
+        return;
+    }
+
+    if (screen === 'editor') {
+        if (e.code === 'Escape') {
+            if (levelsListOpen) { levelsListOpen = false; return; }
+            goModeSelect();
+            return;
+        }
+        if (e.code === 'Digit1' || e.code === 'Numpad1') { editorTool = 'wall'; return; }
+        if (e.code === 'Digit2' || e.code === 'Numpad2') { editorTool = 'carrot'; return; }
+        if (e.code === 'Digit3' || e.code === 'Numpad3') { editorTool = 'spawn'; return; }
+        if (e.code === 'Digit4' || e.code === 'Numpad4') { editorTool = 'nanny'; return; }
+        if (e.code === 'Digit5' || e.code === 'Numpad5') {
+            editorTool = 'hero';
+            showEditorMsg('👥 Хранилище героев');
+            return;
+        }
+        if (e.code === 'Digit6' || e.code === 'Numpad6') { editorTool = 'stick'; return; }
+        if (e.code === 'Digit7' || e.code === 'Numpad7') { editorTool = 'knife'; return; }
+        if (e.code === 'Digit8' || e.code === 'Numpad8') { editorTool = 'erase'; return; }
+        // стрелки в хранилище — переключить героя
+        if (editorTool === 'hero') {
+            const list = placeableCharacters();
+            let idx = list.findIndex(c => c.id === editorCharId);
+            if (idx < 0) idx = 0;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                idx = (idx - 1 + list.length) % list.length;
+                editorCharId = list[idx].id;
+                saveCharStorage();
+                showEditorMsg('👥 ' + list[idx].name);
+                return;
+            }
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                idx = (idx + 1) % list.length;
+                editorCharId = list[idx].id;
+                saveCharStorage();
+                showEditorMsg('👥 ' + list[idx].name);
+                return;
+            }
+        }
+        if (e.code === 'KeyS' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            saveCurrentLevel();
+            return;
+        }
+        if (e.code === 'KeyS') { saveCurrentLevel(); return; }
+        if (e.code === 'Enter' || e.code === 'KeyP') { startCustomFromEditor(); return; }
+        if (e.code === 'KeyM') {
+            editorLevel.playMode = editorLevel.playMode === 'team' ? 'collect' : 'team';
+            showEditorMsg(editorLevel.playMode === 'team' ? '⚔️ Командный бой' : '🥕 Сбор морковок');
+            return;
+        }
+        if (e.code === 'KeyT' && editorLevel.playMode === 'team') {
+            editorNpcTeam = editorNpcTeam === 'ally' ? 'enemy' : 'ally';
+            showEditorMsg(editorNpcTeam === 'ally' ? '🔵 Союзники' : '🔴 Враги');
+            return;
+        }
+        return;
+    }
+
+    if (screen === 'select') {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+            selectedIndex = (selectedIndex - 1 + CHARACTERS.length) % CHARACTERS.length;
+        }
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+            selectedIndex = (selectedIndex + 1) % CHARACTERS.length;
+        }
+        if (e.code === 'KeyT') {
+            pickRandomCharacter();
+        }
+        if (e.code === 'KeyR') {
+            startGame(pickRandomCharacter());
+            return;
+        }
+        if (e.code === 'Enter' || e.code === 'Space') {
+            startGame(CHARACTERS[selectedIndex]);
+        }
+        if (e.code === 'Escape') {
+            if (gameMode === 'custom') openEditor();
+            else goModeSelect();
+        }
+        return;
+    }
+
+    if (e.code === 'Escape') {
+        if (paused) showExitDialog = true;
+        else {
+            paused = true;
+            gameplayStop();
+        }
+        return;
+    }
+    if (e.code === 'KeyR') {
+        if (gameMode === 'custom') { openEditor(); return; }
+        goSelect();
+        return;
+    }
+    if (e.code === 'Enter' && (playerDead || gameOver)) {
+        restartSameChar();
+    }
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+canvas.addEventListener('mousemove', e => {
+    if (showExitDialog) return;
+    const { mx, my } = canvasMouse(e);
+    if (screen === 'editor') {
+        handleEditorMouseMove(mx, my);
+        return;
+    }
+    if (screen !== 'select') return;
+    hoverIndex = pickAt(mx, my);
+    if (hoverIndex >= 0) selectedIndex = hoverIndex;
+});
+
+canvas.addEventListener('mousedown', e => {
+    if (screen !== 'editor' || showExitDialog) return;
+    const { mx, my } = canvasMouse(e);
+    handleEditorMouseDown(mx, my);
+});
+canvas.addEventListener('mouseup', e => {
+    if (screen !== 'editor') return;
+    const { mx, my } = canvasMouse(e);
+    handleEditorMouseUp(mx, my);
+});
+canvas.addEventListener('mouseleave', () => {
+    if (wallDrag) handleEditorMouseUp(wallDrag.x1, wallDrag.y1);
+});
+
+canvas.addEventListener('click', e => {
+    const { mx, my } = canvasMouse(e);
+
+    if (showExitDialog) {
+        if (hitBtn(EXIT_YES, mx, my)) { doExit(); return; }
+        if (hitBtn(EXIT_NO, mx, my)) { showExitDialog = false; return; }
+        return;
+    }
+
+    if (screen === 'mode') {
+        if (hitBtn(BTN_EXIT_SELECT, mx, my)) {
+            showExitDialog = true;
+            return;
+        }
+        if (hitBtn(BTN_MODE_BATTLE, mx, my)) {
+            chooseMode('battle');
+            return;
+        }
+        if (hitBtn(BTN_MODE_CHASE, mx, my)) {
+            chooseMode('chase');
+            return;
+        }
+        if (hitBtn(BTN_MODE_TAG, mx, my)) {
+            chooseMode('tag');
+            return;
+        }
+        if (hitBtn(BTN_MODE_RACE, mx, my)) {
+            chooseMode('race');
+            return;
+        }
+        if (hitBtn(BTN_MODE_EDITOR, mx, my)) {
+            openEditor();
+            return;
+        }
+        return;
+    }
+
+    if (screen === 'editor') {
+        // если тянули стену — mouseup уже обработал; клик для остальных инструментов
+        if (editorTool === 'wall' && wallDrag) return;
+        handleEditorClick(mx, my);
+        return;
+    }
+
+    if (screen === 'select') {
+        if (hitBtn(BTN_EXIT_SELECT, mx, my)) {
+            showExitDialog = true;
+            return;
+        }
+        if (hitBtn(BTN_BACK_MODE, mx, my)) {
+            if (gameMode === 'custom') openEditor();
+            else goModeSelect();
+            return;
+        }
+        if (hitBtn(BTN_RANDOM, mx, my)) {
+            startGame(pickRandomCharacter());
+            return;
+        }
+        const i = pickAt(mx, my);
+        if (i >= 0) {
+            selectedIndex = i;
+            startGame(CHARACTERS[selectedIndex]);
+        }
+        return;
+    }
+
+    if (hitBtn(BTN_EXIT_GAME, mx, my)) {
+        showExitDialog = true;
+        return;
+    }
+    if (playerDead && !gameOver && gameMode === 'battle') {
+        if (hitBtn(DEAD_RESTART, mx, my)) { restartSameChar(); return; }
+        if (hitBtn(DEAD_SELECT, mx, my)) { goSelect(); return; }
+    }
+    if (gameOver) {
+        if (hitBtn(RES_RESTART, mx, my)) { restartSameChar(); return; }
+        if (hitBtn(RES_SELECT, mx, my)) { goSelect(); return; }
+    }
+});
+
+function loop() {
+    if (screen === 'mode') drawModeScreen();
+    else if (screen === 'select') drawSelectScreen();
+    else if (screen === 'editor') drawEditorScreen();
+    else { updateGame(); drawGame(); }
+    requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

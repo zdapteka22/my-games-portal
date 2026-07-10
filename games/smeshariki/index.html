@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Смешарики — Битва и Догонялки</title>
+  <meta name="description" content="Фанатская аркада: битва, догонялки, голя. Персонажи, управление, играть в браузере.">
+  <style>
+    :root {
+      --bg: #0f0a1a; --surface: #1a1230; --card: #241a3a; --yellow: #fc0;
+      --text: #fff; --muted: #a99; --border: #3a2a55; --pink: #ff6bcb; --link: #9ad0ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: var(--text);
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(255,0,200,.2), transparent 50%),
+        radial-gradient(ellipse at 80% 10%, rgba(255,204,0,.15), transparent 45%),
+        linear-gradient(160deg, #1a0a2e, #2d1b4e 50%, #0f3460);
+      min-height: 100vh; line-height: 1.45;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 48px; }
+
+    .topbar {
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 44px; padding: 0 18px; border-radius: 12px; font-weight: 800; font-size: 14px;
+    }
+    .btn-main {
+      background: linear-gradient(135deg, #ffcc00, #ff9f1c); color: #2a1200;
+      box-shadow: 0 4px 0 #b87a00; min-width: 180px; min-height: 52px; font-size: 16px;
+    }
+    .btn-main:hover { filter: brightness(1.05); }
+    .btn-ghost {
+      background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.25);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.16); }
+
+    .hero {
+      display: grid; grid-template-columns: 220px 1fr; gap: 24px;
+      background: rgba(0,0,0,.35); border: 1px solid var(--border);
+      border-radius: 20px; padding: 20px; margin-bottom: 22px;
+    }
+    @media (max-width: 700px) { .hero { grid-template-columns: 1fr; } }
+    .cover {
+      aspect-ratio: 1; border-radius: 16px;
+      background: linear-gradient(145deg, #2d1b4e, #0f3460);
+      display: grid; place-items: center; position: relative; overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,.4);
+    }
+    .cover img {
+      width: 100%; height: 100%; object-fit: cover;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,.5));
+    }
+    .cover .age {
+      position: absolute; bottom: 10px; right: 10px;
+      width: 36px; height: 36px; border-radius: 8px; background: #333; border: 2px solid #888;
+      display: grid; place-items: center; font-weight: 800; font-size: 13px;
+    }
+    .hero h1 {
+      margin: 0 0 8px; font-size: clamp(1.5rem, 4vw, 2rem); color: var(--yellow);
+      text-shadow: 0 0 24px rgba(255,0,200,.35);
+    }
+    .dev { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+    .dev a { color: var(--link); }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+    .tag {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      padding: 5px 12px; border-radius: 999px; font-size: 13px;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .tabs {
+      display: flex; gap: 4px; border-bottom: 1px solid var(--border);
+      margin-bottom: 16px; overflow-x: auto;
+    }
+    .tab {
+      padding: 12px 16px; font-weight: 700; font-size: 14px; background: none;
+      color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap;
+    }
+    .tab:hover { color: #fff; }
+    .tab.active { color: #fff; border-bottom-color: var(--yellow); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: rgba(0,0,0,.3); border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px 20px; margin-bottom: 14px;
+    }
+    .card h3 { margin: 0 0 10px; color: var(--yellow); font-size: 16px; }
+    .card p { margin: 0 0 12px; color: #ccc; }
+    .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+    @media (max-width: 600px) { .modes { grid-template-columns: 1fr; } }
+    .mode {
+      background: rgba(255,255,255,.06); border-radius: 14px; padding: 14px;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .mode .ico { font-size: 28px; margin-bottom: 4px; }
+    .mode h4 { margin: 0 0 6px; color: var(--yellow); }
+    .mode p { margin: 0; font-size: 13px; color: #aaa; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+    kbd {
+      display: inline-block; min-width: 1.5em; padding: 3px 8px;
+      background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.25);
+      border-radius: 6px; color: var(--yellow); font-weight: 700; font-size: 12px;
+    }
+
+    .chars {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;
+    }
+    .char {
+      background: rgba(0,0,0,.3); border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.1); text-align: center;
+    }
+    .char .art {
+      aspect-ratio: 1; display: grid; place-items: center; padding: 12px;
+    }
+    .char img { width: 78%; height: 78%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
+    .char .name { padding: 8px 10px 12px; font-weight: 800; font-size: 14px; }
+
+    .reviews { display: grid; gap: 12px; }
+    .review {
+      background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px; padding: 14px 16px;
+    }
+    .review .top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+    .review .author { font-weight: 800; }
+    .review .stars { color: var(--yellow); }
+    .review p { margin: 0; color: #ccc; font-size: 14px; }
+
+    .mini-links {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;
+      margin-top: 8px;
+    }
+    .mini-links a {
+      display: block; padding: 12px 14px; border-radius: 12px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      font-weight: 700; font-size: 13px;
+    }
+    .mini-links a:hover { border-color: var(--yellow); background: rgba(255,204,0,.08); }
+
+    footer {
+      margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 13px; text-align: center;
+    }
+    footer a { color: var(--yellow); }
+    .disc { font-size: 12px; color: #777; margin-top: 12px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="btn btn-ghost" href="../../index.html">← Портал любимых игр · Blue Cat</a>
+      <a class="btn btn-main" href="game.html" target="_blank" rel="noopener">▶ Играть</a>
+    </div>
+
+    <section class="hero">
+      <div class="cover">
+        <img src="images/smeshariki_kruglaya_kompaniya-square.jpg" alt="Смешарики"
+             onerror="this.src='images/krosh.png'">
+        <div class="age">6+</div>
+      </div>
+      <div>
+        <h1>Смешарики — Битва, Догонялки и Гонки</h1>
+        <div class="dev">
+          Фанатская мини-игра ·
+          <a href="https://github.com/zdapteka22/smeshariki-game" target="_blank" rel="noopener">GitHub</a>
+        </div>
+        <div class="tags">
+          <span class="tag">Аркада</span>
+          <span class="tag">Локальный мультиплеер</span>
+          <span class="tag">Для детей</span>
+          <span class="tag">Битва</span>
+          <span class="tag">Догонялки</span>
+          <span class="tag">Гонки</span>
+        </div>
+        <div class="actions">
+          <a class="btn btn-main" href="game.html" target="_blank" rel="noopener">▶ Играть сейчас</a>
+          <a class="btn btn-ghost" href="#howto">Как играть</a>
+          <a class="btn btn-ghost" href="#chars">Персонажи</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" type="button" data-tab="about">Об игре</button>
+      <button class="tab" type="button" data-tab="howto">Управление</button>
+      <button class="tab" type="button" data-tab="chars">Персонажи</button>
+      <button class="tab" type="button" data-tab="minis">Мини-игры</button>
+      <button class="tab" type="button" data-tab="reviews">Отзывы</button>
+    </div>
+
+    <div id="panel-about" class="panel active">
+      <div class="card">
+        <h3>Описание</h3>
+        <p>
+          Весёлая аркада по мотивам любимого мультфильма! Выбери Смешарика и сразись
+          с друзьями на арене долины: бей, бегай, собирай морковки, играй в голю или мчись в гонках!
+        </p>
+        <p>
+          Несколько режимов, знакомые герои, музыка и управление с клавиатуры.
+          Играй прямо в браузере — ничего скачивать не нужно.
+        </p>
+        <div class="modes">
+          <div class="mode">
+            <div class="ico">⚔️</div>
+            <h4>Битва</h4>
+            <p>Арена, удары, последний герой побеждает.</p>
+          </div>
+          <div class="mode">
+            <div class="ico">🥕</div>
+            <h4>Догонялки</h4>
+            <p>Собери морковки быстрее всех!</p>
+          </div>
+          <div class="mode">
+            <div class="ico">🏃</div>
+            <h4>Голя</h4>
+            <p>Классические салки на время.</p>
+          </div>
+          <div class="mode">
+            <div class="ico">🏁</div>
+            <h4>Гонки</h4>
+            <p>Кто первый до финиша — тот чемпион!</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Информация</h3>
+        <p><b>Жанр:</b> аркада, экшен</p>
+        <p><b>Платформы:</b> Web, PC, Mobile</p>
+        <p><b>Язык:</b> русский · <b>Возраст:</b> 6+</p>
+        <p style="margin-top:14px">
+          <a class="btn btn-main" href="game.html" target="_blank" rel="noopener">Играть бесплатно</a>
+        </p>
+      </div>
+    </div>
+
+    <div id="panel-howto" class="panel">
+      <div class="card" id="howto">
+        <h3>Управление</h3>
+        <table>
+          <thead><tr><th>Клавиша</th><th>Действие</th></tr></thead>
+          <tbody>
+            <tr><td><kbd>1</kbd>…<kbd>5</kbd></td><td>Режим: Битва / Догонялки / Голя / Гонки / Свой уровень</td></tr>
+            <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Ходьба</td></tr>
+            <tr><td><kbd>Пробел</kbd></td><td>Удар / кусь</td></tr>
+            <tr><td><kbd>Shift</kbd></td><td>Бег</td></tr>
+            <tr><td><kbd>M</kbd></td><td>Музыка вкл/выкл</td></tr>
+            <tr><td><kbd>Q</kbd></td><td>Выйти в меню</td></tr>
+            <tr><td><kbd>Esc</kbd></td><td>Пауза</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:14px;color:#aaa;font-size:14px">
+          На телефоне — тап по экрану для фокуса. Кликни по полю игры, чтобы начать.
+        </p>
+      </div>
+    </div>
+
+    <div id="panel-chars" class="panel">
+      <div class="chars" id="chars">
+        <div class="char"><div class="art" style="background:linear-gradient(145deg,#1a3,#062)"><img src="images/krosh.png" alt="Крош" onerror="this.style.display='none'"></div><div class="name">Крош</div></div>
+        <div class="char"><div class="art" style="background:linear-gradient(145deg,#345,#123)"><img src="images/yozhik.png" alt="Ёжик" onerror="this.style.display='none'"></div><div class="name">Ёжик</div></div>
+        <div class="char"><div class="art" style="background:linear-gradient(145deg,#654,#321)"><img src="images/barash.png" alt="Бараш" onerror="this.style.display='none'"></div><div class="name">Бараш</div></div>
+        <div class="char"><div class="art" style="background:linear-gradient(145deg,#850,#420)"><img src="images/losyash.png" alt="Лосяш" onerror="this.style.display='none'"></div><div class="name">Лосяш</div></div>
+        <div class="char"><div class="art" style="background:linear-gradient(145deg,#246,#013)"><img src="images/pin.png" alt="Пин" onerror="this.style.display='none'"></div><div class="name">Пин</div></div>
+        <div class="char"><div class="art" style="background:linear-gradient(145deg,#572,#241)"><img src="images/kopatych.png" alt="Копатыч" onerror="this.style.display='none'"></div><div class="name">Копатыч</div></div>
+      </div>
+    </div>
+
+    <div id="panel-minis" class="panel">
+      <div class="card">
+        <h3>Мини-игры долины</h3>
+        <p style="color:#aaa;font-size:14px">Отдельные короткие игры со Смешариками (если файлы есть в папке minis).</p>
+        <div class="mini-links">
+          <a href="../minis/jeleznaya-nyanya.html" target="_blank" rel="noopener">🤖 Собери Железную няню</a>
+          <a href="../minis/pin-workshop.html" target="_blank" rel="noopener">🐧 Мастерская Пина</a>
+          <a href="../minis/losyash-chemistry.html" target="_blank" rel="noopener">🧪 Лосяш: Химик</a>
+          <a href="../minis/kopatych-garden.html" target="_blank" rel="noopener">🌻 Огород Копатыча</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-reviews" class="panel">
+      <div class="reviews">
+        <div class="review">
+          <div class="top"><span class="author">🧒 Миша, 8 лет</span><span class="stars">★★★★★</span></div>
+          <p>Крутяк!!! Я Крошем всех побил. Догонялки самые весёлые 🥕</p>
+        </div>
+        <div class="review">
+          <div class="top"><span class="author">👪 Папа Димы</span><span class="stars">★★★★★</span></div>
+          <p>Поиграли вместе: я — Копатыч, он — Крош. Смеялись над догонялками. Возраст 6+ — честно.</p>
+        </div>
+        <div class="review">
+          <div class="top"><span class="author">🎮 NoScopeCat</span><span class="stars">★★★★★</span></div>
+          <p>Локальный хаос как party-game. Зашёл «на минуту» — вышел через час. WASD + пробел — классика.</p>
+        </div>
+        <div class="review">
+          <div class="top"><span class="author">🤖 GrokPlay</span><span class="stars">★★★★★</span></div>
+          <p>Баланс ок, весело, иногда бесит — значит, работает 😄 Топ для фанатской мини-игры!</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="disc">
+      Неофициальная фанатская мини-игра. Персонажи «Смешарики» принадлежат Riki Group / правообладателям.
+      Не является продуктом компании Яндекс.
+    </p>
+    <footer>
+      <a href="game.html" target="_blank" rel="noopener">▶ Играть</a> ·
+      <a href="../../index.html">Портал любимых игр · Blue Cat</a> ·
+      <a href="../../menu.html">Все игры</a>
+    </footer>
+  </div>
+
+  <script>
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+        tab.classList.add("active");
+        const panel = document.getElementById("panel-" + tab.dataset.tab);
+        if (panel) panel.classList.add("active");
+        if (tab.dataset.tab === "howto") location.hash = "howto";
+        if (tab.dataset.tab === "chars") location.hash = "chars";
+      });
+    });
+    if (location.hash === "#howto") document.querySelector('.tab[data-tab="howto"]')?.click();
+    if (location.hash === "#chars") document.querySelector('.tab[data-tab="chars"]')?.click();
+  </script>
+</body>
+</html>

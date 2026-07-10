@@ -1,6 +1,6 @@
 (() => {
   const STORAGE_GAMES = "myGamesPortal_customGames_v1";
-  const STORAGE_REVIEWS = "myGamesPortal_reviews_v1";
+  const STORAGE_REVIEWS = "myGamesPortal_reviews_v2";
 
   /** Встроенные игры портала */
   const BUILTIN_GAMES = [
@@ -40,6 +40,15 @@
       url: "games/smeshariki/index.html",
       emoji: "🟡",
       color: "#ffcc00",
+      builtin: true,
+    },
+    {
+      id: "tanks",
+      title: "Танчики",
+      description: "Классические танчики: езжай, стреляй, укрытия!",
+      url: "games/minis/tanks.html",
+      emoji: "🪖",
+      color: "#8bc34a",
       builtin: true,
     },
   ];
@@ -96,9 +105,17 @@
 
   function seedReviews() {
     const seeded = [
+      makeReview("snake", 5),
+      makeReview("snake", 4),
+      makeReview("pacman", 5),
+      makeReview("pacman", 4),
+      makeReview("mario", 5),
+      makeReview("mario", 5),
       makeReview("smeshariki", 5),
       makeReview("smeshariki", 4),
       makeReview("smeshariki", 5),
+      makeReview("tanks", 5),
+      makeReview("tanks", 4),
     ];
     saveReviews(seeded);
     return seeded;

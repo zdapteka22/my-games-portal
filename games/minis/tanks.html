@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Танчики</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: "Segoe UI", Arial, sans-serif; color: #fff;
+      background: radial-gradient(ellipse at 40% 0%, #3a4a20, transparent 50%),
+                  linear-gradient(160deg, #1a2010, #0d1408 55%, #0a1006);
+      padding: 12px; gap: 10px;
+    }
+    .top {
+      width: min(640px, 96vw); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .top a {
+      color: #2a1200; text-decoration: none; font-weight: 800; padding: 8px 14px; border-radius: 999px;
+      background: linear-gradient(135deg, #ffcc00, #ff9f1c); font-size: 14px;
+    }
+    .top a.ghost { background: rgba(255,255,255,.1); color: #d8ffb0; border: 1px solid rgba(160,220,80,.35); }
+    h1 { font-size: 1.35rem; color: #c8ff6a; text-shadow: 0 0 16px rgba(160,255,80,.35); }
+    .hud {
+      width: min(640px, 96vw); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      background: rgba(0,0,0,.4); border: 1px solid rgba(160,220,80,.28); border-radius: 12px; padding: 10px 14px; font-weight: 700;
+    }
+    .hud b { color: #ffcc00; }
+    canvas {
+      width: min(640px, 96vw); height: auto; aspect-ratio: 640 / 420;
+      border: 4px solid #5a7a30; border-radius: 14px; background: #2a3820;
+      box-shadow: 0 0 40px rgba(100,160,40,.25); touch-action: none; outline: none;
+    }
+    .hint { color: rgba(220,255,180,.75); font-size: 13px; text-align: center; max-width: 640px; line-height: 1.4; }
+    .pad { display: none; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    @media (max-width: 700px), (pointer: coarse) { .pad { display: flex; } }
+    .pad button {
+      min-width: 56px; height: 48px; border: 2px solid #9fcf4a; border-radius: 10px;
+      background: rgba(0,0,0,.4); color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a href="../../index.html">🐱 Меню</a>
+    <h1>🪖 Танчики</h1>
+    <a class="ghost" href="../../menu.html">Все игры</a>
+  </div>
+  <div class="hud">
+    <span>Ты: <b id="hp1">3</b> ❤️</span>
+    <span>Враг: <b id="hp2">3</b> ❤️</span>
+    <span id="status">Стреляй!</span>
+  </div>
+  <canvas id="c" width="640" height="420" tabindex="0"></canvas>
+  <p class="hint">
+    WASD / стрелки — езда · Пробел / Enter — выстрел · R — рестарт<br>
+    Уничтожь вражеский танк! Укрытия блокируют пули.
+  </p>
+  <div class="pad">
+    <button type="button" data-k="up">↑</button>
+    <button type="button" data-k="left">←</button>
+    <button type="button" data-k="down">↓</button>
+    <button type="button" data-k="right">→</button>
+    <button type="button" data-k="fire">🔥</button>
+  </div>
+<script>
+(() => {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const keys = {};
+  const hold = { up: false, down: false, left: false, right: false, fire: false };
+
+  const walls = [
+    { x: 200, y: 80, w: 40, h: 140 },
+    { x: 400, y: 200, w: 40, h: 140 },
+    { x: 280, y: 180, w: 80, h: 40 },
+    { x: 120, y: 300, w: 100, h: 30 },
+    { x: 420, y: 60, w: 100, h: 30 },
+  ];
+
+  let p, e, bullets, won, over, fireCd, eCd, status;
+
+  function tank(x, y, ang, color, isPlayer) {
+    return { x, y, ang, color, isPlayer, hp: 3, r: 18, speed: isPlayer ? 2.1 : 1.45 };
+  }
+
+  function reset() {
+    p = tank(80, H / 2, 0, "#6adf3a", true);
+    e = tank(W - 80, H / 2, Math.PI, "#e85d4c", false);
+    bullets = [];
+    won = false; over = false;
+    fireCd = 0; eCd = 0;
+    status = "Стреляй!";
+    document.getElementById("hp1").textContent = "3";
+    document.getElementById("hp2").textContent = "3";
+    document.getElementById("status").textContent = status;
+  }
+
+  function hitWall(x, y, r) {
+    for (const w of walls) {
+      const nx = Math.max(w.x, Math.min(x, w.x + w.w));
+      const ny = Math.max(w.y, Math.min(y, w.y + w.h));
+      const dx = x - nx, dy = y - ny;
+      if (dx * dx + dy * dy < r * r) return true;
+    }
+    return false;
+  }
+
+  function moveTank(t, forward, turn) {
+    t.ang += turn * 0.055;
+    if (!forward) return;
+    const nx = t.x + Math.cos(t.ang) * t.speed * forward;
+    const ny = t.y + Math.sin(t.ang) * t.speed * forward;
+    if (nx > t.r && nx < W - t.r && ny > t.r && ny < H - t.r && !hitWall(nx, ny, t.r)) {
+      t.x = nx; t.y = ny;
+    }
+  }
+
+  function shoot(t) {
+    bullets.push({
+      x: t.x + Math.cos(t.ang) * 24,
+      y: t.y + Math.sin(t.ang) * 24,
+      vx: Math.cos(t.ang) * 6.5,
+      vy: Math.sin(t.ang) * 6.5,
+      from: t.isPlayer ? "p" : "e",
+      life: 90
+    });
+  }
+
+  function update() {
+    if (over) return;
+    fireCd = Math.max(0, fireCd - 1);
+    eCd = Math.max(0, eCd - 1);
+
+    let f = 0, tr = 0;
+    if (keys["ArrowUp"] || keys["w"] || keys["W"] || hold.up) f = 1;
+    if (keys["ArrowDown"] || keys["s"] || keys["S"] || hold.down) f = -1;
+    if (keys["ArrowLeft"] || keys["a"] || keys["A"] || hold.left) tr = -1;
+    if (keys["ArrowRight"] || keys["d"] || keys["D"] || hold.right) tr = 1;
+    moveTank(p, f, tr);
+    if ((keys[" "] || keys["Enter"] || hold.fire) && fireCd === 0) {
+      shoot(p); fireCd = 18;
+    }
+
+    // simple enemy AI
+    const dx = p.x - e.x, dy = p.y - e.y;
+    const want = Math.atan2(dy, dx);
+    let da = want - e.ang;
+    while (da > Math.PI) da -= Math.PI * 2;
+    while (da < -Math.PI) da += Math.PI * 2;
+    moveTank(e, 1, Math.max(-1, Math.min(1, da * 3)));
+    if (Math.abs(da) < 0.25 && eCd === 0 && Math.hypot(dx, dy) < 320) {
+      shoot(e); eCd = 28 + Math.floor(Math.random() * 20);
+    }
+
+    for (const b of bullets) {
+      b.x += b.vx; b.y += b.vy; b.life--;
+      if (hitWall(b.x, b.y, 3) || b.x < 0 || b.y < 0 || b.x > W || b.y > H) b.life = 0;
+      const target = b.from === "p" ? e : p;
+      if (b.life > 0 && Math.hypot(b.x - target.x, b.y - target.y) < target.r) {
+        b.life = 0;
+        target.hp--;
+        document.getElementById(target.isPlayer ? "hp1" : "hp2").textContent = String(Math.max(0, target.hp));
+        if (target.hp <= 0) {
+          over = true;
+          won = !target.isPlayer;
+          status = won ? "Победа! R — ещё раз" : "Поражение. R — рестарт";
+          document.getElementById("status").textContent = status;
+        }
+      }
+    }
+    bullets = bullets.filter(b => b.life > 0);
+  }
+
+  function drawTank(t) {
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    ctx.rotate(t.ang);
+    // body
+    ctx.fillStyle = t.color;
+    ctx.fillRect(-16, -12, 32, 24);
+    ctx.fillStyle = "#222";
+    ctx.fillRect(-18, -14, 8, 6);
+    ctx.fillRect(-18, 8, 8, 6);
+    ctx.fillRect(10, -14, 8, 6);
+    ctx.fillRect(10, 8, 8, 6);
+    // barrel
+    ctx.fillStyle = "#ddd";
+    ctx.fillRect(8, -3, 22, 6);
+    // hatch
+    ctx.beginPath();
+    ctx.fillStyle = "#333";
+    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function draw() {
+    // grass field
+    ctx.fillStyle = "#2f4024";
+    ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < 40; i++) {
+      ctx.fillStyle = i % 2 ? "rgba(0,0,0,.06)" : "rgba(255,255,255,.03)";
+      ctx.fillRect((i * 47) % W, (i * 73) % H, 30, 18);
+    }
+    // walls
+    for (const w of walls) {
+      ctx.fillStyle = "#6a5a40";
+      ctx.fillRect(w.x, w.y, w.w, w.h);
+      ctx.strokeStyle = "#3a3020";
+      ctx.strokeRect(w.x + 0.5, w.y + 0.5, w.w - 1, w.h - 1);
+    }
+    drawTank(p);
+    drawTank(e);
+    for (const b of bullets) {
+      ctx.beginPath();
+      ctx.fillStyle = b.from === "p" ? "#ffe066" : "#ff8866";
+      ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (over) {
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = won ? "#b8ff6a" : "#ff6b6b";
+      ctx.font = "bold 36px Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(won ? "ПОБЕДА!" : "ПОРАЖЕНИЕ", W / 2, H / 2);
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px Segoe UI, Arial";
+      ctx.fillText("R — новая игра", W / 2, H / 2 + 34);
+    }
+  }
+
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  document.addEventListener("keydown", e => {
+    keys[e.key] = true;
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
+    if (e.key === "r" || e.key === "R") reset();
+  });
+  document.addEventListener("keyup", e => { keys[e.key] = false; });
+
+  document.querySelectorAll(".pad button").forEach(btn => {
+    const k = btn.dataset.k;
+    const on = e => { e.preventDefault(); hold[k] = true; };
+    const off = e => { e.preventDefault(); hold[k] = false; };
+    btn.addEventListener("pointerdown", on);
+    btn.addEventListener("pointerup", off);
+    btn.addEventListener("pointerleave", off);
+    btn.addEventListener("pointercancel", off);
+  });
+
+  reset();
+  canvas.focus();
+  canvas.addEventListener("click", () => canvas.focus());
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
