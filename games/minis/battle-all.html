@@ -183,7 +183,7 @@
 
   <section class="screen" id="selectScreen">
     <h2 style="font-size:1.15rem;margin-bottom:4px">Выбери героя</h2>
-    <p class="sub">Все герои и картинки из твоих игр: Смешарики, Марио, Пакман, Змейка, Танчики, Лунтик и враги. В бою выходят <b>все герои сразу</b> — ты + весь список. У каждого атака и супер-способность.</p>
+    <p class="sub">В бою выходят <b>все <span id="heroCountLabel">27</span> героев сразу</b> (не 5–6). Ты — выбранный герой, остальные — ИИ. Смешарики, Марио, Пакман, Змейка, Танчики, Лунтик, враги — весь список.</p>
     <div class="filter-row" id="filterRow"></div>
     <div class="heroes" id="heroGrid"></div>
     <div class="detail" id="heroDetail">
@@ -202,7 +202,7 @@
     <div class="hud">
       <span>Герой: <b id="hudHero">—</b></span>
       <span>Способность: <b id="hudAbil">готово</b></span>
-      <span>В живых: <b id="hudAlive">—</b></span>
+      <span>На арене: <b id="hudAlive">—</b></span>
     </div>
     <div class="bars" id="hpBars"></div>
     <div class="canvas-wrap">
@@ -394,6 +394,8 @@
   let running = false;
   let lastT = 0;
   let arenaObstacles = [];
+  let spawnFreeze = 0; // секунды: все на поле, бой ещё не начался
+  let totalHeroes = 0;
   const keys = {};
   const hold = { up:false, down:false, left:false, right:false, atk:false, abil:false };
   const imageCache = {}; // path -> HTMLImageElement | null (failed)
@@ -512,43 +514,42 @@
   });
 
   function makeArena() {
+    // Мало препятствий — чтобы все герои были видны
     arenaObstacles = [
-      { x: W*0.5-42, y: H*0.5-42, w: 84, h: 84 },
-      { x: 130, y: 110, w: 74, h: 28 },
-      { x: W-204, y: 110, w: 74, h: 28 },
-      { x: 130, y: H-138, w: 74, h: 28 },
-      { x: W-204, y: H-138, w: 74, h: 28 },
-      { x: W*0.5-58, y: 64, w: 116, h: 24 },
-      { x: W*0.5-58, y: H-88, w: 116, h: 24 }
+      { x: W * 0.5 - 28, y: H * 0.5 - 28, w: 56, h: 56 },
+      { x: 100, y: H * 0.5 - 14, w: 50, h: 28 },
+      { x: W - 150, y: H * 0.5 - 14, w: 50, h: 28 }
     ];
   }
 
   function spawnPos(i, n) {
-    // Несколько колец, чтобы все герои поместились на арене
-    const cx = W / 2, cy = H / 2;
-    const rings = n <= 10 ? 1 : n <= 18 ? 2 : 3;
-    const perRing = Math.ceil(n / rings);
-    const ring = Math.floor(i / perRing);
-    const idxInRing = i % perRing;
-    const countOnRing = Math.min(perRing, n - ring * perRing);
-    const r = 70 + ring * (rings === 1 ? 0 : 95) + (rings === 3 && ring === 2 ? 20 : 0);
-    const a = (Math.PI * 2 * idxInRing) / countOnRing - Math.PI / 2 + ring * 0.35;
+    // Сетка на всю арену: каждый герой на своей клетке (никого «за кадром»)
+    const cols = Math.ceil(Math.sqrt(n * (W / H)));
+    const rows = Math.ceil(n / cols);
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const padX = 48, padY = 48;
+    const cellW = (W - padX * 2) / Math.max(1, cols);
+    const cellH = (H - padY * 2) / Math.max(1, rows);
     return {
-      x: cx + Math.cos(a) * Math.min(r, W * 0.38),
-      y: cy + Math.sin(a) * Math.min(r * 0.85, H * 0.36)
+      x: padX + cellW * (col + 0.5),
+      y: padY + cellH * (row + 0.5)
     };
   }
 
   function createFighter(def, isPlayer, index, total) {
     const p = spawnPos(index, total);
-    // Чуть меньше радиус, когда героев много
-    const baseR = total > 16 ? 18 : total > 10 ? 20 : 24;
+    // Меньше размер, когда героев много — все помещаются
+    const baseR = total >= 24 ? 16 : total > 14 ? 18 : 22;
+    // Чуть больше HP в королевской битве, чтобы не умирали за 3 секунды
+    const hpBonus = total > 12 ? 1.25 : 1;
+    const hp = Math.round(def.hp * hpBonus);
     return {
       def, isPlayer, x:p.x, y:p.y, vx:0, vy:0, r:baseR,
-      hp: def.hp, maxHp: def.hp, facing:1, dead:false,
+      hp, maxHp: hp, facing:1, dead:false,
       atkCd:0, abilCd:0, powerT:0, phaseT:0, megaT:0, growT:0,
       stunT:0, shieldT:0, poisonT:0, spinT:0, shellSlide:0,
-      aiTimer: Math.random() * 0.4, aiTarget:null, flash:0, scale:1
+      aiTimer: Math.random() * 0.5, aiTarget:null, flash:0, scale:1
     };
   }
 
@@ -565,15 +566,34 @@
     projectiles = []; particles = [];
     endOverlay.hidden = true;
 
-    // ВСЕ герои из списка — игрок + все остальные как ИИ
+    // ЖЁСТКО: каждый герой из HEROES ровно один раз. Без slice, без лимита.
     const playerHero = heroById(playerId) || HEROES[0];
-    const others = HEROES.filter(h => h.id !== playerHero.id);
-    shuffle(others);
-    const picks = [playerHero, ...others];
-    fighters = picks.map((h, i) => createFighter(h, i === 0, i, picks.length));
+    const picks = [playerHero];
+    for (let i = 0; i < HEROES.length; i++) {
+      if (HEROES[i].id !== playerHero.id) picks.push(HEROES[i]);
+    }
+    // Перемешиваем только позиции AI (игрок всегда index 0, но место на сетке своё)
+    const player = picks.shift();
+    shuffle(picks);
+    picks.unshift(player);
+
+    totalHeroes = picks.length;
+    fighters = picks.map((h, i) => createFighter(h, h.id === playerHero.id, i, picks.length));
+    // Гарантия: игрок один
+    let playerCount = 0;
+    for (const f of fighters) {
+      if (f.isPlayer) {
+        playerCount++;
+        if (playerCount > 1) f.isPlayer = false;
+      }
+    }
+
+    spawnFreeze = 2.8; // сначала видно ВСЕХ, потом бой
 
     document.getElementById("hudHero").textContent =
-      fighters[0].def.emoji + " " + fighters[0].def.name + " · все " + fighters.length;
+      fighters.find(f => f.isPlayer).def.emoji + " " +
+      fighters.find(f => f.isPlayer).def.name;
+    document.getElementById("hudAlive").textContent = totalHeroes + " / " + totalHeroes;
     selectScreen.hidden = true;
     gameWrap.hidden = false;
     running = true;
@@ -585,6 +605,7 @@
 
   function updateBars() {
     const el = document.getElementById("hpBars");
+    const alive = fighters.filter(f => !f.dead).length;
     el.innerHTML = fighters.map(f => {
       const pct = Math.max(0, (f.hp/f.maxHp)*100);
       const thumb = f.def._imgPath
@@ -595,11 +616,13 @@
         <div class="bar-hp"><i style="width:${pct}%"></i></div>
       </div>`;
     }).join("");
-    document.getElementById("hudAlive").textContent = String(fighters.filter(f=>!f.dead).length);
+    document.getElementById("hudAlive").textContent = alive + " / " + totalHeroes;
     const p = fighters.find(f=>f.isPlayer);
     if (p) {
       const cd = Math.max(0, p.abilCd);
-      document.getElementById("hudAbil").textContent = cd>0 ? cd.toFixed(1)+" с" : "готово ✨";
+      document.getElementById("hudAbil").textContent =
+        spawnFreeze > 0 ? ("старт " + spawnFreeze.toFixed(1) + "с") :
+        (cd>0 ? cd.toFixed(1)+" с" : "готово ✨");
     }
   }
 
@@ -896,6 +919,14 @@
   }
 
   function update(dt){
+    if (spawnFreeze > 0) {
+      spawnFreeze = Math.max(0, spawnFreeze - dt);
+      // Пока отсчёт — все стоят на местах, видно полный состав
+      for (const f of fighters) { f.vx = 0; f.vy = 0; }
+      updateBars();
+      return;
+    }
+
     const p=fighters.find(f=>f.isPlayer);
     if (p && !p.dead && p.stunT<=0){
       if (p.shellSlide<=0){
@@ -1172,24 +1203,46 @@
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha=1;
+    // Лёгкое затемнение во время отсчёта, герои рисуются поверх
+    if (spawnFreeze > 0) {
+      ctx.fillStyle = "rgba(0,0,0,.25)";
+      ctx.fillRect(0, 0, W, H);
+    }
     const sorted=[...fighters].sort((a,b)=>(a.dead===b.dead?a.y-b.y:(a.dead?-1:1)));
     for (const f of sorted) drawFighter(f);
 
-    ctx.fillStyle="rgba(0,0,0,.4)";
-    ctx.fillRect(W/2-130,10,260,26);
-    ctx.fillStyle="#ffcc00";
-    ctx.font="bold 14px Segoe UI, Arial";
-    ctx.textAlign="center"; ctx.textBaseline="middle";
     const aliveN = fighters.filter(f => !f.dead).length;
-    ctx.fillText("⚔️ Все герои: " + aliveN + "/" + fighters.length, W/2, 23);
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    if (spawnFreeze > 0) {
+      ctx.fillStyle = "rgba(0,0,0,.72)";
+      ctx.fillRect(W/2 - 210, 40, 420, 70);
+      ctx.strokeStyle = "#ffcc00";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(W/2 - 210, 40, 420, 70);
+      ctx.fillStyle = "#ffcc00";
+      ctx.font = "bold 22px Segoe UI, Arial";
+      ctx.fillText("ВСЕ " + totalHeroes + " ГЕРОЕВ НА АРЕНЕ", W/2, 68);
+      ctx.font = "bold 16px Segoe UI, Arial";
+      ctx.fillStyle = "#fff";
+      ctx.fillText("Бой через " + Math.ceil(spawnFreeze) + "… смотри весь состав!", W/2, 94);
+    }
+    ctx.fillStyle = "rgba(0,0,0,.5)";
+    ctx.fillRect(W/2 - 150, 6, 300, 28);
+    ctx.fillStyle = "#ffcc00";
+    ctx.font = "bold 14px Segoe UI, Arial";
+    ctx.fillText("⚔️ На арене: " + aliveN + " из " + totalHeroes + " (все)", W/2, 20);
   }
 
   // init
+  const hc = document.getElementById("heroCountLabel");
+  if (hc) hc.textContent = String(HEROES.length);
   renderFilters();
   renderSelect();
   preloadAll().then(() => {
     renderSelect();
     if (selectedId) showDetail(heroById(selectedId));
+    const t = document.getElementById("loadText");
+    if (t) t.textContent = "Готово: " + HEROES.length + " героев — в бой выйдут ВСЕ";
   });
 })();
 </script>
