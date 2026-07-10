@@ -183,7 +183,7 @@
 
   <section class="screen" id="selectScreen">
     <h2 style="font-size:1.15rem;margin-bottom:4px">Выбери героя</h2>
-    <p class="sub">Режим <b>все против всех</b>: на арене сразу все <span id="heroCountLabel">27</span> героев. Нет команд — каждый бьёт каждого. Ты — выбранный герой, остальные дерутся между собой и с тобой. Последний выживший побеждает.</p>
+    <p class="sub">Режим <b>все против всех</b>: на арене сразу <b>все <span id="heroCountLabel">?</span> героев</b> из всех твоих игр + <b>Соник</b>. Нет команд. Ты — выбранный, остальные — ИИ. Последний выживший побеждает.</p>
     <div class="filter-row" id="filterRow"></div>
     <div class="heroes" id="heroGrid"></div>
     <div class="detail" id="heroDetail">
@@ -236,7 +236,6 @@
 (() => {
   /* ========== Paths relative to games/minis/ ========== */
   const IMG = {
-    // portal / smeshariki
     krosh: "../../images/krosh.png",
     yozhik: "../../images/yozhik.png",
     barash: "../../images/barash.png",
@@ -247,124 +246,225 @@
     robonanny: "../../images/robonanny.png",
     pacman: "../../images/pacman.png",
     cat: "../../images/blue-cat.svg",
-    // mario heroes / enemies (sprites + art)
+    sonic: "../../images/sonic.svg",
+    mario_art: "mario_art.png",
     mario: "sprites/smb3_mario.png",
-    mario2: "sprites/smw_mario.png",
-    mario3: "sprites/sm64_mario.png",
+    mario_walk: "sprites/smb3_mario_walk.png",
+    mario_smw: "sprites/smw_mario.png",
+    mario_sm64: "sprites/sm64_mario.png",
+    mario_smb2: "sprites/smb2_mario.png",
+    mario_big: "sprites/smb3_big.png",
+    mario_side: "sprites/sm64_mario_side.png",
     luigi: "sprites/smb3_luigi.png",
-    luigi2: "sprites/smw_luigi.png",
-    luigi3: "sprites/sm64_luigi.png",
+    luigi_smw: "sprites/smw_luigi.png",
+    luigi_sm64: "sprites/sm64_luigi.png",
+    luigi_smb2: "sprites/smb2_luigi.png",
+    luigi_art: "art_luigi_try2.png",
     goomba: "sprites/smb3_goomba.png",
     goomba2: "art_goomba2.png",
-    goomba3: "sprites/smw_goomba.png",
+    goomba_smw: "sprites/smw_goomba.png",
+    goomba_smw2: "sprites/smw_goomba2.png",
+    goomba_smb2: "sprites/smb2_goomba.png",
+    goomba_sm64: "sprites/sm64_goomba.png",
     koopa: "sprites/smb3_koopa.png",
     koopa2: "art_koopa.png",
+    koopa_smw: "sprites/smw_koopa.png",
+    koopa_smw2: "sprites/smw_koopa2.png",
+    koopa_smb2: "sprites/smb2_koopa.png",
+    koopa_sm64: "sprites/sm64_koopa.png",
     bowser: "sprites/smw_bowser.png",
     bowser2: "sprites/smb3_bowser.png",
     bowser3: "art_bowser_try.png",
     piranha: "art_piranha.png",
     spiny: "art_spiny.png",
     shell: "art_shell.png",
+    shell_red: "sprites/smw_shell_red.png",
+    shell_smw: "sprites/smw_shell.png",
     bullet: "art_bullet.png",
     star: "art_star.png",
     mush: "art_mushroom.png",
-    coin: "sprites/smb3_coin.png"
+    oneup: "art_1up.png",
+    coin: "sprites/smb3_coin.png",
+    enemy_a: "sprites/smb2_enemy_a.png",
+    enemy_b: "sprites/smb2_enemy_b.png",
+    qblock: "art_qblock.png",
+    brick: "art_brick.png",
+    flappy: "FlappyTimeIco.gif"
   };
 
   /**
-   * style:
-   *  melee, shoot, dash, tank, bite, phase, snake, fire, dualfire,
-   *  mega, heal, spike, shell, bomb, charge, boss
+   * style: melee, shoot, dash, tank, bite, phase, snake, fire, dualfire,
+   *        mega, heal, spike, shell, bomb, charge, boss, spin, laby
    */
   const HEROES = [
-    // —— Смешарики ——
+    // —— Смешарики + Лунтик (все из твоей игры) ——
     { id:"krosh", name:"Крош", from:"Смешарики", group:"smesh", emoji:"🐰", img:IMG.krosh, color:"#3aa0ff", accent:"#9ad4ff",
       hp:100, speed:3.5, atk:14, rate:0.85, style:"dash", attackName:"Удар", abilityName:"Рывок",
-      desc:"Быстрый и ловкий. Бьёт в ближнем бою.", abilityDesc:"Молниеносный рывок с уроном. 6 с." },
+      desc:"Быстрый и ловкий.", abilityDesc:"Рывок с уроном. 6 с." },
     { id:"yozhik", name:"Ёжик", from:"Смешарики", group:"smesh", emoji:"🦔", img:IMG.yozhik, color:"#9b7ed9", accent:"#d4c0ff",
       hp:95, speed:3.0, atk:17, rate:0.95, style:"spike", attackName:"Иглы", abilityName:"Шипы",
-      desc:"Сильный удар иглами.", abilityDesc:"Шипы вокруг на 3 сек. 7 с." },
+      desc:"Сильный удар иглами.", abilityDesc:"Шипы 3 сек. 7 с." },
     { id:"barash", name:"Бараш", from:"Смешарики", group:"smesh", emoji:"🐑", img:IMG.barash, color:"#f48fb1", accent:"#ffd0e0",
       hp:105, speed:2.9, atk:13, rate:0.9, style:"melee", attackName:"Стих", abilityName:"Вдохновение",
-      desc:"Средний боец-поэт.", abilityDesc:"Ускорение и +урон 4 сек. 8 с." },
+      desc:"Поэт-боец.", abilityDesc:"+скорость и урон 4 сек. 8 с." },
     { id:"losyash", name:"Лосяш", from:"Смешарики", group:"smesh", emoji:"🦌", img:IMG.losyash, color:"#ffb74d", accent:"#ffe0a8",
       hp:120, speed:2.6, atk:12, rate:1.0, style:"shoot", attackName:"Формула", abilityName:"Эксперимент",
-      desc:"Умный, много HP. Стреляет «формулами».", abilityDesc:"3 снаряда + лечение. 8 с." },
+      desc:"Умный, много HP.", abilityDesc:"3 снаряда + лечение. 8 с." },
     { id:"pin", name:"Пин", from:"Смешарики", group:"smesh", emoji:"🐧", img:IMG.pin, color:"#90a4ae", accent:"#d0dce4",
-      hp:115, speed:2.7, atk:14, rate:0.9, style:"tank", attackName:"Гаечный ключ", abilityName:"Щит",
-      desc:"Броня и баланс.", abilityDesc:"Щит 3 сек. (мало урона). 9 с." },
+      hp:115, speed:2.7, atk:14, rate:0.9, style:"tank", attackName:"Ключ", abilityName:"Щит",
+      desc:"Броня и баланс.", abilityDesc:"Щит 3 сек. 9 с." },
     { id:"kopatych", name:"Копатыч", from:"Смешарики", group:"smesh", emoji:"🐻", img:IMG.kopatych, color:"#8d6e63", accent:"#d4b8a0",
       hp:135, speed:2.3, atk:16, rate:1.05, style:"charge", attackName:"Лопата", abilityName:"Мед-сила",
-      desc:"Силач: много HP.", abilityDesc:"Таран вперёд + огромный урон. 7 с." },
+      desc:"Силач.", abilityDesc:"Таран + большой урон. 7 с." },
     { id:"robonanny", name:"Железная няня", from:"Смешарики", group:"smesh", emoji:"🤖", img:IMG.robonanny, color:"#ef5350", accent:"#ffb0a8",
       hp:140, speed:2.4, atk:15, rate:0.95, style:"boss", attackName:"Захват", abilityName:"Лазер",
-      desc:"Босс-няня: очень крепкая.", abilityDesc:"Лазерный луч. 8 с." },
+      desc:"Босс-няня.", abilityDesc:"Лазерный луч. 8 с." },
     { id:"luntik", name:"Лунтик", from:"Лунтик", group:"smesh", emoji:"🟣", img:IMG.luntik, color:"#9b59b6", accent:"#e0b0ff",
       hp:120, speed:2.8, atk:12, rate:0.9, style:"heal", attackName:"Пузырь", abilityName:"Лунный луч",
-      desc:"Добрый, но сильный. Лечится.", abilityDesc:"Луч урона + лечение. 8 с." },
+      desc:"Добрый, но сильный.", abilityDesc:"Луч + лечение. 8 с." },
 
     // —— Пакман ——
     { id:"pacman", name:"Пакман", from:"Пакман", group:"pac", emoji:"🟡", img:IMG.pacman, color:"#f6d32d", accent:"#fff3a0",
       hp:105, speed:3.1, atk:15, rate:0.8, style:"bite", attackName:"Укус", abilityName:"Энергетик",
-      desc:"Кусает врагов. Быстрый.", abilityDesc:"5 сек. супер-скорость и +урон. 9 с." },
-    { id:"ghost_red", name:"Призрак Блинки", from:"Пакман", group:"pac", emoji:"🔴", img:null, color:"#ff3b4a", accent:"#ffb0b8",
+      desc:"Кусает врагов.", abilityDesc:"Супер-скорость 5 сек. 9 с." },
+    { id:"mspac", name:"Мисс Пакман", from:"Пакман", group:"pac", emoji:"🎀", img:null, color:"#ff6bb5", accent:"#ffd0e8",
+      hp:100, speed:3.2, atk:14, rate:0.8, style:"bite", attackName:"Укус", abilityName:"Вишня",
+      desc:"Розовая охотница.", abilityDesc:"Лечение + ускорение. 8 с.", pacDraw:true },
+    { id:"ghost_red", name:"Блинки", from:"Пакман", group:"pac", emoji:"🔴", img:null, color:"#ff3b4a", accent:"#ffb0b8",
       hp:90, speed:3.2, atk:13, rate:0.85, style:"phase", attackName:"Пугание", abilityName:"Фаза",
-      desc:"Красный призрак. Ловкий.", abilityDesc:"2.5 сек. неуязвимости. 8 с.", ghost:true },
-    { id:"ghost_pink", name:"Призрак Пинки", from:"Пакман", group:"pac", emoji:"🩷", img:null, color:"#ff7ab8", accent:"#ffd0e8",
+      desc:"Красный призрак.", abilityDesc:"Неуязвимость 2.5 с. 8 с.", ghost:true },
+    { id:"ghost_pink", name:"Пинки", from:"Пакман", group:"pac", emoji:"🩷", img:null, color:"#ff7ab8", accent:"#ffd0e8",
       hp:88, speed:3.3, atk:12, rate:0.85, style:"phase", attackName:"Засада", abilityName:"Телепорт",
-      desc:"Розовый призрак. Хитрый.", abilityDesc:"Телепорт к врагу + удар. 7 с.", ghost:true },
-    { id:"ghost_cyan", name:"Призрак Инки", from:"Пакман", group:"pac", emoji:"🩵", img:null, color:"#40e0ff", accent:"#b8f4ff",
+      desc:"Розовый призрак.", abilityDesc:"Телепорт + удар. 7 с.", ghost:true },
+    { id:"ghost_cyan", name:"Инки", from:"Пакман", group:"pac", emoji:"🩵", img:null, color:"#40e0ff", accent:"#b8f4ff",
       hp:92, speed:3.0, atk:13, rate:0.9, style:"phase", attackName:"Волна", abilityName:"Клон-удар",
-      desc:"Голубой призрак.", abilityDesc:"Волна урона вокруг. 7 с.", ghost:true },
-    { id:"ghost_orange", name:"Призрак Клайд", from:"Пакман", group:"pac", emoji:"🟠", img:null, color:"#ff9f40", accent:"#ffd0a0",
+      desc:"Голубой призрак.", abilityDesc:"Волна вокруг. 7 с.", ghost:true },
+    { id:"ghost_orange", name:"Клайд", from:"Пакман", group:"pac", emoji:"🟠", img:null, color:"#ff9f40", accent:"#ffd0a0",
       hp:100, speed:2.8, atk:14, rate:0.95, style:"charge", attackName:"Толчок", abilityName:"Ярость",
-      desc:"Оранжевый призрак. Сильный.", abilityDesc:"Ярость: +скорость и урон 4 сек. 8 с.", ghost:true },
+      desc:"Оранжевый призрак.", abilityDesc:"Ярость 4 сек. 8 с.", ghost:true },
+    { id:"ghost_scared", name:"Синий призрак", from:"Пакман", group:"pac", emoji:"🔵", img:null, color:"#2244aa", accent:"#88aaff",
+      hp:85, speed:2.5, atk:11, rate:1.0, style:"phase", attackName:"Дрожь", abilityName:"Бегство",
+      desc:"Испуганный призрак.", abilityDesc:"Фаза + рывок. 6 с.", ghost:true },
 
-    // —— Марио / Луиджи / враги ——
-    { id:"mario", name:"Марио", from:"Марио", group:"mario", emoji:"🍄", img:IMG.mario, imgFallbacks:[IMG.mario2, IMG.mario3], color:"#e74c3c", accent:"#ff9a90",
+    // —— Марио (все версии + враги + предметы) ——
+    { id:"mario", name:"Марио (SMB3)", from:"Марио", group:"mario", emoji:"🍄", img:IMG.mario, imgFallbacks:[IMG.mario_walk, IMG.mario_art], color:"#e74c3c", accent:"#ff9a90",
       hp:110, speed:3.0, atk:15, rate:0.9, style:"fire", attackName:"Удар", abilityName:"Огненный шар",
-      desc:"Герой-платформер.", abilityDesc:"Огненный шар вперёд. 6.5 с." },
-    { id:"luigi", name:"Луиджи", from:"Марио", group:"mario", emoji:"🟩", img:IMG.luigi, imgFallbacks:[IMG.luigi2, IMG.luigi3], color:"#27ae60", accent:"#8dffb5",
+      desc:"Классический Марио.", abilityDesc:"Огненный шар. 6.5 с." },
+    { id:"mario_smw", name:"Марио (SMW)", from:"Марио", group:"mario", emoji:"🧢", img:IMG.mario_smw, color:"#e74c3c", accent:"#ffccaa",
+      hp:112, speed:3.05, atk:15, rate:0.88, style:"fire", attackName:"Удар", abilityName:"Пламя",
+      desc:"Super Mario World.", abilityDesc:"Огненный шар. 6 с." },
+    { id:"mario_sm64", name:"Марио (64)", from:"Марио", group:"mario", emoji:"🕹️", img:IMG.mario_sm64, imgFallbacks:[IMG.mario_side], color:"#c0392b", accent:"#ffb0a0",
+      hp:115, speed:3.1, atk:16, rate:0.9, style:"charge", attackName:"Кулак", abilityName:"Удар с разбега",
+      desc:"Super Mario 64.", abilityDesc:"Мощный разбег. 7 с." },
+    { id:"mario_smb2", name:"Марио (SMB2)", from:"Марио", group:"mario", emoji:"🍅", img:IMG.mario_smb2, color:"#e67e22", accent:"#ffd0a0",
+      hp:108, speed:2.95, atk:14, rate:0.9, style:"melee", attackName:"Хват", abilityName:"Бросок",
+      desc:"Super Mario Bros. 2.", abilityDesc:"Сильный бросок. 6.5 с." },
+    { id:"mario_big", name:"Большой Марио", from:"Марио", group:"mario", emoji:"💪", img:IMG.mario_big, imgFallbacks:[IMG.mario], color:"#e74c3c", accent:"#ffcc00",
+      hp:140, speed:2.6, atk:17, rate:1.0, style:"mega", attackName:"Топот", abilityName:"Супер-рост",
+      desc:"Увеличенный Марио.", abilityDesc:"Мега-рост 4 сек. 9 с." },
+    { id:"luigi", name:"Луиджи (SMB3)", from:"Марио", group:"mario", emoji:"🟩", img:IMG.luigi, imgFallbacks:[IMG.luigi_art], color:"#27ae60", accent:"#8dffb5",
       hp:100, speed:3.25, atk:14, rate:0.88, style:"dualfire", attackName:"Удар", abilityName:"Зелёный огонь",
-      desc:"Выше и шустрее брата.", abilityDesc:"Двойной зелёный шар. 7 с." },
-    { id:"goomba", name:"Гумба", from:"Марио · враги", group:"mario", emoji:"🟤", img:IMG.goomba, imgFallbacks:[IMG.goomba2, IMG.goomba3], color:"#8b5a2b", accent:"#d4a574",
+      desc:"Брат Марио.", abilityDesc:"Двойной шар. 7 с." },
+    { id:"luigi_smw", name:"Луиджи (SMW)", from:"Марио", group:"mario", emoji:"🟢", img:IMG.luigi_smw, color:"#1abc9c", accent:"#a0ffe0",
+      hp:102, speed:3.3, atk:14, rate:0.85, style:"dualfire", attackName:"Удар", abilityName:"Двойной огонь",
+      desc:"SMW Луиджи.", abilityDesc:"Два шара. 6.5 с." },
+    { id:"luigi_sm64", name:"Луиджи (64)", from:"Марио", group:"mario", emoji:"👤", img:IMG.luigi_sm64, color:"#16a085", accent:"#7dffe0",
+      hp:98, speed:3.4, atk:13, rate:0.85, style:"dash", attackName:"Прыжок", abilityName:"Длинный прыжок",
+      desc:"Высокий прыгун.", abilityDesc:"Рывок-прыжок. 6 с." },
+    { id:"luigi_smb2", name:"Луиджи (SMB2)", from:"Марио", group:"mario", emoji:"🥬", img:IMG.luigi_smb2, color:"#2ecc71", accent:"#b0ffd0",
+      hp:100, speed:3.35, atk:13, rate:0.88, style:"melee", attackName:"Хват", abilityName:"Высокий бросок",
+      desc:"SMB2 Луиджи.", abilityDesc:"Сильный бросок. 6.5 с." },
+    { id:"goomba", name:"Гумба", from:"Марио · враги", group:"mario", emoji:"🟤", img:IMG.goomba, imgFallbacks:[IMG.goomba2], color:"#8b5a2b", accent:"#d4a574",
       hp:115, speed:2.5, atk:16, rate:0.95, style:"mega", attackName:"Таран", abilityName:"Мега-рост",
-      desc:"Классический враг.", abilityDesc:"Растёт и давит 4 сек. 10 с." },
+      desc:"Классический враг.", abilityDesc:"Рост 4 сек. 10 с." },
+    { id:"goomba_smw", name:"Гумба SMW", from:"Марио · враги", group:"mario", emoji:"🟤", img:IMG.goomba_smw, imgFallbacks:[IMG.goomba_smw2], color:"#a0522d", accent:"#deb887",
+      hp:110, speed:2.6, atk:15, rate:0.9, style:"charge", attackName:"Толчок", abilityName:"Натиск",
+      desc:"Гумба из SMW.", abilityDesc:"Таран. 7 с." },
+    { id:"goomba_smb2", name:"Враг SMB2 A", from:"Марио · враги", group:"mario", emoji:"👾", img:IMG.goomba_smb2, imgFallbacks:[IMG.enemy_a], color:"#7f5a3a", accent:"#c4a484",
+      hp:108, speed:2.55, atk:15, rate:0.92, style:"melee", attackName:"Удар", abilityName:"Прыжок-атака",
+      desc:"Враг из SMB2.", abilityDesc:"Прыжок с уроном. 7 с." },
+    { id:"goomba_sm64", name:"Гумба 64", from:"Марио · враги", group:"mario", emoji:"🗿", img:IMG.goomba_sm64, color:"#6b4423", accent:"#c9a66b",
+      hp:118, speed:2.4, atk:16, rate:0.95, style:"mega", attackName:"Топот", abilityName:"Раздувание",
+      desc:"3D-гумба.", abilityDesc:"Мега-рост. 9 с." },
     { id:"koopa", name:"Купа", from:"Марио · враги", group:"mario", emoji:"🐢", img:IMG.koopa, imgFallbacks:[IMG.koopa2], color:"#2ecc71", accent:"#8ef0b0",
       hp:110, speed:2.6, atk:14, rate:0.9, style:"shell", attackName:"Панцирь", abilityName:"Скольжение",
-      desc:"Черепаха с панцирем.", abilityDesc:"Скользит панцирем по арене. 7 с." },
+      desc:"Черепаха.", abilityDesc:"Скольжение. 7 с." },
+    { id:"koopa_smw", name:"Купа SMW", from:"Марио · враги", group:"mario", emoji:"🐢", img:IMG.koopa_smw, imgFallbacks:[IMG.koopa_smw2], color:"#27ae60", accent:"#a0ffc0",
+      hp:112, speed:2.65, atk:14, rate:0.9, style:"shell", attackName:"Панцирь", abilityName:"Турбо",
+      desc:"Купа SMW.", abilityDesc:"Турбо-панцырь. 7 с." },
+    { id:"koopa_sm64", name:"Купа 64", from:"Марио · враги", group:"mario", emoji:"🐢", img:IMG.koopa_sm64, color:"#1e8449", accent:"#7dcea0",
+      hp:114, speed:2.55, atk:15, rate:0.92, style:"shell", attackName:"Удар", abilityName:"Вихрь",
+      desc:"Купа 64.", abilityDesc:"Скольжение. 7 с." },
     { id:"bowser", name:"Боузер", from:"Марио · враги", group:"mario", emoji:"🐲", img:IMG.bowser, imgFallbacks:[IMG.bowser2, IMG.bowser3], color:"#c0392b", accent:"#ffb070",
       hp:160, speed:2.1, atk:18, rate:1.1, style:"boss", attackName:"Коготь", abilityName:"Огненное дыхание",
-      desc:"Главный босс. Очень много HP.", abilityDesc:"3 огненных шара. 9 с." },
+      desc:"Главный босс.", abilityDesc:"3 огненных шара. 9 с." },
     { id:"piranha", name:"Пиранья", from:"Марио · враги", group:"mario", emoji:"🌺", img:IMG.piranha, color:"#27ae60", accent:"#ff6b6b",
       hp:95, speed:2.4, atk:17, rate:0.85, style:"bite", attackName:"Укус", abilityName:"Яд",
-      desc:"Растение-хищник.", abilityDesc:"Яд: урон со временем врагам рядом. 8 с." },
+      desc:"Растение-хищник.", abilityDesc:"Яд рядом. 8 с." },
     { id:"spiny", name:"Спайни", from:"Марио · враги", group:"mario", emoji:"🦔", img:IMG.spiny, color:"#e74c3c", accent:"#ffb0a0",
       hp:100, speed:2.7, atk:15, rate:0.9, style:"spike", attackName:"Шипы", abilityName:"Ёж-шар",
-      desc:"Колючий враг.", abilityDesc:"Крутится и колет всех рядом. 7 с." },
-    { id:"shell", name:"Панцирь", from:"Марио · враги", group:"mario", emoji:"🟢", img:IMG.shell, color:"#16a085", accent:"#7dffe0",
+      desc:"Колючий враг.", abilityDesc:"Крутится 3 сек. 7 с." },
+    { id:"shell", name:"Панцирь зелёный", from:"Марио · враги", group:"mario", emoji:"🟢", img:IMG.shell, imgFallbacks:[IMG.shell_smw], color:"#16a085", accent:"#7dffe0",
       hp:85, speed:3.4, atk:14, rate:0.75, style:"shell", attackName:"Удар", abilityName:"Турбо-панцырь",
-      desc:"Быстрый скользящий панцирь.", abilityDesc:"Макс. скорость + урон. 6 с." },
+      desc:"Скользящий панцирь.", abilityDesc:"Макс. скорость. 6 с." },
+    { id:"shell_red", name:"Панцирь красный", from:"Марио · враги", group:"mario", emoji:"🔴", img:IMG.shell_red, color:"#c0392b", accent:"#ff8a80",
+      hp:88, speed:3.5, atk:15, rate:0.72, style:"shell", attackName:"Удар", abilityName:"Огненный панцирь",
+      desc:"Агрессивный панцирь.", abilityDesc:"Турбо + урон. 6 с." },
     { id:"bullet", name:"Пуля Билл", from:"Марио · враги", group:"mario", emoji:"💣", img:IMG.bullet, color:"#2c3e50", accent:"#95a5a6",
       hp:80, speed:3.6, atk:18, rate:1.0, style:"shoot", attackName:"Таран", abilityName:"Залп",
-      desc:"Летающая пуля. Очень быстрая.", abilityDesc:"Мощный снаряд. 6 с." },
+      desc:"Летающая пуля.", abilityDesc:"Мощный снаряд. 6 с." },
+    { id:"enemy_a", name:"Враг SMB2", from:"Марио · враги", group:"mario", emoji:"👹", img:IMG.enemy_a, color:"#8e44ad", accent:"#d7bde2",
+      hp:105, speed:2.7, atk:14, rate:0.9, style:"melee", attackName:"Удар", abilityName:"Прыжок",
+      desc:"Враг из SMB2.", abilityDesc:"Прыжок-атака. 7 с." },
+    { id:"enemy_b", name:"Враг SMB2 B", from:"Марио · враги", group:"mario", emoji:"👺", img:IMG.enemy_b, color:"#6c3483", accent:"#e8daef",
+      hp:108, speed:2.6, atk:15, rate:0.92, style:"charge", attackName:"Толчок", abilityName:"Натиск",
+      desc:"Ещё враг SMB2.", abilityDesc:"Таран. 7 с." },
     { id:"star", name:"Звезда", from:"Марио · предметы", group:"mario", emoji:"⭐", img:IMG.star, color:"#f1c40f", accent:"#fff3a0",
       hp:90, speed:3.3, atk:13, rate:0.8, style:"phase", attackName:"Луч", abilityName:"Неуязвимость",
-      desc:"Звезда-сила.", abilityDesc:"3.5 сек. неуязвимости + урон аурой. 10 с." },
+      desc:"Звезда-сила.", abilityDesc:"Неуязвимость 3.5 с. 10 с." },
     { id:"mushroom", name:"Гриб", from:"Марио · предметы", group:"mario", emoji:"🍄", img:IMG.mush, color:"#e74c3c", accent:"#ffcccc",
       hp:100, speed:2.5, atk:12, rate:1.0, style:"mega", attackName:"Толкание", abilityName:"Большой рост",
       desc:"Супер-гриб.", abilityDesc:"Рост + HP. 9 с." },
+    { id:"oneup", name:"1-UP", from:"Марио · предметы", group:"mario", emoji:"💚", img:IMG.oneup, color:"#27ae60", accent:"#a8ffc8",
+      hp:95, speed:2.8, atk:11, rate:1.0, style:"heal", attackName:"Толчок", abilityName:"Вторая жизнь",
+      desc:"Зелёный гриб жизни.", abilityDesc:"Сильное лечение. 8 с." },
+    { id:"coin", name:"Монета", from:"Марио · предметы", group:"mario", emoji:"🪙", img:IMG.coin, color:"#f1c40f", accent:"#ffeaa7",
+      hp:70, speed:3.6, atk:10, rate:0.7, style:"dash", attackName:"Звон", abilityName:"Дождь монет",
+      desc:"Быстрая монета.", abilityDesc:"Волна урона. 6 с." },
+    { id:"qblock", name:"?-Блок", from:"Марио · предметы", group:"mario", emoji:"❓", img:IMG.qblock, color:"#e67e22", accent:"#f5cba7",
+      hp:120, speed:2.2, atk:13, rate:1.1, style:"shoot", attackName:"Выброс", abilityName:"Сюрприз",
+      desc:"Сюрприз-блок.", abilityDesc:"3 случайных снаряда. 8 с." },
 
-    // —— Змейка / Танчики / портал ——
+    // —— Змейка / Танчики / Лабиринт / портал ——
     { id:"snake", name:"Змейка", from:"Змейка", group:"other", emoji:"🐍", img:null, color:"#2ecc71", accent:"#8ef0b0",
       hp:95, speed:2.8, atk:13, rate:0.85, style:"snake", attackName:"Хвост", abilityName:"Рост",
-      desc:"Длинный хвост бьёт по площади.", abilityDesc:"Удлиняется и душит. 8 с.", snakeDraw:true },
+      desc:"Длинный хвост.", abilityDesc:"Рост + удушение. 8 с.", snakeDraw:true },
+    { id:"snake_food", name:"Яблоко", from:"Змейка", group:"other", emoji:"🍎", img:null, color:"#e74c3c", accent:"#ffb0b0",
+      hp:80, speed:3.0, atk:11, rate:0.9, style:"heal", attackName:"Касание", abilityName:"Перекус",
+      desc:"Еда змейки.", abilityDesc:"Лечение. 7 с.", foodDraw:true },
     { id:"tank", name:"Танчик", from:"Танчики", group:"other", emoji:"🪖", img:null, color:"#6b8f3a", accent:"#c8ff6a",
       hp:130, speed:2.2, atk:16, rate:0.9, style:"tank", attackName:"Выстрел", abilityName:"Тройной залп",
-      desc:"Броня и снаряды.", abilityDesc:"Три снаряда веером. 7 с.", tankDraw:true },
+      desc:"Твой танк.", abilityDesc:"3 снаряда. 7 с.", tankDraw:true },
+    { id:"tank_red", name:"Танк враг", from:"Танчики", group:"other", emoji:"💥", img:null, color:"#a04030", accent:"#ff8a70",
+      hp:125, speed:2.3, atk:17, rate:0.95, style:"tank", attackName:"Выстрел", abilityName:"Огненный залп",
+      desc:"Вражеский танк.", abilityDesc:"3 огненных. 7 с.", tankDraw:true, tankRed:true },
+    { id:"labyrinth", name:"Лабиринт-герой", from:"Лабиринт", group:"other", emoji:"🌀", img:null, color:"#1abc9c", accent:"#7dffe0",
+      hp:100, speed:3.0, atk:13, rate:0.9, style:"laby", attackName:"Шаг", abilityName:"Выход ⭐",
+      desc:"Искатель выхода.", abilityDesc:"Телепорт + урон. 7 с.", labyDraw:true },
     { id:"bluecat", name:"Blue Cat", from:"Портал", group:"other", emoji:"🐱", img:IMG.cat, color:"#5eb0ff", accent:"#ffcc00",
       hp:110, speed:3.0, atk:14, rate:0.9, style:"heal", attackName:"Лапка", abilityName:"Мяу-волна",
-      desc:"Хозяин портала!", abilityDesc:"Волна урона + лёгкое лечение. 7 с." }
+      desc:"Хозяин портала!", abilityDesc:"Волна + лечение. 7 с." },
+    { id:"flappy", name:"Flappy", from:"Мини", group:"other", emoji:"🐤", img:IMG.flappy, color:"#f4d03f", accent:"#fff3a0",
+      hp:85, speed:3.2, atk:12, rate:0.85, style:"dash", attackName:"Клюв", abilityName:"Взлёт",
+      desc:"Маленькая птичка.", abilityDesc:"Рывок вверх. 6 с." },
+
+    // —— СОНИК ——
+    { id:"sonic", name:"Соник", from:"Sonic", group:"sonic", emoji:"💨", img:IMG.sonic, color:"#1a6fd4", accent:"#5ec8ff",
+      hp:105, speed:4.2, atk:15, rate:0.7, style:"spin", attackName:"Удар", abilityName:"Spin Dash",
+      desc:"Самый быстрый! Все против всех.", abilityDesc:"Спин-дэш: огромная скорость и урон. 6 с.", sonicDraw:true },
+    { id:"sonic_super", name:"Супер Соник", from:"Sonic", group:"sonic", emoji:"⚡", img:IMG.sonic, color:"#f1c40f", accent:"#fff59d",
+      hp:120, speed:4.5, atk:17, rate:0.65, style:"spin", attackName:"Молния", abilityName:"Супер-кольца",
+      desc:"Золотая форма.", abilityDesc:"Неуязвимость 3 сек. + урон. 10 с.", sonicDraw:true, superSonic:true }
   ];
 
   const GROUPS = [
@@ -372,6 +472,7 @@
     { id: "smesh", label: "Смешарики" },
     { id: "pac", label: "Пакман" },
     { id: "mario", label: "Марио" },
+    { id: "sonic", label: "Соник" },
     { id: "other", label: "Другие" }
   ];
 
@@ -540,9 +641,9 @@
   function createFighter(def, isPlayer, index, total) {
     const p = spawnPos(index, total);
     // Меньше размер, когда героев много — все помещаются
-    const baseR = total >= 24 ? 16 : total > 14 ? 18 : 22;
+    const baseR = total >= 40 ? 13 : total >= 28 ? 15 : total > 14 ? 18 : 22;
     // Чуть больше HP в королевской битве, чтобы не умирали за 3 секунды
-    const hpBonus = total > 12 ? 1.25 : 1;
+    const hpBonus = total > 20 ? 1.35 : total > 12 ? 1.25 : 1;
     const hp = Math.round(def.hp * hpBonus);
     return {
       def, isPlayer, x:p.x, y:p.y, vx:0, vy:0, r:baseR,
@@ -901,6 +1002,59 @@
       shoot(f,f.x+face*20,f.y,face*400,0,f.def.atk*1.6,"#95a5a6",7,1.0);
       return;
     }
+    if (id==="sonic" || st==="spin"){
+      f.abilCd = id==="sonic_super" ? 10 : 6;
+      f.vx = face * 620;
+      f.vy = 0;
+      f.spinT = id==="sonic_super" ? 3.2 : 2.0;
+      f.powerT = id==="sonic_super" ? 3.2 : 2.0;
+      if (id==="sonic_super") f.phaseT = 3.0;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 75) damage(o, f.def.atk * 1.8, f);
+      }
+      burst(f.x, f.y, f.def.accent, 18);
+      return;
+    }
+    if (id==="labyrinth" || st==="laby"){
+      f.abilCd = 7;
+      const t = nearestEnemy(f);
+      if (t) {
+        f.x = t.x + (Math.random() - 0.5) * 80;
+        f.y = t.y + (Math.random() - 0.5) * 80;
+        damage(t, f.def.atk * 1.5, f);
+      }
+      burst(f.x, f.y, "#ffcc00", 14);
+      return;
+    }
+    if (id==="mspac" || id==="snake_food" || id==="oneup"){
+      f.abilCd = 8;
+      f.hp = Math.min(f.maxHp, f.hp + (id==="oneup" ? 40 : 20));
+      f.powerT = 3;
+      burst(f.x, f.y, f.def.accent, 12);
+      return;
+    }
+    if (id==="coin"){
+      f.abilCd = 6;
+      for (const o of fighters) {
+        if (o !== f && !o.dead && dist(f, o) < 100) damage(o, f.def.atk * 1.2, f);
+      }
+      burst(f.x, f.y, "#ffd700", 16);
+      return;
+    }
+    if (id==="qblock"){
+      f.abilCd = 8;
+      shoot(f, f.x, f.y, face*260, -40, f.def.atk, "#f5cba7", 6, 1.1);
+      shoot(f, f.x, f.y, face*280, 0, f.def.atk*1.2, "#e67e22", 7, 1.1);
+      shoot(f, f.x, f.y, face*260, 40, f.def.atk, "#f5cba7", 6, 1.1);
+      return;
+    }
+    if (id==="tank_red"){
+      f.abilCd = 7;
+      shoot(f,f.x,f.y,face*340,-70,f.def.atk*0.95,"#ff8a70",5,1.2);
+      shoot(f,f.x,f.y,face*360,0,f.def.atk*1.2,"#ff6b4a",6,1.2);
+      shoot(f,f.x,f.y,face*340,70,f.def.atk*0.95,"#ff8a70",5,1.2);
+      return;
+    }
     // default
     f.abilCd=7; f.powerT=3; burst(f.x,f.y,f.def.accent,10);
   }
@@ -1182,6 +1336,97 @@
     ctx.fillRect(r*0.3, r*0.35, r*0.4, r*0.25);
   }
 
+  function drawPacBody(f, r){
+    const t = performance.now() / 120;
+    const mouth = 0.35 + 0.25 * Math.abs(Math.sin(t));
+    ctx.fillStyle = f.flash > 0 ? "#fff" : f.def.color;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, mouth, Math.PI * 2 - mouth);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(r * 0.15, -r * 0.4, r * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    // bow for Ms Pac
+    if (f.def.id === "mspac") {
+      ctx.fillStyle = "#e91e63";
+      ctx.beginPath();
+      ctx.arc(-r * 0.35, -r * 0.75, r * 0.22, 0, Math.PI * 2);
+      ctx.arc(-r * 0.05, -r * 0.85, r * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawFoodBody(f, r){
+    ctx.fillStyle = f.flash > 0 ? "#fff" : f.def.color;
+    ctx.beginPath();
+    ctx.arc(0, r * 0.1, r * 0.85, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#2d6a2d";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.5);
+    ctx.quadraticCurveTo(r * 0.3, -r * 0.9, r * 0.15, -r * 0.2);
+    ctx.stroke();
+  }
+
+  function drawLabyBody(f, r){
+    ctx.fillStyle = f.flash > 0 ? "#fff" : f.def.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#0a3a30";
+    ctx.lineWidth = 2;
+    // maze pattern
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.55, 0, Math.PI * 1.5);
+    ctx.stroke();
+    ctx.fillStyle = "#ffcc00";
+    ctx.font = "bold " + Math.floor(r) + "px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⭐", 0, 2);
+  }
+
+  function drawSonicBody(f, r){
+    // if image failed, draw blue hedgehog ball
+    const superS = f.def.superSonic || f.def.id === "sonic_super";
+    ctx.fillStyle = f.flash > 0 ? "#fff" : (superS ? "#f1c40f" : f.def.color);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    // spines
+    ctx.fillStyle = superS ? "#d4a017" : "#0b4ea2";
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI * 0.7 + i * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4);
+      ctx.lineTo(Math.cos(a - 0.2) * r * 1.25, Math.sin(a - 0.2) * r * 1.25);
+      ctx.lineTo(Math.cos(a + 0.2) * r * 1.25, Math.sin(a + 0.2) * r * 1.25);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.2, -r * 0.1, r * 0.22, r * 0.28, 0, 0, Math.PI * 2);
+    ctx.ellipse(r * 0.25, -r * 0.1, r * 0.22, r * 0.28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(-r * 0.15 + f.facing * 2, -r * 0.08, r * 0.1, 0, Math.PI * 2);
+    ctx.arc(r * 0.3 + f.facing * 2, -r * 0.08, r * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    if (f.spinT > 0) {
+      ctx.strokeStyle = "rgba(94,200,255,.7)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 4 + Math.sin(performance.now() / 40) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
   function drawFighter(f){
     if (f.dead) ctx.globalAlpha=0.28;
     const r=f.r*f.scale;
@@ -1201,25 +1446,44 @@
 
     const img = f.def._imgEl;
     if (img){
-      // soft circle clip background
       ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2);
       ctx.fillStyle = f.flash>0 ? "#fff" : (f.def.color+"cc");
       ctx.fill();
       ctx.save();
       ctx.beginPath(); ctx.arc(0,0,r*0.92,0,Math.PI*2); ctx.clip();
       if (f.facing<0) ctx.scale(-1,1);
+      // Super Sonic golden tint overlay base
+      if (f.def.superSonic) {
+        ctx.fillStyle = "rgba(241,196,15,.35)";
+        ctx.fillRect(-r, -r, r*2, r*2);
+      }
       const size = r*1.7;
       ctx.drawImage(img, -size/2, -size/2, size, size);
       ctx.restore();
       ctx.shadowBlur=0;
       ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=2;
       ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+      if (f.spinT > 0) {
+        ctx.strokeStyle = "rgba(94,200,255,.75)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, r + 5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     } else if (f.def.ghost){
       drawGhostBody(f,r);
     } else if (f.def.snakeDraw){
       drawSnakeBody(f,r);
     } else if (f.def.tankDraw){
       drawTankBody(f,r);
+    } else if (f.def.pacDraw){
+      drawPacBody(f,r);
+    } else if (f.def.foodDraw){
+      drawFoodBody(f,r);
+    } else if (f.def.labyDraw){
+      drawLabyBody(f,r);
+    } else if (f.def.sonicDraw){
+      drawSonicBody(f,r);
     } else {
       ctx.fillStyle=f.flash>0?"#fff":f.def.color;
       ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
