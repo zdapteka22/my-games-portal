@@ -1,18 +1,41 @@
-САЙТ В ИНТЕРНЕТЕ:
+════════════════════════════════════════════════
+  САЙТ РАБОТАЕТ БЕЗ GROK — ЧИТАЙ ВНИМАТЕЛЬНО
+════════════════════════════════════════════════
 
-Портал (GitHub Pages):
+Grok (этот чат) НЕ ХРАНИТ сайт.
+Когда Grok выключен — чат пропадает, НО сайт в
+интернете должен оставаться.
+
+ГЛАВНАЯ ССЫЛКА (сохрани в закладки / WhatsApp):
 https://zdapteka22.github.io/my-games-portal/
+
+ЗАПАСНАЯ ССЫЛКА (CDN, если pages 404):
+https://cdn.jsdelivr.net/gh/zdapteka22/my-games-portal@main/index.html
 
 Марио:
 https://zdapteka22.github.io/my-games-portal/games/minis/mario.html
 
-Меню:
-https://zdapteka22.github.io/my-games-portal/menu.html
 
-Репозиторий:
-https://github.com/zdapteka22/my-games-portal
+НА РАБОЧЕМ СТОЛЕ:
+  ОТКРЫТЬ_САЙТ_BlueCat.html  ← жми это
+  САЙТ_BlueCat.url
+  OPEN_PORTAL_BlueCat.bat
 
-Локально:
-запусти «Открыть_локально.bat» или:
-  python serve_nocache.py
-  http://127.0.0.1:8765/
+
+ЕСЛИ «СТРАНИЦА НЕ НАЙДЕНА»:
+1) Открой ОТКРЫТЬ_САЙТ_BlueCat.html
+2) Жми кнопку 1 (GitHub Pages)
+3) Если 404 — кнопку 2 (CDN)
+4) Если нет интернета — кнопку 4 (папка на ПК)
+5) НЕ используй http://127.0.0.1 если не запускал сервер
+
+
+ЛОКАЛЬНЫЙ СЕРВЕР (необязательно):
+  INSTALL_AUTOSTART.bat — сервер при включении Windows
+  KEEP_ALIVE.bat — держит локальный сервер живым
+
+
+НЕ ПУТАЙ:
+  Grok          = помощник в чате (не сайт)
+  github.io     = сайт 24/7 в интернете
+  127.0.0.1     = только этот ПК + Python
