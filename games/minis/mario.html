@@ -334,7 +334,7 @@
     document.querySelectorAll("#themeBar button").forEach(b => {
       b.classList.toggle("active", b.dataset.theme === id);
     });
-    editMsg("Стиль: " + THEME_META[id].name + " · тайлы, небо и спрайты героев");
+    editMsg("Стиль: " + THEME_META[id].name + " · тайлы, герои И ВРАГИ");
     // обновить превью выбора персонажа под стиль
     if (typeof setPlayChar === "function") setPlayChar(playChar);
   }
@@ -381,10 +381,15 @@
     }
   };
   function themeEnemyImg(kind) {
+    if (!editorTheme || editorTheme === "classic") return null;
     const pack = enemyThemeImgs[editorTheme];
     if (!pack) return null;
     const im = pack[kind];
     return imgReady(im) ? im : null;
+  }
+  /** В стиле World/64/Bros2/Bros3 — только спрайты темы, без «современного» арта */
+  function isThemedPlay() {
+    return !!(editorTheme && editorTheme !== "classic");
   }
 
   function playCharName() {
@@ -3160,18 +3165,22 @@
 
     if (kind === "goomba") {
       const flip = e.vx > 0;
-      // сначала спрайт текущего стиля (World / 64 / Bros 2)
       let ok = false;
+      // World / 64 / Bros 2 / Bros 3 — свои враги (Shy Guy в Bros2 и т.д.)
       const themed = themeEnemyImg("goomba");
       if (themed) ok = drawFullImage(themed, e.x - 2, e.y + bob - 2, e.w + 4, e.h + 4, flip);
-      if (!ok) ok = drawFullImage(imgGoombaArt, e.x - 2, e.y + bob - 2, e.w + 4, e.h + 4, flip);
+      // «классика» или если тема не загрузилась — обычный арт
+      if (!ok && !isThemedPlay()) {
+        ok = drawFullImage(imgGoombaArt, e.x - 2, e.y + bob - 2, e.w + 4, e.h + 4, flip);
+      }
       if (!ok) ok = drawFullImage(imgGoombaPx, e.x, e.y + bob, e.w, e.h, flip);
       if (!ok) {
         const gi = Math.floor(anim / 8 + e.x) % GOOMBA_WALK.length;
         ok = drawSprite(imgGoomba, GOOMBA_WALK[gi], e.x, e.y + bob, e.w, e.h, flip);
       }
       if (!ok) {
-        ctx.fillStyle = "#8b4513";
+        // цвет по теме
+        ctx.fillStyle = editorTheme === "smb2" ? "#e91e63" : editorTheme === "sm64" ? "#a0522d" : "#8b4513";
         ctx.beginPath();
         ctx.ellipse(e.x + e.w / 2, e.y + e.h / 2 + bob, e.w / 2, e.h / 2, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -3182,7 +3191,11 @@
     if (kind === "koopa") {
       const flip = e.vx < 0;
       if (e.shell) {
-        let ok = drawFullImage(imgShell, e.x - 2, e.y + e.h * 0.05, e.w + 4, e.h * 0.95, flip);
+        let ok = false;
+        // в теме — панцирь из спрайта купы
+        const themedK = themeEnemyImg("koopa");
+        if (themedK) ok = drawFullImage(themedK, e.x - 2, e.y + e.h * 0.1, e.w + 4, e.h * 0.9, flip);
+        if (!ok) ok = drawFullImage(imgShell, e.x - 2, e.y + e.h * 0.05, e.w + 4, e.h * 0.95, flip);
         if (!ok) ok = drawFullImage(imgKoopaPx, e.x, e.y + e.h * 0.15, e.w, e.h * 0.85, flip);
         if (!ok) {
           ctx.fillStyle = "#2ecc40";
@@ -3194,11 +3207,13 @@
         let ok = false;
         const themed = themeEnemyImg("koopa");
         if (themed) ok = drawFullImage(themed, e.x - 4, e.y + bob - 4, e.w + 8, e.h + 6, flip);
-        if (!ok) ok = drawFullImage(imgKoopaArt, e.x - 4, e.y + bob - 4, e.w + 8, e.h + 6, flip);
+        if (!ok && !isThemedPlay()) {
+          ok = drawFullImage(imgKoopaArt, e.x - 4, e.y + bob - 4, e.w + 8, e.h + 6, flip);
+        }
         if (!ok) ok = drawFullImage(imgKoopaPx, e.x, e.y + bob, e.w, e.h, flip);
         if (!ok) ok = drawFullImage(imgKoopa, e.x, e.y + bob, e.w, e.h, flip);
         if (!ok) {
-          ctx.fillStyle = "#2ecc40";
+          ctx.fillStyle = editorTheme === "smb2" ? "#a0522d" : "#2ecc40";
           ctx.beginPath();
           ctx.ellipse(e.x + e.w / 2, e.y + e.h * 0.55 + bob, e.w * 0.45, e.h * 0.38, 0, 0, Math.PI * 2);
           ctx.fill();
