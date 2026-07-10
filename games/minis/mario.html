@@ -106,6 +106,7 @@
     .theme-bar button[data-theme="smw"].active { background: #48a030; }
     .theme-bar button[data-theme="sm64"].active { background: #1e88e5; }
     .theme-bar button[data-theme="smb2"].active { background: #ec407a; }
+    .theme-bar button[data-theme="smb3"].active { background: #fb8c00; }
     body.theme-smw { background: linear-gradient(180deg, #5c94fc 0%, #5c94fc 50%, #00a800 50%, #008800 100%); }
     body.theme-sm64 { background: linear-gradient(180deg, #4fc3f7 0%, #81d4fa 45%, #66bb6a 45%, #43a047 100%); }
     body.theme-smb2 { background: linear-gradient(180deg, #b39ddb 0%, #ce93d8 50%, #aed581 50%, #7cb342 100%); }
@@ -158,9 +159,10 @@
     <div class="row theme-bar" id="themeBar">
       <span style="font-weight:800;margin-right:4px">🎨 Стиль:</span>
       <button type="button" data-theme="classic" class="active">Классика</button>
-      <button type="button" data-theme="smw">Mario World</button>
-      <button type="button" data-theme="sm64">Mario 64</button>
+      <button type="button" data-theme="smw">World</button>
+      <button type="button" data-theme="sm64">64</button>
       <button type="button" data-theme="smb2">Bros 2</button>
+      <button type="button" data-theme="smb3">Bros 3</button>
     </div>
     <div class="tools" id="toolBar"></div>
     <div class="row">
@@ -181,7 +183,7 @@
       <button type="button" id="btnPanRight" class="sec">Камера ▶</button>
     </div>
     <p class="help">
-      1) Выбери <b>стиль</b> (World / 64 / Bros 2) → 2) Инструмент → 3) Кликай по полю ·
+      1) Выбери <b>стиль</b> (World / 64 / Bros 2 / Bros 3) → 2) Инструмент → 3) Кликай по полю ·
       ЛКМ — поставить · ПКМ — стереть · Колесо — камера · Esc — выход · Уровни в браузере.
     </p>
   </div>
@@ -192,7 +194,7 @@
   <p class="hint" id="hintText">
     A/D или ←/→ — бег · W / ↑ / Пробел — прыжок (двойной!) · R — заново · 1–9 — уровень (10–12 — панель)<br>
     Уровни стартуют сами после флага · при смерти рестарт · 0 жизней — Луиджи спасёт и воскресит<br>
-    Выбери <b>Марио</b> или <b>Луиджи</b> · стиль World / 64 / Bros 2 в редакторе · 🟣 МЕГА · 🍄⭐💚 · 12 уровней · Бойзер · двойной прыжок.
+    Выбери <b>Марио</b> или <b>Луиджи</b> · стиль World / 64 / Bros 2 / Bros 3 · 🟣 МЕГА · 🍄⭐💚 · 12 уровней · Бойзер · двойной прыжок.
   </p>
   <div class="pad">
     <div class="dirs">
@@ -273,7 +275,7 @@
 
   // ── Темы редактора: Super Mario World / 64 / Bros 2 ──
   const THEME_KEY = "superMarioEditorTheme_v1";
-  let editorTheme = "classic"; // classic | smw | sm64 | smb2
+  let editorTheme = "classic"; // classic | smw | sm64 | smb2 | smb3
   try { editorTheme = localStorage.getItem(THEME_KEY) || "classic"; } catch (e) {}
 
   function loadImg(src) {
@@ -302,13 +304,21 @@
       question: loadImg("sprites/smb2_question.png"),
       pipe: loadImg("sprites/smb2_pipe.png"),
       coin: loadImg("sprites/smb2_coin.png")
+    },
+    smb3: {
+      ground: loadImg("sprites/smb3_ground.png"),
+      brick: loadImg("sprites/smb3_brick.png"),
+      question: loadImg("sprites/smb3_question.png"),
+      pipe: loadImg("sprites/smb3_pipe.png"),
+      coin: loadImg("sprites/smb3_coin.png")
     }
   };
   const THEME_META = {
     classic: { name: "Классика", sky: "#5c94fc", hill: "#78c850", grid: "rgba(255,255,255,.12)" },
     smw: { name: "Mario World", sky: "#6eb5ff", hill: "#3cb043", grid: "rgba(255,255,200,.15)" },
     sm64: { name: "Mario 64", sky: "#4fc3f7", hill: "#66bb6a", grid: "rgba(200,240,255,.18)" },
-    smb2: { name: "Bros 2", sky: "#b39ddb", hill: "#aed581", grid: "rgba(255,200,230,.18)" }
+    smb2: { name: "Bros 2", sky: "#b39ddb", hill: "#aed581", grid: "rgba(255,200,230,.18)" },
+    smb3: { name: "Bros 3", sky: "#5c94fc", hill: "#e8a838", grid: "rgba(255,220,120,.18)" }
   };
   function setEditorTheme(id) {
     if (!THEME_META[id]) id = "classic";
@@ -343,10 +353,11 @@
   const charThemeImgs = {
     smw: { mario: loadImg("sprites/smw_mario.png"), luigi: loadImg("sprites/smw_luigi.png") },
     sm64: { mario: loadImg("sprites/sm64_mario.png"), luigi: loadImg("sprites/sm64_luigi.png") },
-    smb2: { mario: loadImg("sprites/smb2_mario.png"), luigi: loadImg("sprites/smb2_luigi.png") }
+    smb2: { mario: loadImg("sprites/smb2_mario.png"), luigi: loadImg("sprites/smb2_luigi.png") },
+    smb3: { mario: loadImg("sprites/smb3_mario.png"), luigi: loadImg("sprites/smb3_luigi.png") }
   };
 
-  // Враги под стиль World / 64 / Bros 2 (раньше всегда была «классика»)
+  // Враги под стиль World / 64 / Bros 2 / Bros 3
   const enemyThemeImgs = {
     smw: {
       goomba: loadImg("sprites/smw_goomba.png"),
@@ -362,6 +373,11 @@
       goomba: loadImg("sprites/smb2_goomba.png"), // Shy Guy
       koopa: loadImg("sprites/smb2_koopa.png"),
       bowser: loadImg("sprites/smw_bowser.png")
+    },
+    smb3: {
+      goomba: loadImg("sprites/smb3_goomba.png"),
+      koopa: loadImg("sprites/smb3_koopa.png"),
+      bowser: loadImg("sprites/smb3_bowser.png")
     }
   };
   function themeEnemyImg(kind) {
@@ -3441,6 +3457,11 @@
         sky.addColorStop(0, "#ce93d8");
         sky.addColorStop(0.55, "#b39ddb");
         sky.addColorStop(1, "#e1bee7");
+        ctx.fillStyle = sky;
+      } else if (editorTheme === "smb3") {
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, "#5c94fc");
+        sky.addColorStop(1, "#87ceeb");
         ctx.fillStyle = sky;
       } else if (editorTheme === "smw") {
         ctx.fillStyle = "#6eb5ff";

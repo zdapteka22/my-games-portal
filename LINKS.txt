@@ -1,10 +1,18 @@
-﻿ПОСТОЯННАЯ ССЫЛКА (работает всегда, с любого устройства):
+САЙТ В ИНТЕРНЕТЕ:
 
+Портал (GitHub Pages):
 https://zdapteka22.github.io/my-games-portal/
 
-Марио: https://zdapteka22.github.io/my-games-portal/games/minis/mario.html
-Змейка: https://zdapteka22.github.io/my-games-portal/games/minis/snake.html
-Пакман: https://zdapteka22.github.io/my-games-portal/games/minis/pacman.html
+Марио:
+https://zdapteka22.github.io/my-games-portal/games/minis/mario.html
 
-Локально (только на этом ПК, когда запущен OPEN_PORTAL):
-http://127.0.0.1:8765/
+Меню:
+https://zdapteka22.github.io/my-games-portal/menu.html
+
+Репозиторий:
+https://github.com/zdapteka22/my-games-portal
+
+Локально:
+запусти «Открыть_локально.bat» или:
+  python serve_nocache.py
+  http://127.0.0.1:8765/
