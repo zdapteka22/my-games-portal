@@ -1501,6 +1501,7 @@
   let deathTimer = 0;      // анимация смерти → авто-рестарт уровня (если есть жизни)
   let playerDown = false;  // 0 жизней: Марио выбыл, Луиджи доигрывает и воскрешает
   let autoNextTimer = 0;   // после флага — авто-следующий уровень
+  let bothDeadTimer = 0;   // оба героя выбыли → игра с начала
   // для двойного прыжка: срабатывает только при новом нажатии, а не удержании
   let jumpHeld = false;
 
@@ -1803,15 +1804,55 @@
     lives--;
     if (lives < 0) lives = 0;
     document.getElementById("lives").textContent = lives;
-    if (lives <= 0 && playerDown) {
-      dead = true;
-      document.getElementById("status").textContent = "GAME OVER! Марио и Луиджи выбыли · R — сначала";
-    } else if (lives <= 0 && !playerDown) {
+    if (playerDown) {
+      // Марио уже выбыл — оба мертвы → игра заново
+      luigiRespawnT = 0;
+      startBothDeadRestart("Марио и Луиджи выбыли! Игра начинается заново…");
+    } else if (lives <= 0) {
+      // жизней нет, но Марио ещё на поле — Луиджи не респавнится
+      luigiRespawnT = 0;
       document.getElementById("status").textContent = "Луиджи выбыл! Жизней: 0 · Марио один";
-      luigiRespawnT = 0; // без респавна без жизней
     } else {
       document.getElementById("status").textContent = "Луиджи! Жизней: " + lives + " · скоро вернётся…";
       luigiRespawnT = 120; // ~2 сек респавн рядом с Марио
+    }
+  }
+
+  /** Оба героя мертвы → таймер → игра с 1 уровня */
+  function startBothDeadRestart(msg) {
+    if (bothDeadTimer > 0 || editing || won) return;
+    bothDeadTimer = 100; // ~1.6 сек
+    dead = true;
+    playerDown = true;
+    luigiRespawnT = 0;
+    deathTimer = 0;
+    autoNextTimer = 0;
+    document.getElementById("status").textContent = msg || "GAME OVER! Игра начинается заново…";
+  }
+
+  function restartGameFull() {
+    bothDeadTimer = 0;
+    dead = false;
+    playerDown = false;
+    deathTimer = 0;
+    lives = 3;
+    coinCount = 0;
+    try { localStorage.setItem(PROGRESS_KEY, "1"); } catch (e) {}
+    maxUnlocked = Math.max(1, maxUnlocked);
+    currentLevelIndex = 0;
+    document.getElementById("editSlot").value = "1";
+    resetPlayer(true);
+    document.getElementById("status").textContent = "Игра заново! Уровень 1 · 3 жизни";
+    try { sfx.oneUp(); } catch (e) {}
+  }
+
+  function checkBothDead() {
+    if (editing || won || bothDeadTimer > 0) return;
+    const marioOut = playerDown || (dead && deathTimer <= 0);
+    const luigiOut = !luigi || (!luigi.alive && luigiRespawnT <= 0);
+    // оба выбыли и жизней нет (или марио в playerDown)
+    if (marioOut && luigiOut) {
+      startBothDeadRestart("Оба выбыли! Игра начинается заново…");
     }
   }
 
@@ -1900,6 +1941,7 @@
     dead = false;
     deathTimer = 0;
     playerDown = false;
+    bothDeadTimer = 0;
     autoNextTimer = 0;
     invuln = 0;
     anim = 0;
@@ -2285,11 +2327,16 @@
     }
     sfx.die();
     if (lives <= 0) {
-      // напарник доигрывает и воскрешает
+      // напарник доигрывает; если напарник тоже мёртв — игра заново
       playerDown = true;
       dead = false;
-      document.getElementById("status").textContent =
-        playCharName() + " выбыл! " + partnerName() + " проходит уровень…";
+      const partnerAlive = luigi && (luigi.alive || luigiRespawnT > 0);
+      if (!partnerAlive) {
+        startBothDeadRestart(playCharName() + " и " + partnerName() + " выбыли! Игра заново…");
+      } else {
+        document.getElementById("status").textContent =
+          playCharName() + " выбыл! " + partnerName() + " проходит уровень…";
+      }
     } else {
       deathTimer = 100;
       document.getElementById("status").textContent =
@@ -2749,6 +2796,22 @@
       cameraX = editorCamera;
       return;
     }
+    // оба героя выбыли → игра с начала
+    if (bothDeadTimer > 0) {
+      anim++;
+      bothDeadTimer--;
+      if (player) {
+        player.vy = (player.vy || 0) + GRAV * 0.9;
+        player.y += player.vy;
+        player.vx = 0;
+      }
+      if (luigi && !luigi.alive) {
+        luigi.vy = (luigi.vy || 0) + GRAV * 0.9;
+        luigi.y += luigi.vy;
+      }
+      if (bothDeadTimer <= 0) restartGameFull();
+      return;
+    }
     // победа: пауза, затем авто-следующий уровень (как в оригинале)
     if (won) {
       anim++;
@@ -2774,6 +2837,10 @@
     }
     if (dead && !playerDown) return;
     anim++;
+    // на всякий случай проверяем «оба выбыли» каждый кадр
+    if (playerDown && luigi && !luigi.alive && luigiRespawnT <= 0 && lives <= 0) {
+      checkBothDead();
+    }
 
     if (!playerDown) {
       const left = keys["ArrowLeft"] || keys["a"] || keys["A"] || keys._left;
