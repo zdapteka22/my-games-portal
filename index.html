@@ -2,7 +2,11 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a2a4a">
   <title>Портал любимых игр — Blue Cat | бесплатные онлайн игры</title>
   <meta name="description" content="Портал любимых игр (Blue Cat) — бесплатные онлайн игры в браузере: Змейка, Пакман, Марио, Смешарики, Танчики. Играй без скачивания.">
   <meta name="keywords" content="портал любимых игр, портал любимых игр blue cat, blue cat игры, блю кэт портал, онлайн игры бесплатно, змейка, пакман, марио, смешарики, танчики, мини игры">
@@ -415,11 +419,33 @@
     .review-card-static p { margin: 0 0 8px; color: #ddd; font-size: 14px; line-height: 1.4; }
     .review-card-static .review-game { color: var(--yg-muted); font-size: 12px; }
     @media (max-width: 800px) {
-      .classics-grid { grid-template-columns: 1fr; }
+      .classics-grid { grid-template-columns: 1fr; gap: 12px; }
       .nav-cats a { display: none; }
+      .nav-cats .play-link { display: inline-flex !important; }
       .nav-cats .lang-switch { display: flex; }
       .search { display: none; }
-      .header { gap: 10px; }
+      .header { gap: 8px; padding: 0 10px; height: 52px; }
+      .logo { font-size: 14px; }
+      .logo-mark { width: 30px; height: 30px; }
+      .page { padding: 14px 12px 40px; }
+      .brand-banner { padding: 14px; gap: 10px; }
+      .brand-banner-title { font-size: 1.35rem; }
+      .portal-hero { padding: 18px 14px; }
+      .portal-actions { gap: 8px; }
+      .btn-play, .btn-secondary { min-height: 48px; font-size: 15px; flex: 1 1 auto; }
+      .classic-card .cc-art { height: 160px; }
+      .classic-card .cc-play { height: 48px; font-size: 16px; }
+      .reviews-filters { gap: 6px; }
+      .rev-filter { min-height: 40px; padding: 8px 12px; font-size: 13px; }
+      .menu-grid, .catalog { gap: 10px; }
+      a.menu-item, a.game-card { min-height: 72px; }
+      footer { font-size: 13px; line-height: 1.6; padding: 0 4px 20px; }
+      /* удобнее тапать на телефоне */
+      * { -webkit-tap-highlight-color: rgba(94,176,255,.2); }
+    }
+    @media (max-width: 480px) {
+      .portal-actions { flex-direction: column; }
+      .btn-play, .btn-secondary { width: 100%; }
     }
     a.classic-card {
       display: flex; flex-direction: column;

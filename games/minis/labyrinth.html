@@ -2,7 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a1410">
   <title>Лабиринт — Ёжик / Пин vs Няня</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,12 +43,14 @@
     }
     .chars button.active { border-color: #ffcc00; background: rgba(60,50,10,.55); }
     .chars img { width: 36px; height: 36px; object-fit: contain; }
-    .pad { display: none; grid-template-columns: 60px 60px 60px; gap: 6px; }
-    @media (max-width: 600px), (pointer: coarse) { .pad { display: grid; } }
+    .pad { display: none; grid-template-columns: 68px 68px 68px; gap: 8px; margin-top: 8px; touch-action: none; }
+    @media (max-width: 900px), (pointer: coarse), (hover: none) { .pad { display: grid; } }
     .pad button {
-      width: 60px; height: 48px; border: none; border-radius: 12px; font-size: 20px; font-weight: 800;
-      background: rgba(100,255,140,.2); color: #fff; border: 1px solid rgba(100,255,140,.35); cursor: pointer;
+      width: 68px; height: 56px; border: none; border-radius: 14px; font-size: 22px; font-weight: 800;
+      background: rgba(100,255,140,.25); color: #fff; border: 2px solid rgba(100,255,140,.45); cursor: pointer;
+      touch-action: none; -webkit-tap-highlight-color: transparent;
     }
+    .pad button:active { background: rgba(255,204,0,.4); }
     .pad .empty { visibility: hidden; }
   </style>
 </head>

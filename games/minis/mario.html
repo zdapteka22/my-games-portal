@@ -2,15 +2,22 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#5c94fc">
   <title>Марио — 9 уровней</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { overscroll-behavior: none; }
     body {
-      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
       font-family: "Segoe UI", Arial, sans-serif; color: #fff;
       background: linear-gradient(180deg, #5c94fc 0%, #5c94fc 55%, #00a800 55%, #008800 100%);
-      padding: 12px; gap: 8px;
+      padding: 8px 8px calc(12px + env(safe-area-inset-bottom, 0px)); gap: 6px;
+      touch-action: manipulation;
     }
     .top {
       width: min(900px, 98vw); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -48,16 +55,57 @@
     }
     #editMsg.show { display: block; }
     .pad {
-      display: none; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;
+      display: none;
+      width: min(900px, 98vw);
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+      z-index: 50;
+      user-select: none;
+      -webkit-user-select: none;
     }
-    @media (max-width: 700px), (pointer: coarse) { .pad { display: flex; } }
-    .pad .dirs { display: grid; grid-template-columns: 56px 56px 56px; gap: 4px; }
+    /* телефон / тач — всегда показываем кнопки */
+    @media (max-width: 900px), (pointer: coarse), (hover: none) {
+      .pad { display: flex; }
+      body { padding-bottom: 8px; }
+      .hint { font-size: 11px; max-width: 98vw; }
+      .hud { font-size: 12px; padding: 6px 10px; }
+      .top a, .top button.nav { padding: 10px 12px; font-size: 13px; min-height: 44px; }
+      canvas { width: 100%; max-width: 98vw; border-width: 3px; }
+    }
+    .pad .dirs {
+      display: grid;
+      grid-template-columns: 64px 64px 64px;
+      grid-template-rows: 56px 56px;
+      gap: 6px;
+    }
     .pad button {
-      min-width: 56px; height: 48px; border: 3px solid #fff; border-radius: 10px; font-size: 18px; font-weight: 800;
-      background: rgba(0,0,0,.4); color: #fff; cursor: pointer;
+      min-width: 64px; height: 56px; border: 3px solid #fff; border-radius: 14px;
+      font-size: 22px; font-weight: 900;
+      background: rgba(0,0,0,.55); color: #fff; cursor: pointer;
+      touch-action: none;
+      box-shadow: 0 4px 0 rgba(0,0,0,.35);
     }
-    .pad .empty { visibility: hidden; }
-    .pad .jump { min-width: 100px; background: #e52521; }
+    .pad button:active, .pad button.pressed {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 rgba(0,0,0,.35);
+      background: rgba(255,204,0,.35);
+    }
+    .pad .empty { visibility: hidden; min-width: 64px; height: 56px; }
+    .pad .jump {
+      min-width: 120px; height: 120px; border-radius: 50%;
+      background: #e52521; font-size: 16px; line-height: 1.15;
+      box-shadow: 0 6px 0 #8b0000;
+    }
+    .pad .jump:active, .pad .jump.pressed {
+      box-shadow: 0 2px 0 #8b0000;
+    }
+    .pad .actions { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+    .pad .btn-run {
+      min-width: 72px; height: 48px; font-size: 13px;
+      background: #2563eb;
+    }
 
     /* Level select */
     .levels {
@@ -196,16 +244,19 @@
     Уровни стартуют сами после флага · при смерти рестарт · 0 жизней — Луиджи спасёт и воскресит<br>
     Выбери <b>Марио</b> или <b>Луиджи</b> · стиль World / 64 / Bros 2 / Bros 3 · 🟣 МЕГА · 🍄⭐💚 · 12 уровней · Бойзер · двойной прыжок.
   </p>
-  <div class="pad">
+  <div class="pad" id="touchPad" aria-label="Управление с телефона">
     <div class="dirs">
       <span class="empty"></span>
-      <button type="button" id="btnUp">▲</button>
+      <button type="button" id="btnUp" aria-label="Вверх">▲</button>
       <span class="empty"></span>
-      <button type="button" id="btnLeft">◀</button>
-      <span class="empty"></span>
-      <button type="button" id="btnRight">▶</button>
+      <button type="button" id="btnLeft" aria-label="Влево">◀</button>
+      <button type="button" id="btnDown" aria-label="Вниз">▼</button>
+      <button type="button" id="btnRight" aria-label="Вправо">▶</button>
     </div>
-    <button type="button" class="jump" id="btnJump">ПРЫЖОК</button>
+    <div class="actions">
+      <button type="button" class="jump" id="btnJump" aria-label="Прыжок">ПРЫЖОК</button>
+      <button type="button" class="btn-run" id="btnRestart" aria-label="Заново">R · заново</button>
+    </div>
   </div>
 <script>
 (() => {
@@ -4852,18 +4903,55 @@
   function bindHold(id, key) {
     const el = document.getElementById(id);
     if (!el) return;
-    const on = (e) => { e.preventDefault(); keys[key] = true; };
-    const off = (e) => { e.preventDefault(); keys[key] = false; };
-    el.addEventListener("mousedown", on);
-    el.addEventListener("mouseup", off);
-    el.addEventListener("mouseleave", off);
+    const on = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      keys[key] = true;
+      el.classList.add("pressed");
+      try { unlockMusicOnce(); } catch (err) {}
+    };
+    const off = (e) => {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      keys[key] = false;
+      el.classList.remove("pressed");
+    };
+    el.addEventListener("pointerdown", on);
+    el.addEventListener("pointerup", off);
+    el.addEventListener("pointercancel", off);
+    el.addEventListener("pointerleave", off);
     el.addEventListener("touchstart", on, { passive: false });
     el.addEventListener("touchend", off);
+    el.addEventListener("touchcancel", off);
   }
   bindHold("btnLeft", "_left");
   bindHold("btnRight", "_right");
   bindHold("btnUp", "_jump");
+  bindHold("btnDown", "ArrowDown");
   bindHold("btnJump", "_jump");
+  const btnRestart = document.getElementById("btnRestart");
+  if (btnRestart) {
+    btnRestart.addEventListener("click", (e) => {
+      e.preventDefault();
+      resetPlayer(true);
+    });
+  }
+
+  // всегда показывать тач-пад на телефонах (даже если media query сбойнул)
+  (function forceTouchPad() {
+    const pad = document.getElementById("touchPad");
+    if (!pad) return;
+    const isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
+    if (isTouch || window.innerWidth <= 900) {
+      pad.style.display = "flex";
+    }
+  })();
+
+  // не скроллить страницу пальцем во время игры
+  document.body.addEventListener("touchmove", (e) => {
+    if (e.target.closest && e.target.closest(".pad, canvas, .editor")) {
+      e.preventDefault();
+    }
+  }, { passive: false });
 
   // start
   try {
