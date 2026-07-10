@@ -246,7 +246,8 @@
     robonanny: "../../images/robonanny.png",
     pacman: "../../images/pacman.png",
     cat: "../../images/blue-cat.svg",
-    sonic: "../../images/sonic.svg",
+    sonic: "../../images/sonic.png",
+    sonic_super: "../../images/sonic_super.png",
     mario_art: "mario_art.png",
     mario: "sprites/smb3_mario.png",
     mario_walk: "sprites/smb3_mario_walk.png",
@@ -459,12 +460,12 @@
       desc:"Маленькая птичка.", abilityDesc:"Рывок вверх. 6 с." },
 
     // —— СОНИК ——
-    { id:"sonic", name:"Соник", from:"Sonic", group:"sonic", emoji:"💨", img:IMG.sonic, color:"#1a6fd4", accent:"#5ec8ff",
+    { id:"sonic", name:"Соник", from:"Sonic", group:"sonic", emoji:"💨", img:IMG.sonic, imgFallbacks:["../../images/sonic.svg"], color:"#1a6fd4", accent:"#5ec8ff",
       hp:105, speed:4.2, atk:15, rate:0.7, style:"spin", attackName:"Удар", abilityName:"Spin Dash",
-      desc:"Самый быстрый! Все против всех.", abilityDesc:"Спин-дэш: огромная скорость и урон. 6 с.", sonicDraw:true },
-    { id:"sonic_super", name:"Супер Соник", from:"Sonic", group:"sonic", emoji:"⚡", img:IMG.sonic, color:"#f1c40f", accent:"#fff59d",
+      desc:"Оригинальный арт. Самый быстрый!", abilityDesc:"Спин-дэш: огромная скорость и урон. 6 с.", sonicDraw:true },
+    { id:"sonic_super", name:"Супер Соник", from:"Sonic", group:"sonic", emoji:"⚡", img:IMG.sonic_super, imgFallbacks:[IMG.sonic, "../../images/sonic.svg"], color:"#f1c40f", accent:"#fff59d",
       hp:120, speed:4.5, atk:17, rate:0.65, style:"spin", attackName:"Молния", abilityName:"Супер-кольца",
-      desc:"Золотая форма.", abilityDesc:"Неуязвимость 3 сек. + урон. 10 с.", sonicDraw:true, superSonic:true }
+      desc:"Оригинальный золотой арт.", abilityDesc:"Неуязвимость 3 сек. + урон. 10 с.", sonicDraw:true, superSonic:true }
   ];
 
   const GROUPS = [
