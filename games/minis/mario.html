@@ -2191,6 +2191,24 @@
     won = true;
     playerDown = false;
     deathTimer = 0;
+    // Луиджи не задерживает: сразу «на финише», не нужно ждать
+    if (luigi) {
+      luigi.finished = true;
+      luigi.alive = true;
+      luigi.vx = 0;
+      luigi.vy = 0;
+      // поставить рядом с флагом, чтобы не торчал позади
+      let flagX = levelW - 4 * TILE;
+      for (const p of platforms) {
+        if (p.type === "flag" || p.type === "flagpole") {
+          flagX = p.x;
+          break;
+        }
+      }
+      luigi.x = flagX - 10;
+      luigi.y = GROUND_Y - (luigi.h || 44);
+      luigiFinishedMsg = 0;
+    }
     sfx.win();
     if (currentLevelIndex + 1 >= maxUnlocked && currentLevelIndex < NUM_LEVELS - 1) {
       maxUnlocked = currentLevelIndex + 2;
@@ -2201,9 +2219,9 @@
     }
     updateLevelBar();
     if (currentLevelIndex < NUM_LEVELS - 1) {
-      // как в оригинале: пауза «COURSE CLEAR» → авто-следующий уровень
-      autoNextTimer = 150;
-      document.getElementById("status").textContent = "УРОВЕНЬ ПРОЙДЕН! След. уровень…";
+      // короткая пауза и сразу следующий — без ожидания Луиджи
+      autoNextTimer = 70;
+      document.getElementById("status").textContent = "УРОВЕНЬ ПРОЙДЕН! → дальше…";
     } else {
       autoNextTimer = 0;
       document.getElementById("status").textContent = "ВСЕ 12 УРОВНЕЙ! 🏆 R — сначала";
@@ -2265,7 +2283,21 @@
       }
     }
 
-    const spd = MOVE * 0.95
+    // Луиджи догоняет игрока, чтобы не тормозил прохождение
+    let catchUp = 1;
+    if (player && !playerDown) {
+      const gap = player.x - luigi.x;
+      if (gap > 120) catchUp = 1.35;
+      if (gap > 220) catchUp = 1.7;
+      if (gap > 360) {
+        // далеко отстал — телепорт ближе к Марио
+        luigi.x = Math.max(20, player.x - 70);
+        luigi.y = player.y;
+        luigi.vy = 0;
+        catchUp = 1.2;
+      }
+    }
+    const spd = MOVE * 1.05 * catchUp
       * (luigi.megaTimer > 0 ? 1.3 : luigi.big ? 1.08 : 1)
       * (luigi.starTimer > 0 ? 1.12 : 1);
     luigi.facing = 1;
@@ -2507,12 +2539,14 @@
           document.getElementById("status").textContent = "💚 ЛУИДЖИ СПАС! Марио воскрес!";
           sfx.oneUp();
           completeLevel();
-        } else {
+        } else if (!won) {
+          // игрок ещё не у флага — бонус, но уровень не блокируем
           coinCount += 3;
           document.getElementById("coins").textContent = coinCount;
-          document.getElementById("status").textContent = "💚 ЛУИДЖИ ДОШЁЛ ДО ФЛАГА! (+3)";
-          sfx.win();
+          document.getElementById("status").textContent = "💚 Луиджи у флага! (+3) Добеги сам!";
+          sfx.coin();
         }
+        // если won уже true — ничего не ждём, Луиджи просто на финише
         break;
       }
     }
@@ -2996,10 +3030,12 @@
       }
     }
 
+    // Достаточно, чтобы до флага дошёл ИГРОК — Луиджи ждать не нужно
     if (!playerDown) {
       for (const p of platforms) {
         if ((p.type === "flag" || p.type === "flagpole") && rects(player, p)) {
           completeLevel();
+          break;
         }
       }
     }
