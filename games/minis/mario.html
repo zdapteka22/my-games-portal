@@ -1570,6 +1570,8 @@
       phase: e.phase || 0,
       baseY: e.baseY != null ? e.baseY : (e.y != null ? e.y : GROUND_Y - 40),
       linkId: e.linkId != null ? e.linkId : null,
+      vy: e.vy != null ? e.vy : 0,
+      onGround: false,
       _uid: e._uid || ("e" + Date.now() + "_" + Math.random().toString(36).slice(2, 7))
     };
     if (e.linkId != null && Number(e.linkId) >= nextLinkId) nextLinkId = Number(e.linkId) + 1;
@@ -2060,6 +2062,42 @@
         ent.x = p.x + p.w;
         ent.vx = 0;
       }
+    }
+  }
+
+  /** Гравитация для врагов — падают с неба/платформ, а не висят в воздухе */
+  function applyEnemyGravity(e, opts) {
+    opts = opts || {};
+    if (e.vy == null) e.vy = 0;
+    e.vy += GRAV * (opts.gravScale != null ? opts.gravScale : 1);
+    if (e.vy > 16) e.vy = 16;
+    e.y += e.vy;
+    e.onGround = false;
+    for (const p of platforms) {
+      if (!solid(p)) continue;
+      if (!rects(e, p)) continue;
+      // приземление сверху
+      if (e.vy >= 0 && (e.y + e.h - e.vy) <= p.y + 8) {
+        e.y = p.y - e.h;
+        e.vy = 0;
+        e.onGround = true;
+      } else if (e.vy < 0 && (e.y - e.vy) >= p.y + p.h - 6) {
+        // ударился головой о блок
+        e.y = p.y + p.h;
+        e.vy = 0;
+      } else if (p.type === "pipe" || p.type === "brick" || p.type === "question" || p.type === "used") {
+        // боковой толчок
+        if (e.vx > 0) e.x = p.x - e.w - 1;
+        else if (e.vx < 0) e.x = p.x + p.w + 1;
+        if (opts.reverseOnWall !== false) {
+          e.vx *= -1;
+          if (e.facing != null) e.facing = e.vx >= 0 ? 1 : -1;
+        }
+      }
+    }
+    // упал в пропасть
+    if (e.y > H + 100) {
+      e.alive = false;
     }
   }
 
@@ -2850,24 +2888,7 @@
         e.x += e.vx;
         if (e.x < 0) { e.x = 0; e.vx = Math.abs(e.vx); e.facing = 1; }
         if (e.x > levelW - e.w) { e.x = levelW - e.w; e.vx = -Math.abs(e.vx); e.facing = -1; }
-        let onPlat = false;
-        for (const p of platforms) {
-          if (!solid(p)) continue;
-          if (e.x + e.w > p.x && e.x < p.x + p.w && Math.abs(e.y + e.h - p.y) < 8) {
-            onPlat = true;
-            e.y = p.y - e.h;
-          }
-          if (rects({ x: e.x, y: e.y, w: e.w, h: e.h }, p) && (p.type === "pipe" || p.type === "brick" || p.type === "question")) {
-            if (e.vx > 0) e.x = p.x - e.w - 1;
-            else e.x = p.x + p.w + 1;
-            e.vx *= -1;
-            e.facing = e.vx >= 0 ? 1 : -1;
-          }
-        }
-        if (!onPlat) {
-          if (e.y < GROUND_Y - e.h) e.y = Math.min(e.y + 4, GROUND_Y - e.h);
-          else e.y = GROUND_Y - e.h;
-        }
+        applyEnemyGravity(e); // падает, если поставили в небе
       } else if (kind === "bowser") {
         // Бойзер тоже целится в ближайшего героя (Марио / Луиджи)
         const target = nearestHero(e);
@@ -2884,22 +2905,7 @@
         e.x += e.vx;
         if (e.x < 0) { e.x = 0; e.facing = 1; }
         if (e.x > levelW - e.w) { e.x = levelW - e.w; e.facing = -1; }
-        let onPlat = false;
-        for (const p of platforms) {
-          if (!solid(p)) continue;
-          if (e.x + e.w > p.x && e.x < p.x + p.w && Math.abs(e.y + e.h - p.y) < 10) {
-            onPlat = true;
-            e.y = p.y - e.h;
-          }
-          if (rects({ x: e.x, y: e.y, w: e.w, h: e.h }, p) && (p.type === "pipe" || p.type === "brick" || p.type === "question")) {
-            if (e.vx > 0) e.x = p.x - e.w - 1;
-            else e.x = p.x + p.w + 1;
-          }
-        }
-        if (!onPlat) {
-          if (e.y < GROUND_Y - e.h) e.y = Math.min(e.y + 5, GROUND_Y - e.h);
-          else e.y = GROUND_Y - e.h;
-        }
+        applyEnemyGravity(e, { reverseOnWall: false });
         // огненные шары в сторону цели
         e.fireCd = (e.fireCd || 0) - 1;
         if (e.fireCd <= 0 && Math.abs(dx) < 420) {
@@ -2920,32 +2926,35 @@
         e.life = (e.life != null ? e.life : 180) - 1;
         if (e.life <= 0 || e.x < cameraX - 100 || e.x > cameraX + W + 100) e.alive = false;
       } else {
-        // goomba / koopa / spiny: если герой рядом — идут к ближайшему (Марио или Луиджи)
+        // goomba / koopa / spiny — ходят и ПАДАЮТ (не висят в небе)
         if (!(kind === "koopa" && e.shell)) {
           const target = nearestHero(e);
-          if (target) {
+          if (target && e.onGround) {
             const dxH = target.x - e.x;
             if (Math.abs(dxH) < 260 && Math.abs((target.y || 0) - e.y) < 90) {
-              const want = dxH > 0 ? Math.abs(e.vx) || 1.2 : -(Math.abs(e.vx) || 1.2);
-              // плавно разворачиваемся к цели
+              const base = Math.abs(e.vx) > 0.3 ? Math.abs(e.vx) : 1.2;
+              const want = dxH > 0 ? base : -base;
               if (Math.sign(e.vx) !== Math.sign(want) || Math.abs(e.vx) < 0.2) e.vx = want;
             }
           }
         }
         e.x += e.vx;
-        let onPlat = false;
-        for (const p of platforms) {
-          if (!solid(p)) continue;
-          if (e.x + e.w > p.x && e.x < p.x + p.w && Math.abs(e.y + e.h - p.y) < 6) {
-            onPlat = true;
-            if (e.x <= p.x || e.x + e.w >= p.x + p.w) e.vx *= -1;
+        if (e.x < 0) { e.x = 0; e.vx = Math.abs(e.vx) || 1.2; }
+        if (e.x > levelW - e.w) { e.x = levelW - e.w; e.vx = -(Math.abs(e.vx) || 1.2); }
+        // у края платформы — разворот (только на земле)
+        if (e.onGround && !(kind === "koopa" && e.shell && Math.abs(e.vx) > 2)) {
+          const probeX = e.vx >= 0 ? e.x + e.w + 4 : e.x - 4;
+          let groundAhead = false;
+          for (const p of platforms) {
+            if (!solid(p)) continue;
+            if (probeX > p.x && probeX < p.x + p.w && Math.abs(p.y - (e.y + e.h)) < 12) {
+              groundAhead = true;
+              break;
+            }
           }
-          if (rects({ x: e.x, y: e.y, w: e.w, h: e.h }, p) && p.type === "pipe") {
-            e.vx *= -1;
-            e.x += e.vx * 2;
-          }
+          if (!groundAhead) e.vx *= -1;
         }
-        if (!onPlat && e.y >= H - 120) e.vx *= -1;
+        applyEnemyGravity(e, { reverseOnWall: true });
       }
 
       if (playerDown) continue;
