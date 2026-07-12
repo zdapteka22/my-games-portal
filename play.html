@@ -273,22 +273,41 @@
     const wrap = document.getElementById("playWrap");
     const raw = document.getElementById("openRawBtn");
     const src = gameSrc();
+    // Локальные игры портала
     if (src) {
-      wrap.innerHTML = '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(src) + '" allow="fullscreen; gamepad; autoplay" allowfullscreen></iframe>';
-      if (raw) { raw.href = src; raw.hidden = false; }
-    } else if (meta.externalUrl) {
-      wrap.innerHTML =
-        '<div class="ext-box">' +
-        '<div class="big">' + esc(meta.emoji || "🎮") + '</div>' +
-        "<h2 style='margin-bottom:8px'>" + esc(meta.title) + "</h2>" +
-        "<p style='color:#aaa;margin-bottom:16px;max-width:480px;margin-left:auto;margin-right:auto'>" + esc(meta.desc) + "</p>" +
-        '<a class="btn btn-go" style="font-size:16px;padding:14px 22px" href="' + esc(meta.externalUrl) + '" target="_blank" rel="noopener">▶ Играть на Игроутке</a>' +
-        '<p class="hint" style="margin-top:14px">Откроется в новой вкладке · igroutka.ru</p></div>';
-      if (raw) { raw.href = meta.externalUrl; raw.hidden = false; }
-    } else {
-      wrap.innerHTML = "<div class='missing'>Игра не найдена. <a href='index.html'>На портал</a></div>";
-      if (raw) raw.hidden = true;
+      wrap.innerHTML = '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(src) + '" allow="fullscreen; gamepad; autoplay; clipboard-write" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>';
+      if (raw) { raw.href = src; raw.hidden = false; raw.textContent = "↗ На весь экран"; }
+      return;
     }
+    // Игры с Игроутки — открываем НА НАШЕМ сайте (iframe), не уводим на igroutka
+    if (meta.externalUrl) {
+      const url = meta.externalUrl;
+      wrap.innerHTML =
+        '<div style="position:relative;width:100%;min-height:62vh;background:#000">' +
+        '<div id="extLoading" style="position:absolute;inset:0;display:grid;place-items:center;color:#aaa;z-index:1;pointer-events:none;font-size:14px">' +
+        '<div style="text-align:center"><div style="font-size:2.5rem;margin-bottom:8px">' + esc(meta.emoji || "🎮") + '</div>' +
+        'Загрузка на Blue Cat…</div></div>' +
+        '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(url) + '" ' +
+        'style="width:100%;height:min(78vh,900px);min-height:420px;border:0;display:block;background:#000;position:relative;z-index:2" ' +
+        'allow="fullscreen; gamepad; autoplay; clipboard-write" allowfullscreen ' +
+        'referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
+      if (raw) { raw.href = url; raw.hidden = false; raw.textContent = "↗ Открыть отдельно"; }
+      // если iframe заблокирован — запасной блок
+      const frame = document.getElementById("gameFrame");
+      if (frame) {
+        frame.addEventListener("load", function () {
+          const ld = document.getElementById("extLoading");
+          if (ld) ld.style.display = "none";
+        });
+        setTimeout(function () {
+          const ld = document.getElementById("extLoading");
+          if (ld) ld.style.display = "none";
+        }, 4000);
+      }
+      return;
+    }
+    wrap.innerHTML = "<div class='missing'>Игра не найдена. <a href='index.html'>На портал</a></div>";
+    if (raw) raw.hidden = true;
   }
 
   function fillHeader() {
@@ -298,7 +317,7 @@
     document.getElementById("descText").textContent = meta.desc || "—";
     document.getElementById("descMeta").textContent =
       "Жанр: " + (meta.genre || "—") + " · Оценка: " + (meta.rating || "—") +
-      (meta.externalUrl ? " · Внешняя игра" : " · На портале");
+      (meta.externalUrl ? " · Играется на Blue Cat (каталог Игроутки)" : " · На портале");
   }
 
   // tabs

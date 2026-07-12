@@ -250,7 +250,8 @@
       <button type="button" class="btn btn-sec" id="randBtn">🎲 Случайный</button>
     </div>
     <div class="load-bar" id="loadBar" title="Загрузка картинок"><i id="loadFill"></i></div>
-    <p class="sub" id="loadText" style="margin-top:8px;margin-bottom:0;text-align:center">Загрузка картинок…</p>
+    <p class="sub" id="loadText" style="margin-top:8px;margin-bottom:0;text-align:center">Загрузка оригинальных артов героев…</p>
+    <p class="sub" style="margin-top:4px;margin-bottom:0;text-align:center;font-size:12px;color:#888">Если видишь эмодзи — нажми Ctrl+F5. Арты: images/heroes/</p>
   </section>
 
   <div id="gameWrap" hidden>
@@ -1203,16 +1204,16 @@
     if (/^https?:\/\//i.test(src) || src.startsWith("data:")) {
       try {
         const u = new URL(src);
-        u.searchParams.set("v", "5");
+        u.searchParams.set("v", "7");
         return u.href;
-      } catch (_) { return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=5"; }
+      } catch (_) { return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=7"; }
     }
     try {
       const u = new URL(src, location.href);
-      u.searchParams.set("v", "5"); // cache-bust HQ arts
+      u.searchParams.set("v", "7"); // cache-bust: arts always show
       return u.href;
     } catch (_) {
-      return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=5";
+      return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=7";
     }
   }
 
@@ -1222,33 +1223,54 @@
       const full = artUrl(src);
       if (full in imageCache) { resolve(imageCache[full]); return; }
       const im = new Image();
-      im.crossOrigin = "anonymous";
+      // НЕ ставить crossOrigin — на GitHub Pages из‑за этого арты не грузились
       im.decoding = "async";
-      im.onload = () => { imageCache[full] = im; resolve(im); };
+      im.onload = () => {
+        if (im.naturalWidth > 0) {
+          imageCache[full] = im;
+          resolve(im);
+        } else {
+          imageCache[full] = null;
+          resolve(null);
+        }
+      };
       im.onerror = () => { imageCache[full] = null; resolve(null); };
       im.src = full;
     });
   }
 
+  /** Прямой URL арта героя (для <img> без ожидания preload) */
+  function heroArtSrc(h) {
+    if (!h) return "";
+    if (h._imgPath) return h._imgPath;
+    if (h.id) return artUrl(heroesBase() + h.id + ".png");
+    if (h.img) return artUrl(h.img);
+    return "";
+  }
+
   async function resolveHeroImage(h) {
-    // force re-resolve if previous attempt failed
     if (h._imgEl) return h._imgEl;
     const base = heroesBase();
     const paths = [];
+    // 1) папка оригинальных артов портала
     if (h.id) {
       paths.push(base + h.id + ".png");
       paths.push("../../images/heroes/" + h.id + ".png");
-      paths.push("/my-games-portal/images/heroes/" + h.id + ".png");
-      paths.push("images/heroes/" + h.id + ".png");
     }
+    // 2) путь из IMG (может быть sprites/ или images/)
     if (h.img) paths.push(h.img);
     (h.imgFallbacks || []).forEach(function (p) { if (p) paths.push(p); });
+    // 3) запасные корни
+    if (h.id) {
+      paths.push("../../images/" + h.id + ".png");
+      paths.push("../../images/" + h.id + ".webp");
+    }
     const seen = {};
     for (const p of paths) {
       if (!p || seen[p]) continue;
       seen[p] = 1;
       const im = await loadImage(p);
-      if (im && im.width > 0) {
+      if (im && im.naturalWidth > 0) {
         h._imgEl = im;
         h._imgPath = artUrl(p);
         return im;
@@ -1297,10 +1319,13 @@
   });
 
   function picHtml(h, sizeClass) {
-    if (h._imgEl) {
-      return `<img src="${h._imgPath || h.img}" alt="${h.name}" draggable="false">`;
+    const src = heroArtSrc(h) || (h.img ? artUrl(h.img) : "");
+    if (src) {
+      // Сразу показываем <img> — не ждём preload (иначе вечно одни эмодзи)
+      return `<img src="${src}" alt="${h.name || ""}" draggable="false" loading="eager" onerror="this.style.display='none';var f=this.parentNode&&this.parentNode.querySelector('.fallback');if(f)f.hidden=false">` +
+        `<span class="fallback" hidden>${h.emoji || "🎮"}</span>`;
     }
-    return `<span class="fallback">${h.emoji}</span>`;
+    return `<span class="fallback">${h.emoji || "🎮"}</span>`;
   }
 
   function matchHeroFilter(h) {

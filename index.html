@@ -1692,16 +1692,35 @@
 
     <div id="panel-admin" class="panel">
       <div class="card">
-        <h3>🔐 Проверка игр (владелец)</h3>
+        <h3>👑 Админ — всё могу</h3>
         <p style="color:#aaa;font-size:14px;margin-bottom:12px">
-          Сюда заходишь <b>ты</b>. Вставь заявку игрока или открой список. После «Одобрить» игра попадёт в каталог на этом устройстве.
-          Пароль по умолчанию: <code style="color:#fc0">bluecat</code>
+          Полный контроль портала на этом устройстве. Пароль: <code style="color:#fc0">bluecat</code>
         </p>
         <div class="row" style="margin-bottom:12px">
           <input type="password" id="adminPass" placeholder="Пароль" style="flex:1;min-width:140px;padding:12px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff">
-          <button type="button" class="btn-secondary" id="adminLoginBtn" style="height:44px">Войти</button>
+          <button type="button" class="btn-secondary" id="adminLoginBtn" style="height:44px">Войти как админ</button>
         </div>
         <div id="adminPanel" hidden>
+          <div style="display:grid;gap:10px;margin-bottom:16px">
+            <h4 style="margin:0;color:#fc0">⚡ Супер-кнопки</h4>
+            <div class="row">
+              <button type="button" class="btn-play" id="adminPremiumSelf" style="height:40px;font-size:13px">⭐ Себе Premium навсегда</button>
+              <button type="button" class="btn-secondary" id="adminPremiumOff" style="height:40px;font-size:13px">Снять Premium</button>
+              <button type="button" class="btn-secondary" id="adminApproveAll" style="height:40px;font-size:13px">✓ Одобрить все заявки</button>
+            </div>
+            <div class="row">
+              <button type="button" class="btn-secondary" id="adminClearReviews" style="height:40px;font-size:13px">🗑 Очистить отзывы</button>
+              <button type="button" class="btn-secondary" id="adminClearFriends" style="height:40px;font-size:13px">🗑 Очистить друзей</button>
+              <button type="button" class="btn-secondary" id="adminClearCreated" style="height:40px;font-size:13px">🗑 Очистить созданные игры</button>
+            </div>
+            <div class="row">
+              <button type="button" class="btn-secondary" id="adminExportAll" style="height:40px;font-size:13px">📤 Экспорт всех данных</button>
+              <button type="button" class="btn-secondary" id="adminImportAll" style="height:40px;font-size:13px">📥 Импорт JSON</button>
+              <button type="button" class="btn-secondary" id="adminNuke" style="height:40px;font-size:13px;color:#f88;border-color:#633">💣 Сбросить ВСЁ</button>
+            </div>
+            <textarea id="adminDataIO" rows="3" placeholder="Сюда вставь JSON для импорта / сюда попадёт экспорт" style="width:100%;background:#0a0a0a;color:#9f9;border:1px solid #333;border-radius:10px;padding:10px;font-size:11px"></textarea>
+            <p class="hint-mini" id="adminSuperNote"></p>
+          </div>
           <label style="display:block;color:#aaa;font-size:13px;margin-bottom:6px">Вставить заявку (текст от игрока)</label>
           <textarea id="adminPaste" rows="4" placeholder="Вставь заявку BLUE_CAT_GAME_REQUEST..." style="width:100%;background:#111;color:#ddd;border:1px solid #333;border-radius:10px;padding:10px;font-size:12px"></textarea>
           <div class="row" style="margin-top:10px">
@@ -1712,6 +1731,8 @@
           <div id="adminQueue"></div>
           <h4 style="margin:18px 0 8px">Одобренные игры</h4>
           <div id="adminApproved"></div>
+          <h4 style="margin:18px 0 8px">Статус портала</h4>
+          <div id="adminStats" style="color:#8a8;font-size:13px;line-height:1.5"></div>
         </div>
       </div>
     </div>
@@ -4178,7 +4199,137 @@
       const panel = document.getElementById("adminPanel");
       if (panel) panel.hidden = false;
       renderAdminQueue();
-      toast("Вход выполнен");
+      renderAdminStats();
+      toast("👑 Админ: полный доступ");
+    });
+
+    function renderAdminStats() {
+      const el = document.getElementById("adminStats");
+      if (!el) return;
+      const u = loadUser();
+      const prem = loadPremium();
+      el.innerHTML =
+        "Пользователь: <b>" + esc(u ? u.name : "не вошёл") + "</b><br>" +
+        "Premium: <b>" + (prem ? "да до " + new Date(prem.until).toLocaleString() : "нет") + "</b><br>" +
+        "Заявок: " + loadPending().length + " · Одобрено: " + loadApproved().length + "<br>" +
+        "Созданных игр: " + loadCreated().length + " · Друзей: " + loadFriends().length + "<br>" +
+        "Отзывов (локально): " + loadUserReviews().length + " · Игроутка в каталоге: " + (typeof IGROUTKA_GAMES !== "undefined" ? IGROUTKA_GAMES.length : 0);
+    }
+
+    on("adminPremiumSelf", "click", () => {
+      if (!loadUser()) saveUser({ id: "admin", name: "Админ", provider: "admin" });
+      const until = Date.now() + 100 * 365 * 24 * 60 * 60 * 1000; // ~100 лет
+      try { localStorage.setItem(STORAGE_PREMIUM, JSON.stringify({ until: until, source: "admin", at: new Date().toISOString() })); } catch (_) {}
+      refreshAuthUI();
+      renderAdminStats();
+      toast("⭐ Premium навсегда (админ)");
+    });
+    on("adminPremiumOff", "click", () => {
+      try { localStorage.removeItem(STORAGE_PREMIUM); } catch (_) {}
+      refreshAuthUI();
+      renderAdminStats();
+      toast("Premium снят");
+    });
+    on("adminApproveAll", "click", () => {
+      const pending = loadPending().filter(g => (g.status || "pending") === "pending");
+      const approved = loadApproved();
+      pending.forEach(g => {
+        g.status = "approved";
+        if (!approved.find(x => x.id === g.id)) approved.unshift(g);
+      });
+      savePending(loadPending().map(g => {
+        if ((g.status || "pending") === "pending") g.status = "approved";
+        return g;
+      }));
+      saveApproved(approved);
+      renderAdminQueue();
+      renderAll();
+      renderAdminStats();
+      toast("✓ Все заявки одобрены (" + pending.length + ")");
+    });
+    on("adminClearReviews", "click", () => {
+      if (!confirm("Удалить все локальные отзывы?")) return;
+      try { localStorage.removeItem(STORAGE_REVIEWS); } catch (_) {}
+      try { renderUserReviews(); } catch (_) {}
+      renderAdminStats();
+      toast("Отзывы очищены");
+    });
+    on("adminClearFriends", "click", () => {
+      if (!confirm("Удалить всех друзей?")) return;
+      saveFriends([]);
+      renderFriends();
+      renderAdminStats();
+      toast("Друзья очищены");
+    });
+    on("adminClearCreated", "click", () => {
+      if (!confirm("Удалить все созданные на сайте игры?")) return;
+      saveCreated([]);
+      renderMyCreated();
+      renderAll();
+      renderAdminStats();
+      toast("Созданные игры удалены");
+    });
+    on("adminExportAll", "click", () => {
+      const dump = {
+        user: loadUser(),
+        premium: loadPremium(),
+        friends: loadFriends(),
+        reviews: loadUserReviews(),
+        pending: loadPending(),
+        approved: loadApproved(),
+        created: loadCreated(),
+        custom: loadCustom(),
+        at: new Date().toISOString()
+      };
+      const ta = document.getElementById("adminDataIO");
+      if (ta) ta.value = JSON.stringify(dump, null, 2);
+      try {
+        navigator.clipboard.writeText(JSON.stringify(dump));
+        toast("Экспорт скопирован в буфер");
+      } catch (_) {
+        toast("Экспорт в поле ниже");
+      }
+    });
+    on("adminImportAll", "click", () => {
+      const ta = document.getElementById("adminDataIO");
+      const raw = (ta && ta.value) || "";
+      if (!raw.trim()) return toast("Вставь JSON в поле");
+      try {
+        const d = JSON.parse(raw);
+        if (d.user) saveUser(d.user);
+        if (d.premium) try { localStorage.setItem(STORAGE_PREMIUM, JSON.stringify(d.premium)); } catch (_) {}
+        if (Array.isArray(d.friends)) saveFriends(d.friends);
+        if (Array.isArray(d.reviews)) saveUserReviews(d.reviews);
+        if (Array.isArray(d.pending)) savePending(d.pending);
+        if (Array.isArray(d.approved)) saveApproved(d.approved);
+        if (Array.isArray(d.created)) saveCreated(d.created);
+        if (Array.isArray(d.custom)) saveCustom(d.custom);
+        refreshAuthUI();
+        renderFriends();
+        renderAdminQueue();
+        renderMyCreated();
+        renderAll();
+        renderAdminStats();
+        toast("📥 Импорт готов");
+      } catch (err) {
+        toast("Ошибка JSON");
+      }
+    });
+    on("adminNuke", "click", () => {
+      if (!confirm("УДАЛИТЬ ВСЕ данные портала на этом устройстве?")) return;
+      if (!confirm("Точно? Это необратимо на этом браузере.")) return;
+      [
+        STORAGE_USER, STORAGE_PREMIUM, STORAGE_FRIENDS, STORAGE_REVIEWS,
+        STORAGE_PENDING, STORAGE_APPROVED, STORAGE_CREATED, STORAGE_GAMES, STORAGE_ADMIN_OK
+      ].forEach(k => { try { localStorage.removeItem(k); } catch (_) {} });
+      refreshAuthUI();
+      renderFriends();
+      renderAdminQueue();
+      renderMyCreated();
+      renderAll();
+      const panel = document.getElementById("adminPanel");
+      if (panel) panel.hidden = true;
+      toast("💣 Всё сброшено");
     });
     if (localStorage.getItem(STORAGE_ADMIN_OK) === "1") {
       const panel = document.getElementById("adminPanel");
