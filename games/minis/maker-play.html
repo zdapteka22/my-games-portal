@@ -25,6 +25,7 @@
 <body>
   <div class="top">
     <a href="../../index.html">⬅ На сайт</a>
+    <a href="../../play.html?id=snake" id="backPlay" style="display:none">Описание</a>
     <h1 id="title">Моя игра</h1>
     <button type="button" class="btn btn-sec" id="restartBtn">Заново</button>
   </div>
@@ -84,51 +85,69 @@
       clicker: "Кликай / тапай по цели",
       dodge: "Стрелки / WASD — уворачивайся",
       catch: "Стрелки — лови падающее",
-      memory: "Запомни и повтори цвета (клик)"
+      memory: "Запомни и повтори цвета (клик)",
+      runner: "Прыжок: ↑ / W / Пробел / ⚡",
+      shooter: "Стрелки · ⚡ стрельба",
+      builder: "Бегай по своей постройке · ⚡ прыжок",
+      race: "Вправо / ⚡ ускорение · до финиша",
+      platform: "←→ и прыжок по блокам",
+      puzzle: "Кликай клетки — собери 3 в ряд"
     };
-    document.getElementById("hint").textContent = hints[game.type] || "Играй!";
+    document.getElementById("hint").textContent = (hints[game.type] || "Играй!") + " · герой: " + (game.hero || "custom");
     reset();
     running = true;
     last = performance.now();
     requestAnimationFrame(loop);
   }
 
-  function difficultyMul() {
-    const d = Number(game.difficulty) || 2;
-    return 0.7 + d * 0.35;
+  function mul() {
+    return 0.7 + (Number(game.difficulty) || 2) * 0.35;
+  }
+
+  function defaultMap() {
+    const cols = 16, rows = 8;
+    const m = [];
+    for (let y = 0; y < rows; y++) {
+      const row = [];
+      for (let x = 0; x < cols; x++) row.push(y === rows - 1 ? 1 : 0);
+      m.push(row);
+    }
+    // platforms
+    for (let x = 2; x < 6; x++) m[5][x] = 1;
+    for (let x = 9; x < 14; x++) m[4][x] = 1;
+    return m;
   }
 
   function reset() {
-    const mul = difficultyMul();
+    const m = mul();
+    const map = (game.map && game.map.length) ? game.map : defaultMap();
     state = {
-      score: 0,
-      lives: 3,
-      t: 0,
-      over: false,
-      won: false,
-      player: { x: W/2, y: H - 60, r: 18, vx: 0 },
-      entities: [],
-      target: { x: W/2, y: H/2, r: 28, pulse: 0 },
-      spawn: 0,
-      memorySeq: [],
-      memoryStep: 0,
-      memoryShow: true,
-      memoryFlash: -1,
-      memoryWait: 0.8,
-      memoryInput: [],
-      pads: [{ color: "#e74c3c" }, { color: "#3498db" }, { color: "#2ecc71" }, { color: "#f1c40f" }]
+      score: 0, lives: 3, t: 0, over: false, won: false,
+      player: { x: 80, y: H - 80, vx: 0, vy: 0, r: 18, onGround: false },
+      entities: [], target: { x: W/2, y: H/2, r: 28, pulse: 0 },
+      spawn: 0, map: map,
+      memorySeq: [Math.floor(Math.random()*4)], memoryStep: 0, memoryShow: true,
+      memoryFlash: 0, memoryWait: 0.8, memoryInput: [],
+      pads: [{color:"#e74c3c"},{color:"#3498db"},{color:"#2ecc71"},{color:"#f1c40f"}],
+      puzzle: null, raceX: 40, finish: W - 60
     };
     if (game.type === "memory") {
-      state.memorySeq = [Math.floor(Math.random() * 4)];
-      state.memoryWait = 1;
-      state.memoryShow = true;
       state.memoryFlash = state.memorySeq[0];
+    }
+    if (game.type === "puzzle") {
+      state.puzzle = [];
+      for (let i = 0; i < 36; i++) state.puzzle.push(Math.floor(Math.random() * 5));
+    }
+    if (game.type === "builder" || game.type === "platform") {
+      state.player.x = 60;
+      state.player.y = 100;
+      state.player.vy = 0;
     }
     updateHud();
   }
 
   function updateHud() {
-    document.getElementById("score").textContent = String(state.score);
+    document.getElementById("score").textContent = String(Math.floor(state.score));
     document.getElementById("lives").textContent = String(state.lives);
   }
 
@@ -137,49 +156,60 @@
     state.won = !!win;
   }
 
+  function solidAt(px, py) {
+    const map = state.map;
+    if (!map || !map.length) return false;
+    const rows = map.length, cols = map[0].length;
+    const tw = W / cols, th = H / rows;
+    const cx = Math.floor(px / tw), cy = Math.floor(py / th);
+    if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) return cy >= rows;
+    return !!map[cy][cx];
+  }
+
   function update(dt) {
     if (!state || state.over) return;
     state.t += dt;
-    const mul = difficultyMul();
     const type = game.type;
+    const m = mul();
+    const p = state.player;
+    const left = keys.ArrowLeft || keys.a || keys.left;
+    const right = keys.ArrowRight || keys.d || keys.right;
+    const up = keys.ArrowUp || keys.w || keys.up || keys[" "] || keys.action;
 
     if (type === "clicker") {
       state.target.pulse += dt * 4;
-      // auto shrink difficulty
     } else if (type === "dodge") {
-      const spd = 220 * mul;
+      const spd = 220 * m;
       let dx = 0, dy = 0;
-      if (keys.ArrowLeft || keys.a || keys.left) dx -= 1;
-      if (keys.ArrowRight || keys.d || keys.right) dx += 1;
+      if (left) dx -= 1; if (right) dx += 1;
       if (keys.ArrowUp || keys.w || keys.up) dy -= 1;
       if (keys.ArrowDown || keys.s || keys.down) dy += 1;
       if (dx || dy) {
         const len = Math.hypot(dx, dy) || 1;
-        state.player.x += (dx / len) * spd * dt;
-        state.player.y += (dy / len) * spd * dt;
+        p.x += (dx / len) * spd * dt;
+        p.y += (dy / len) * spd * dt;
       }
-      state.player.x = Math.max(20, Math.min(W - 20, state.player.x));
-      state.player.y = Math.max(20, Math.min(H - 20, state.player.y));
+      p.x = Math.max(20, Math.min(W - 20, p.x));
+      p.y = Math.max(20, Math.min(H - 20, p.y));
       state.spawn -= dt;
       if (state.spawn <= 0) {
-        state.spawn = Math.max(0.25, 0.9 / mul);
+        state.spawn = Math.max(0.25, 0.9 / m);
         const side = Math.floor(Math.random() * 4);
+        const s = 80 + Math.random() * 120 * m;
         let x, y, vx, vy;
-        const s = 80 + Math.random() * 120 * mul;
         if (side === 0) { x = Math.random()*W; y = -20; vx = (Math.random()-0.5)*60; vy = s; }
         else if (side === 1) { x = Math.random()*W; y = H+20; vx = (Math.random()-0.5)*60; vy = -s; }
         else if (side === 2) { x = -20; y = Math.random()*H; vx = s; vy = (Math.random()-0.5)*60; }
         else { x = W+20; y = Math.random()*H; vx = -s; vy = (Math.random()-0.5)*60; }
-        state.entities.push({ x, y, vx, vy, r: 10 + Math.random()*10 });
+        state.entities.push({ x, y, vx, vy, r: 10 + Math.random()*10, kind: "bad" });
       }
       for (let i = state.entities.length - 1; i >= 0; i--) {
         const e = state.entities[i];
         e.x += e.vx * dt; e.y += e.vy * dt;
-        if (e.x < -40 || e.x > W+40 || e.y < -40 || e.y > H+40) { state.entities.splice(i, 1); continue; }
-        if (Math.hypot(e.x - state.player.x, e.y - state.player.y) < e.r + state.player.r) {
+        if (e.x < -50 || e.x > W+50 || e.y < -50 || e.y > H+50) { state.entities.splice(i, 1); continue; }
+        if (Math.hypot(e.x - p.x, e.y - p.y) < e.r + p.r) {
           state.entities.splice(i, 1);
-          state.lives--;
-          updateHud();
+          state.lives--; updateHud();
           if (state.lives <= 0) endGame(false);
         }
       }
@@ -187,22 +217,18 @@
       updateHud();
       if (state.score >= 300) endGame(true);
     } else if (type === "catch") {
-      const spd = 280 * mul;
-      let dx = 0;
-      if (keys.ArrowLeft || keys.a || keys.left) dx -= 1;
-      if (keys.ArrowRight || keys.d || keys.right) dx += 1;
-      state.player.x += dx * spd * dt;
-      state.player.x = Math.max(30, Math.min(W - 30, state.player.x));
-      state.player.y = H - 50;
+      const spd = 280 * m;
+      if (left) p.x -= spd * dt;
+      if (right) p.x += spd * dt;
+      p.x = Math.max(30, Math.min(W - 30, p.x));
+      p.y = H - 50;
       state.spawn -= dt;
       if (state.spawn <= 0) {
-        state.spawn = Math.max(0.35, 0.85 / mul);
+        state.spawn = Math.max(0.35, 0.85 / m);
         state.entities.push({
-          x: 40 + Math.random() * (W - 80),
-          y: -20,
-          vy: 120 + Math.random() * 80 * mul,
-          r: 14,
-          good: Math.random() > 0.25
+          x: 40 + Math.random() * (W - 80), y: -20,
+          vy: 120 + Math.random() * 80 * m, r: 14,
+          good: Math.random() > 0.25, kind: "fall"
         });
       }
       for (let i = state.entities.length - 1; i >= 0; i--) {
@@ -210,20 +236,13 @@
         e.y += e.vy * dt;
         if (e.y > H + 30) {
           state.entities.splice(i, 1);
-          if (e.good) {
-            state.lives--;
-            updateHud();
-            if (state.lives <= 0) endGame(false);
-          }
+          if (e.good) { state.lives--; updateHud(); if (state.lives <= 0) endGame(false); }
           continue;
         }
-        if (Math.hypot(e.x - state.player.x, e.y - state.player.y) < e.r + 22) {
+        if (Math.hypot(e.x - p.x, e.y - p.y) < e.r + 22) {
           state.entities.splice(i, 1);
-          if (e.good) { state.score += 10; }
-          else {
-            state.lives--;
-            if (state.lives <= 0) endGame(false);
-          }
+          if (e.good) state.score += 10;
+          else { state.lives--; if (state.lives <= 0) endGame(false); }
           updateHud();
         }
       }
@@ -235,88 +254,252 @@
           state.memoryFlash = -1;
           state.memoryStep++;
           if (state.memoryStep >= state.memorySeq.length) {
-            state.memoryShow = false;
-            state.memoryStep = 0;
-            state.memoryInput = [];
+            state.memoryShow = false; state.memoryStep = 0; state.memoryInput = [];
           } else {
             state.memoryFlash = state.memorySeq[state.memoryStep];
             state.memoryWait = 0.55;
           }
         }
       }
+    } else if (type === "runner" || type === "race") {
+      // auto run right with jump
+      if (type === "runner") {
+        p.x += 180 * m * dt;
+        if (p.x > W + 40) { p.x = -20; state.score += 10; updateHud(); }
+      } else {
+        if (right || keys.action) p.x += 220 * m * dt;
+        if (left) p.x -= 100 * dt;
+        state.raceX = p.x;
+        if (p.x >= state.finish) { state.score = 100; endGame(true); }
+      }
+      p.vy += 900 * dt;
+      p.y += p.vy * dt;
+      const ground = H - 60;
+      if (p.y > ground) { p.y = ground; p.vy = 0; p.onGround = true; }
+      else p.onGround = false;
+      if (up && p.onGround) p.vy = -420;
+      // obstacles
+      state.spawn -= dt;
+      if (state.spawn <= 0 && type === "runner") {
+        state.spawn = Math.max(0.7, 1.4 / m);
+        state.entities.push({ x: W + 20, y: ground, vx: -200 * m, r: 18, kind: "obs" });
+      }
+      for (let i = state.entities.length - 1; i >= 0; i--) {
+        const e = state.entities[i];
+        e.x += (e.vx || 0) * dt;
+        if (e.x < -40) { state.entities.splice(i, 1); continue; }
+        if (Math.hypot(e.x - p.x, e.y - p.y) < e.r + p.r) {
+          state.entities.splice(i, 1);
+          state.lives--; updateHud();
+          if (state.lives <= 0) endGame(false);
+        }
+      }
+      if (type === "runner" && state.score >= 80) endGame(true);
+    } else if (type === "shooter") {
+      const spd = 240 * m;
+      if (left) p.x -= spd * dt;
+      if (right) p.x += spd * dt;
+      if (keys.ArrowUp || keys.w || keys.up) p.y -= spd * dt;
+      if (keys.ArrowDown || keys.s || keys.down) p.y += spd * dt;
+      p.x = Math.max(20, Math.min(W - 20, p.x));
+      p.y = Math.max(20, Math.min(H - 20, p.y));
+      if (keys.action || keys[" "]) {
+        if (!state.shootCd || state.shootCd <= 0) {
+          state.entities.push({ x: p.x, y: p.y - 20, vx: 0, vy: -400, r: 6, kind: "bullet" });
+          state.shootCd = 0.2;
+        }
+      }
+      state.shootCd = Math.max(0, (state.shootCd || 0) - dt);
+      state.spawn -= dt;
+      if (state.spawn <= 0) {
+        state.spawn = Math.max(0.4, 0.9 / m);
+        state.entities.push({ x: 40 + Math.random() * (W - 80), y: -20, vx: 0, vy: 80 + 40 * m, r: 16, kind: "enemy", hp: 1 });
+      }
+      for (let i = state.entities.length - 1; i >= 0; i--) {
+        const e = state.entities[i];
+        e.x += (e.vx || 0) * dt; e.y += (e.vy || 0) * dt;
+        if (e.y > H + 40 || e.y < -40) { state.entities.splice(i, 1); continue; }
+        if (e.kind === "enemy" && Math.hypot(e.x - p.x, e.y - p.y) < e.r + p.r) {
+          state.entities.splice(i, 1); state.lives--; updateHud();
+          if (state.lives <= 0) endGame(false);
+          continue;
+        }
+        if (e.kind === "bullet") {
+          for (let j = state.entities.length - 1; j >= 0; j--) {
+            const o = state.entities[j];
+            if (o.kind !== "enemy") continue;
+            if (Math.hypot(e.x - o.x, e.y - o.y) < e.r + o.r) {
+              state.entities.splice(j, 1);
+              state.entities.splice(i, 1);
+              state.score += 10; updateHud();
+              if (state.score >= 150) endGame(true);
+              break;
+            }
+          }
+        }
+      }
+    } else if (type === "builder" || type === "platform") {
+      // platformer on custom map
+      const acc = 800, maxSpd = 220, grav = 1200, jump = -480;
+      if (left) p.vx = -maxSpd;
+      else if (right) p.vx = maxSpd;
+      else p.vx *= 0.8;
+      p.vy += grav * dt;
+      // move x
+      p.x += p.vx * dt;
+      if (solidAt(p.x, p.y + p.r - 2) || solidAt(p.x, p.y - p.r + 2)) {
+        p.x -= p.vx * dt; p.vx = 0;
+      }
+      // move y
+      p.y += p.vy * dt;
+      p.onGround = false;
+      if (solidAt(p.x - p.r + 2, p.y + p.r) || solidAt(p.x + p.r - 2, p.y + p.r)) {
+        // snap up
+        while (solidAt(p.x, p.y + p.r)) p.y -= 1;
+        p.vy = 0; p.onGround = true;
+      }
+      if (solidAt(p.x, p.y - p.r) && p.vy < 0) {
+        p.vy = 0;
+      }
+      if (up && p.onGround) p.vy = jump;
+      // coins
+      state.spawn -= dt;
+      if (state.spawn <= 0) {
+        state.spawn = 1.2;
+        state.entities.push({ x: 40 + Math.random() * (W - 80), y: 40 + Math.random() * (H - 160), r: 12, kind: "coin" });
+      }
+      for (let i = state.entities.length - 1; i >= 0; i--) {
+        const e = state.entities[i];
+        if (e.kind === "coin" && Math.hypot(e.x - p.x, e.y - p.y) < e.r + p.r) {
+          state.entities.splice(i, 1);
+          state.score += 10; updateHud();
+          if (state.score >= 100) endGame(true);
+        }
+      }
+      if (p.y > H + 40) {
+        state.lives--; updateHud();
+        p.x = 60; p.y = 80; p.vy = 0;
+        if (state.lives <= 0) endGame(false);
+      }
+    } else if (type === "puzzle") {
+      // idle — click handled in pointer
     }
+  }
+
+  function drawMap() {
+    const map = state.map;
+    if (!map || !map.length) return;
+    const rows = map.length, cols = map[0].length;
+    const tw = W / cols, th = H / rows;
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        if (!map[y][x]) continue;
+        ctx.fillStyle = "#3d6b4f";
+        ctx.fillRect(x * tw, y * th, tw + 0.5, th + 0.5);
+        ctx.fillStyle = "#6bcf7f";
+        ctx.fillRect(x * tw, y * th, tw + 0.5, 4);
+      }
+    }
+  }
+
+  function drawPlayer() {
+    const p = state.player;
+    const color = game.color || "#5eb0ff";
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    ctx.font = "20px Segoe UI";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(game.emoji || "🎮", p.x, p.y + 1);
   }
 
   function draw() {
     const color = game.color || "#5eb0ff";
-    ctx.fillStyle = "#0d0d12";
+    ctx.fillStyle = "#0d0d14";
     ctx.fillRect(0, 0, W, H);
-    // grid
-    ctx.strokeStyle = "rgba(255,255,255,.04)";
-    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
     const type = game.type;
+
+    if (type === "builder" || type === "platform") drawMap();
+
     if (type === "clicker") {
-      const p = state.target;
-      const r = p.r + Math.sin(state.target.pulse) * 4;
+      const t = state.target;
+      const r = t.r + Math.sin(state.target.pulse) * 4;
       ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, Math.PI * 2); ctx.fill();
       ctx.font = "bold 28px Segoe UI";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(game.emoji || "🎯", p.x, p.y);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(game.emoji || "🎯", t.x, t.y);
       ctx.fillStyle = "#aaa";
       ctx.font = "16px Segoe UI";
-      ctx.fillText("Кликай! Цель: 50 очков", W/2, 36);
-    } else if (type === "dodge") {
-      ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(state.player.x, state.player.y, state.player.r, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = "#fff";
-      ctx.font = "18px Segoe UI";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(game.emoji || "🐱", state.player.x, state.player.y);
-      for (const e of state.entities) {
-        ctx.fillStyle = "#e74c3c";
-        ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill();
+      ctx.fillText("Кликай! Цель: 50", W/2, 36);
+    } else if (type === "dodge" || type === "catch" || type === "shooter" || type === "runner" || type === "race" || type === "builder" || type === "platform") {
+      if (type === "race") {
+        ctx.fillStyle = "#333";
+        ctx.fillRect(0, H - 40, W, 40);
+        ctx.fillStyle = "#4ade80";
+        ctx.fillRect(state.finish - 4, H - 120, 8, 80);
+        ctx.fillStyle = "#fff";
+        ctx.font = "14px Segoe UI";
+        ctx.fillText("🏁", state.finish, H - 130);
       }
-    } else if (type === "catch") {
-      ctx.fillStyle = color;
-      ctx.fillRect(state.player.x - 36, state.player.y - 12, 72, 24);
-      ctx.font = "20px Segoe UI";
-      ctx.textAlign = "center";
-      ctx.fillText(game.emoji || "🧺", state.player.x, state.player.y - 28);
-      for (const e of state.entities) {
-        ctx.fillStyle = e.good ? "#4ade80" : "#f87171";
-        ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill();
-        ctx.fillText(e.good ? "⭐" : "💣", e.x, e.y + 1);
+      if (type === "runner" || type === "race") {
+        ctx.fillStyle = "#2a2a2a";
+        ctx.fillRect(0, H - 42, W, 42);
       }
+      for (const e of state.entities) {
+        if (e.kind === "bad" || e.kind === "obs" || e.kind === "enemy") {
+          ctx.fillStyle = "#e74c3c";
+          ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+        } else if (e.kind === "fall") {
+          ctx.fillStyle = e.good ? "#4ade80" : "#f87171";
+          ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+          ctx.fillText(e.good ? "⭐" : "💣", e.x, e.y);
+        } else if (e.kind === "bullet") {
+          ctx.fillStyle = "#ffcc00";
+          ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+        } else if (e.kind === "coin") {
+          ctx.fillStyle = "#f1c40f";
+          ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+          ctx.fillText("🪙", e.x, e.y);
+        }
+      }
+      drawPlayer();
     } else if (type === "memory") {
       const padW = 160, padH = 140, gap = 24;
       const ox = (W - (padW * 2 + gap)) / 2;
       const oy = (H - (padH * 2 + gap)) / 2;
-      state.pads.forEach((p, i) => {
+      state.pads.forEach((pad, i) => {
         const col = i % 2, row = Math.floor(i / 2);
         const x = ox + col * (padW + gap);
         const y = oy + row * (padH + gap);
-        p.x = x; p.y = y; p.w = padW; p.h = padH;
-        ctx.fillStyle = state.memoryFlash === i ? "#fff" : p.color;
+        pad.x = x; pad.y = y; pad.w = padW; pad.h = padH;
+        ctx.fillStyle = state.memoryFlash === i ? "#fff" : pad.color;
         ctx.globalAlpha = state.memoryFlash === i ? 1 : 0.75;
         ctx.fillRect(x, y, padW, padH);
         ctx.globalAlpha = 1;
-        ctx.strokeStyle = "#222";
-        ctx.strokeRect(x, y, padW, padH);
       });
       ctx.fillStyle = "#aaa";
       ctx.font = "16px Segoe UI";
       ctx.textAlign = "center";
-      ctx.fillText(state.memoryShow ? "Смотри последовательность…" : "Повтори!", W/2, 36);
+      ctx.fillText(state.memoryShow ? "Смотри…" : "Повтори!", W/2, 36);
+    } else if (type === "puzzle") {
+      const n = 6, cell = 56, gap = 6;
+      const ox = (W - n * (cell + gap)) / 2;
+      const oy = (H - n * (cell + gap)) / 2;
+      const colors = ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6"];
+      for (let i = 0; i < 36; i++) {
+        const x = i % n, y = Math.floor(i / n);
+        const px = ox + x * (cell + gap), py = oy + y * (cell + gap);
+        ctx.fillStyle = colors[state.puzzle[i] % 5];
+        ctx.fillRect(px, py, cell, cell);
+      }
+      ctx.fillStyle = "#aaa";
+      ctx.font = "16px Segoe UI";
+      ctx.textAlign = "center";
+      ctx.fillText("Кликни клетку — смени цвет. 3 в ряд = очки!", W/2, 36);
     }
 
     if (state.over) {
-      ctx.fillStyle = "rgba(0,0,0,.7)";
+      ctx.fillStyle = "rgba(0,0,0,.72)";
       ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = state.won ? "#4ade80" : "#f87171";
       ctx.font = "bold 42px Segoe UI";
@@ -324,7 +507,7 @@
       ctx.fillText(state.won ? "🏆 Победа!" : "💀 Конец", W/2, H/2 - 10);
       ctx.fillStyle = "#fff";
       ctx.font = "20px Segoe UI";
-      ctx.fillText("Очки: " + state.score + " · Enter / кнопка «Заново»", W/2, H/2 + 30);
+      ctx.fillText("Очки: " + Math.floor(state.score) + " · Enter / Заново", W/2, H/2 + 30);
     }
   }
 
@@ -338,11 +521,11 @@
   }
 
   function clickerHit(mx, my) {
-    const p = state.target;
-    if (Math.hypot(mx - p.x, my - p.y) <= p.r + 8) {
+    const t = state.target;
+    if (Math.hypot(mx - t.x, my - t.y) <= t.r + 8) {
       state.score++;
-      p.x = 60 + Math.random() * (W - 120);
-      p.y = 60 + Math.random() * (H - 120);
+      t.x = 60 + Math.random() * (W - 120);
+      t.y = 60 + Math.random() * (H - 120);
       updateHud();
       if (state.score >= 50) endGame(true);
     }
@@ -351,38 +534,73 @@
   function memoryClick(mx, my) {
     if (state.memoryShow || state.over) return;
     for (let i = 0; i < state.pads.length; i++) {
-      const p = state.pads[i];
-      if (mx >= p.x && mx <= p.x + p.w && my >= p.y && my <= p.y + p.h) {
+      const pad = state.pads[i];
+      if (mx >= pad.x && mx <= pad.x + pad.w && my >= pad.y && my <= pad.y + pad.h) {
         state.memoryFlash = i;
         setTimeout(() => { if (state.memoryFlash === i) state.memoryFlash = -1; }, 200);
         const need = state.memorySeq[state.memoryInput.length];
         if (i !== need) {
-          state.lives--;
-          updateHud();
+          state.lives--; updateHud();
           if (state.lives <= 0) endGame(false);
           else {
             state.memoryInput = [];
-            state.memoryShow = true;
-            state.memoryStep = 0;
-            state.memoryFlash = state.memorySeq[0];
-            state.memoryWait = 0.7;
+            state.memoryShow = true; state.memoryStep = 0;
+            state.memoryFlash = state.memorySeq[0]; state.memoryWait = 0.7;
           }
           return;
         }
         state.memoryInput.push(i);
         if (state.memoryInput.length >= state.memorySeq.length) {
-          state.score += 10;
-          updateHud();
+          state.score += 10; updateHud();
           if (state.memorySeq.length >= 8) { endGame(true); return; }
           state.memorySeq.push(Math.floor(Math.random() * 4));
           state.memoryInput = [];
-          state.memoryShow = true;
-          state.memoryStep = 0;
-          state.memoryFlash = state.memorySeq[0];
-          state.memoryWait = 0.7;
+          state.memoryShow = true; state.memoryStep = 0;
+          state.memoryFlash = state.memorySeq[0]; state.memoryWait = 0.7;
         }
         return;
       }
+    }
+  }
+
+  function puzzleClick(mx, my) {
+    if (state.over) return;
+    const n = 6, cell = 56, gap = 6;
+    const ox = (W - n * (cell + gap)) / 2;
+    const oy = (H - n * (cell + gap)) / 2;
+    const x = Math.floor((mx - ox) / (cell + gap));
+    const y = Math.floor((my - oy) / (cell + gap));
+    if (x < 0 || y < 0 || x >= n || y >= n) return;
+    const i = y * n + x;
+    state.puzzle[i] = (state.puzzle[i] + 1) % 5;
+    // check matches
+    let cleared = 0;
+    for (let row = 0; row < n; row++) {
+      for (let col = 0; col < n - 2; col++) {
+        const a = state.puzzle[row * n + col];
+        if (a === state.puzzle[row * n + col + 1] && a === state.puzzle[row * n + col + 2]) {
+          state.puzzle[row * n + col] = Math.floor(Math.random() * 5);
+          state.puzzle[row * n + col + 1] = Math.floor(Math.random() * 5);
+          state.puzzle[row * n + col + 2] = Math.floor(Math.random() * 5);
+          cleared += 3;
+        }
+      }
+    }
+    for (let col = 0; col < n; col++) {
+      for (let row = 0; row < n - 2; row++) {
+        const a = state.puzzle[row * n + col];
+        if (a === state.puzzle[(row + 1) * n + col] && a === state.puzzle[(row + 2) * n + col]) {
+          state.puzzle[row * n + col] = Math.floor(Math.random() * 5);
+          state.puzzle[(row + 1) * n + col] = Math.floor(Math.random() * 5);
+          state.puzzle[(row + 2) * n + col] = Math.floor(Math.random() * 5);
+          cleared += 3;
+        }
+      }
+    }
+    if (cleared) {
+      state.score += cleared;
+      updateHud();
+      if (state.score >= 60) endGame(true);
     }
   }
 
@@ -393,6 +611,7 @@
     const my = (e.clientY - rect.top) * (H / rect.height);
     if (game.type === "clicker") clickerHit(mx, my);
     if (game.type === "memory") memoryClick(mx, my);
+    if (game.type === "puzzle") puzzleClick(mx, my);
   }
 
   canvas.addEventListener("pointerdown", pointer);

@@ -1188,16 +1188,31 @@
 
   function heroById(id) { return HEROES.find(h => h.id === id); }
 
-  // Resolve art URLs relative to this page (works on GitHub Pages + local)
+  // Base for hero arts — works on GitHub Pages, local, and inside iframe
+  function heroesBase() {
+    try {
+      // games/minis/battle-all.html → ../../images/heroes/
+      return new URL("../../images/heroes/", location.href).href;
+    } catch (_) {
+      return "../../images/heroes/";
+    }
+  }
+
   function artUrl(src) {
     if (!src) return "";
-    if (/^https?:\/\//i.test(src) || src.startsWith("data:")) return src;
+    if (/^https?:\/\//i.test(src) || src.startsWith("data:")) {
+      try {
+        const u = new URL(src);
+        u.searchParams.set("v", "5");
+        return u.href;
+      } catch (_) { return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=5"; }
+    }
     try {
       const u = new URL(src, location.href);
-      u.searchParams.set("v", "3"); // cache-bust so new hero arts load
+      u.searchParams.set("v", "5"); // cache-bust HQ arts
       return u.href;
     } catch (_) {
-      return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=3";
+      return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=5";
     }
   }
 
@@ -1207,6 +1222,7 @@
       const full = artUrl(src);
       if (full in imageCache) { resolve(imageCache[full]); return; }
       const im = new Image();
+      im.crossOrigin = "anonymous";
       im.decoding = "async";
       im.onload = () => { imageCache[full] = im; resolve(im); };
       im.onerror = () => { imageCache[full] = null; resolve(null); };
@@ -1215,21 +1231,24 @@
   }
 
   async function resolveHeroImage(h) {
+    // force re-resolve if previous attempt failed
     if (h._imgEl) return h._imgEl;
+    const base = heroesBase();
     const paths = [];
-    if (h.img) paths.push(h.img);
     if (h.id) {
-      // always try original hero avatar art
+      paths.push(base + h.id + ".png");
       paths.push("../../images/heroes/" + h.id + ".png");
+      paths.push("/my-games-portal/images/heroes/" + h.id + ".png");
       paths.push("images/heroes/" + h.id + ".png");
     }
+    if (h.img) paths.push(h.img);
     (h.imgFallbacks || []).forEach(function (p) { if (p) paths.push(p); });
     const seen = {};
     for (const p of paths) {
       if (!p || seen[p]) continue;
       seen[p] = 1;
       const im = await loadImage(p);
-      if (im) {
+      if (im && im.width > 0) {
         h._imgEl = im;
         h._imgPath = artUrl(p);
         return im;
