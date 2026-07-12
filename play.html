@@ -48,9 +48,69 @@
     .play-wrap iframe {
       width: 100%; height: min(78vh, 900px); min-height: 420px; border: 0; display: block; background: #000;
     }
+    /* Обёртка: прячем шапку Игроутки + наш логотип поверх */
+    .bc-frame-shell {
+      position: relative; width: 100%; background: #0a0a0a; overflow: hidden;
+      min-height: 62vh;
+    }
+    .bc-brand-bar {
+      position: absolute; left: 0; right: 0; top: 0; z-index: 20;
+      height: 56px; display: flex; align-items: center; gap: 10px;
+      padding: 0 12px;
+      background: linear-gradient(180deg, #141414 0%, #0e0e0e 100%);
+      border-bottom: 2px solid #ffcc00;
+      box-shadow: 0 4px 16px rgba(0,0,0,.55);
+    }
+    .bc-brand-bar img {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(145deg, #ffcc00, #c9a000);
+      padding: 3px; object-fit: contain;
+    }
+    .bc-brand-bar .bc-name {
+      font-weight: 900; font-size: 15px; color: #ffcc00; letter-spacing: 0.02em;
+    }
+    .bc-brand-bar .bc-name span { color: #fff; font-weight: 700; font-size: 13px; margin-left: 6px; }
+    .bc-brand-bar .bc-live {
+      margin-left: auto; font-size: 11px; font-weight: 800; color: #4ade80;
+      background: rgba(74,222,128,.12); border: 1px solid rgba(74,222,128,.35);
+      padding: 4px 10px; border-radius: 999px;
+    }
+    /* Сдвигаем iframe вверх — обрезаем логотип/меню Игроутки */
+    .bc-frame-crop {
+      position: relative; width: 100%;
+      height: min(78vh, 900px); min-height: 420px;
+      overflow: hidden;
+      margin-top: 56px; /* под нашей панелью */
+      background: #000;
+    }
+    .bc-frame-crop iframe {
+      width: 100%;
+      /* выше контейнера + сдвиг вверх = прячем чужую шапку */
+      height: calc(100% + 88px) !important;
+      min-height: calc(420px + 88px) !important;
+      margin-top: -88px;
+      border: 0; display: block; background: #000;
+    }
+    /* Нижняя плашка Blue Cat (на случай логотипа внизу) */
+    .bc-brand-foot {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 20;
+      height: 36px; display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: linear-gradient(0deg, #111 0%, rgba(10,10,10,.92) 100%);
+      border-top: 1px solid #333; font-size: 12px; font-weight: 800; color: #ffcc00;
+      pointer-events: none;
+    }
+    .bc-brand-foot img { width: 20px; height: 20px; border-radius: 6px; }
     .play-actions {
       display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); background: #111;
     }
+    .top .logo-inline {
+      display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;
+    }
+    .top .logo-inline img {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(145deg, #ffcc00, #c9a000); padding: 3px;
+    }
+    .top .logo-inline b { color: #ffcc00; font-size: 14px; }
     .btn {
       border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 800; font: inherit; cursor: pointer;
       text-decoration: none; display: inline-grid; place-items: center; min-height: 42px;
@@ -89,6 +149,15 @@
     .missing { padding: 40px 16px; text-align: center; color: #888; }
     @media (max-width: 700px) {
       .play-wrap iframe { min-height: 360px; height: 62vh; }
+      .bc-frame-crop { height: 62vh; min-height: 360px; }
+      .bc-frame-crop iframe {
+        height: calc(100% + 100px) !important;
+        min-height: calc(360px + 100px) !important;
+        margin-top: -100px;
+      }
+      .bc-brand-bar { height: 48px; }
+      .bc-frame-crop { margin-top: 48px; }
+      .bc-brand-bar .bc-name span { display: none; }
       .tabs { top: 56px; }
       .tab { padding: 10px 12px; font-size: 13px; }
     }
@@ -98,6 +167,10 @@
 <body>
   <div class="top">
     <a class="back" href="index.html">⬅ На сайт</a>
+    <a class="logo-inline" href="index.html" title="Blue Cat">
+      <img src="images/blue-cat.svg" alt="Blue Cat">
+      <b>Blue Cat</b>
+    </a>
     <h1 id="gameTitle">🎮 Игра</h1>
     <span class="badge" id="gameGenre">—</span>
   </div>
@@ -279,30 +352,41 @@
       if (raw) { raw.href = src; raw.hidden = false; raw.textContent = "↗ На весь экран"; }
       return;
     }
-    // Игры с Игроутки — открываем НА НАШЕМ сайте (iframe), не уводим на igroutka
+    // Игры из каталога Игроутки — на НАШЕМ сайте + логотип Blue Cat, шапка Игроутки закрыта
     if (meta.externalUrl) {
       const url = meta.externalUrl;
       wrap.innerHTML =
-        '<div style="position:relative;width:100%;min-height:62vh;background:#000">' +
-        '<div id="extLoading" style="position:absolute;inset:0;display:grid;place-items:center;color:#aaa;z-index:1;pointer-events:none;font-size:14px">' +
-        '<div style="text-align:center"><div style="font-size:2.5rem;margin-bottom:8px">' + esc(meta.emoji || "🎮") + '</div>' +
-        'Загрузка на Blue Cat…</div></div>' +
-        '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(url) + '" ' +
-        'style="width:100%;height:min(78vh,900px);min-height:420px;border:0;display:block;background:#000;position:relative;z-index:2" ' +
-        'allow="fullscreen; gamepad; autoplay; clipboard-write" allowfullscreen ' +
-        'referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
+        '<div class="bc-frame-shell" id="bcShell">' +
+          '<div class="bc-brand-bar">' +
+            '<img src="images/blue-cat.svg" alt="Blue Cat">' +
+            '<div class="bc-name">Blue Cat <span>Портал любимых игр</span></div>' +
+            '<div class="bc-live">● Игра на Blue Cat</div>' +
+          '</div>' +
+          '<div class="bc-frame-crop">' +
+            '<div id="extLoading" style="position:absolute;inset:0;display:grid;place-items:center;color:#aaa;z-index:5;pointer-events:none;font-size:14px;background:#0a0a0a">' +
+              '<div style="text-align:center">' +
+                '<img src="images/blue-cat.svg" alt="" style="width:56px;height:56px;margin-bottom:10px;border-radius:14px;background:linear-gradient(145deg,#ffcc00,#c9a000);padding:6px">' +
+                '<div style="font-weight:800;color:#ffcc00;margin-bottom:4px">Blue Cat</div>' +
+                '<div>Загрузка игры…</div>' +
+              '</div>' +
+            '</div>' +
+            '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(url) + '" ' +
+            'allow="fullscreen; gamepad; autoplay; clipboard-write" allowfullscreen ' +
+            'referrerpolicy="no-referrer-when-downgrade"></iframe>' +
+          '</div>' +
+          '<div class="bc-brand-foot">' +
+            '<img src="images/blue-cat.svg" alt=""> Blue Cat · ' + esc(meta.title) +
+          '</div>' +
+        '</div>';
       if (raw) { raw.href = url; raw.hidden = false; raw.textContent = "↗ Открыть отдельно"; }
-      // если iframe заблокирован — запасной блок
       const frame = document.getElementById("gameFrame");
       if (frame) {
-        frame.addEventListener("load", function () {
+        const hideLoad = function () {
           const ld = document.getElementById("extLoading");
           if (ld) ld.style.display = "none";
-        });
-        setTimeout(function () {
-          const ld = document.getElementById("extLoading");
-          if (ld) ld.style.display = "none";
-        }, 4000);
+        };
+        frame.addEventListener("load", hideLoad);
+        setTimeout(hideLoad, 3500);
       }
       return;
     }
