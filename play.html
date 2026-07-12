@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Игра · Blue Cat</title>
+  <meta name="theme-color" content="#0a0a0a">
+  <style>
+    :root {
+      --bg: #0a0a0a; --card: #141414; --border: #2a2a2a; --text: #eee; --muted: #999;
+      --yellow: #ffcc00; --link: #5eb0ff; --btn-a: #3d8bfd; --btn-b: #1a5fd0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    a { color: var(--link); }
+    .top {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 10px 14px; border-bottom: 1px solid var(--border); background: #111;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .top a.back {
+      text-decoration: none; font-weight: 800; color: #2a1200; padding: 8px 14px; border-radius: 999px;
+      background: linear-gradient(135deg, #ffcc00, #ff9f1c); font-size: 14px;
+    }
+    .top h1 { font-size: 1.1rem; flex: 1; min-width: 140px; }
+    .top .badge {
+      font-size: 12px; color: var(--muted); background: #1a1a1a; border: 1px solid #333;
+      padding: 4px 10px; border-radius: 999px;
+    }
+    .tabs {
+      display: flex; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--border);
+      overflow-x: auto; background: #0f0f0f; position: sticky; top: 52px; z-index: 15;
+    }
+    .tab {
+      border: 0; background: transparent; color: #aaa; font: inherit; font-weight: 800;
+      padding: 10px 14px; border-radius: 10px; cursor: pointer; white-space: nowrap; font-size: 14px;
+    }
+    .tab:hover { color: #fff; background: #1a1a1a; }
+    .tab.active { color: #111; background: var(--yellow); }
+    .panel { display: none; flex: 1; min-height: 0; }
+    .panel.active { display: flex; flex-direction: column; }
+    .play-wrap {
+      flex: 1; min-height: 60vh; background: #000; position: relative;
+    }
+    .play-wrap iframe {
+      width: 100%; height: min(78vh, 900px); min-height: 420px; border: 0; display: block; background: #000;
+    }
+    .play-actions {
+      display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); background: #111;
+    }
+    .btn {
+      border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 800; font: inherit; cursor: pointer;
+      text-decoration: none; display: inline-grid; place-items: center; min-height: 42px;
+    }
+    .btn-go { background: linear-gradient(135deg, var(--btn-a), var(--btn-b)); color: #fff; }
+    .btn-sec { background: #222; color: #ddd; border: 1px solid #444; }
+    .content {
+      padding: 16px; max-width: 900px; margin: 0 auto; width: 100%;
+    }
+    .content h2 { font-size: 1.2rem; margin-bottom: 10px; color: var(--yellow); }
+    .content p, .content li { color: #ccc; line-height: 1.5; font-size: 15px; margin-bottom: 8px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .ctrl-grid { display: grid; gap: 10px; }
+    .ctrl-item b { color: var(--yellow); display: block; margin-bottom: 4px; }
+    .review {
+      background: #151515; border: 1px solid #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 10px;
+    }
+    .review.bad { border-color: #5a2020; }
+    .review-top { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-weight: 800; font-size: 14px; }
+    .stars { color: #fc0; letter-spacing: 1px; font-size: 13px; }
+    .review p { margin: 0 0 6px; color: #ddd; font-size: 14px; }
+    .form label { display: block; margin-bottom: 10px; font-size: 13px; color: #aaa; }
+    .form input, .form select, .form textarea {
+      width: 100%; margin-top: 4px; padding: 10px 12px; border-radius: 10px; border: 1px solid #3a3a3a;
+      background: #111; color: #fff; font: inherit;
+    }
+    .form .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hint { color: var(--muted); font-size: 13px; margin-top: 8px; }
+    .ext-box {
+      text-align: center; padding: 40px 16px; background: linear-gradient(160deg, #1a1208, #0a0a0a);
+      border: 1px solid #3a2a10; border-radius: 16px; margin: 16px;
+    }
+    .ext-box .big { font-size: 3rem; margin-bottom: 8px; }
+    .missing { padding: 40px 16px; text-align: center; color: #888; }
+    @media (max-width: 700px) {
+      .play-wrap iframe { min-height: 360px; height: 62vh; }
+      .tabs { top: 56px; }
+      .tab { padding: 10px 12px; font-size: 13px; }
+    }
+  </style>
+  <script src="games/game-meta.js"></script>
+</head>
+<body>
+  <div class="top">
+    <a class="back" href="index.html">⬅ На сайт</a>
+    <h1 id="gameTitle">🎮 Игра</h1>
+    <span class="badge" id="gameGenre">—</span>
+  </div>
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab active" data-tab="play">🎮 Играть</button>
+    <button type="button" class="tab" data-tab="desc">📖 Описание</button>
+    <button type="button" class="tab" data-tab="reviews">💬 Отзывы</button>
+    <button type="button" class="tab" data-tab="controls">🎛 Управление</button>
+  </div>
+
+  <div id="panel-play" class="panel active">
+    <div class="play-wrap" id="playWrap">
+      <div class="missing" id="playPlaceholder">Загрузка…</div>
+    </div>
+    <div class="play-actions">
+      <button type="button" class="btn btn-go" id="reloadBtn">↻ Заново</button>
+      <a class="btn btn-sec" id="openRawBtn" href="#" target="_blank" rel="noopener">↗ На весь экран</a>
+      <a class="btn btn-sec" href="index.html">Каталог</a>
+    </div>
+  </div>
+
+  <div id="panel-desc" class="panel">
+    <div class="content">
+      <div class="card">
+        <h2>📖 Описание</h2>
+        <p id="descText">—</p>
+        <p class="hint" id="descMeta"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-reviews" class="panel">
+    <div class="content">
+      <div class="card">
+        <h2>💬 Отзывы</h2>
+        <div id="reviewsList"></div>
+      </div>
+      <div class="card">
+        <h2>✍️ Написать отзыв</h2>
+        <form class="form" id="reviewForm">
+          <label>Имя *
+            <input type="text" name="who" required maxlength="40" placeholder="Как тебя зовут">
+          </label>
+          <label>Оценка *
+            <select name="stars" required>
+              <option value="5">★★★★★ 5</option>
+              <option value="4">★★★★☆ 4</option>
+              <option value="3">★★★☆☆ 3</option>
+              <option value="2">★★☆☆☆ 2</option>
+              <option value="1">★☆☆☆☆ 1</option>
+            </select>
+          </label>
+          <label>Текст *
+            <textarea name="text" required rows="3" maxlength="400" placeholder="Что понравилось / не понравилось"></textarea>
+          </label>
+          <div class="row">
+            <button type="submit" class="btn btn-go">💬 Опубликовать</button>
+          </div>
+          <p class="hint" id="reviewNote">Отзыв сохранится на этом устройстве и появится во вкладке.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-controls" class="panel">
+    <div class="content">
+      <div class="card">
+        <h2>🎛 Управление</h2>
+        <div class="ctrl-grid" id="controlsBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const REVIEWS_KEY = "portal_user_reviews_v1";
+  const params = new URLSearchParams(location.search);
+  let gameId = params.get("id") || params.get("game") || "snake";
+  const extUrl = params.get("url") || "";
+  const extTitle = params.get("title") || "";
+  const extEmoji = params.get("emoji") || "🎮";
+  const extGenre = params.get("genre") || "Онлайн";
+
+  function esc(s) {
+    return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function loadUserReviews() {
+    try {
+      const list = JSON.parse(localStorage.getItem(REVIEWS_KEY) || "[]");
+      return Array.isArray(list) ? list : [];
+    } catch { return []; }
+  }
+  function saveUserReviews(list) {
+    try { localStorage.setItem(REVIEWS_KEY, JSON.stringify(list)); } catch (_) {}
+  }
+
+  function resolveMeta() {
+    const META = window.GAME_META || {};
+    if (META[gameId]) return META[gameId];
+    // created mini-game
+    if (gameId.indexOf("c_") === 0 || params.get("created") === "1") {
+      const base = META.maker || {};
+      return Object.assign({}, base, {
+        id: gameId,
+        title: extTitle || base.title,
+        emoji: extEmoji || base.emoji,
+        src: "minis/maker-play.html#" + encodeURIComponent(gameId)
+      });
+    }
+    // external / igroutka
+    if (extUrl || gameId.indexOf("ig_") === 0) {
+      return window.metaForExternal({
+        id: gameId,
+        title: extTitle || gameId,
+        emoji: extEmoji,
+        genre: extGenre,
+        url: extUrl || ("https://igroutka.ru/")
+      });
+    }
+    return META.snake;
+  }
+
+  let meta = resolveMeta();
+
+  function stars(n) {
+    n = Math.max(0, Math.min(5, Number(n) || 0));
+    return "★".repeat(n) + "☆".repeat(5 - n);
+  }
+
+  function allReviews() {
+    const built = (meta.reviews || []).map(r => Object.assign({ builtin: true }, r));
+    const mine = loadUserReviews().filter(r => r && (r.game === meta.id || r.game === gameId));
+    return mine.concat(built);
+  }
+
+  function renderReviews() {
+    const box = document.getElementById("reviewsList");
+    if (!box) return;
+    const list = allReviews();
+    if (!list.length) {
+      box.innerHTML = "<p class='hint'>Пока нет отзывов — напиши первый!</p>";
+      return;
+    }
+    box.innerHTML = list.map(r => {
+      const bad = Number(r.stars) <= 2 ? " bad" : "";
+      const tag = r.builtin ? "" : " · твой";
+      return "<article class='review" + bad + "'>" +
+        "<div class='review-top'><span>" + esc(r.who) + tag + "</span><span class='stars'>" + stars(r.stars) + "</span></div>" +
+        "<p>" + esc(r.text) + "</p></article>";
+    }).join("");
+  }
+
+  function renderControls() {
+    const box = document.getElementById("controlsBox");
+    const c = meta.controls || {};
+    box.innerHTML =
+      "<div class='ctrl-item'><b>👤 Игрок 1</b><p>" + esc(c.p1 || "—") + "</p></div>" +
+      "<div class='ctrl-item'><b>👥 Игрок 2</b><p>" + esc(c.p2 || "—") + "</p></div>" +
+      "<div class='ctrl-item'><b>📱 Телефон</b><p>" + esc(c.mobile || "—") + "</p></div>" +
+      "<div class='ctrl-item'><b>🎯 Цель</b><p>" + esc(c.goal || "—") + "</p></div>";
+  }
+
+  function gameSrc() {
+    if (meta.src) {
+      // relative to play.html at site root
+      return "games/" + meta.src.replace(/^games\//, "");
+    }
+    return null;
+  }
+
+  function mountPlay() {
+    const wrap = document.getElementById("playWrap");
+    const raw = document.getElementById("openRawBtn");
+    const src = gameSrc();
+    if (src) {
+      wrap.innerHTML = '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(src) + '" allow="fullscreen; gamepad; autoplay" allowfullscreen></iframe>';
+      if (raw) { raw.href = src; raw.hidden = false; }
+    } else if (meta.externalUrl) {
+      wrap.innerHTML =
+        '<div class="ext-box">' +
+        '<div class="big">' + esc(meta.emoji || "🎮") + '</div>' +
+        "<h2 style='margin-bottom:8px'>" + esc(meta.title) + "</h2>" +
+        "<p style='color:#aaa;margin-bottom:16px;max-width:480px;margin-left:auto;margin-right:auto'>" + esc(meta.desc) + "</p>" +
+        '<a class="btn btn-go" style="font-size:16px;padding:14px 22px" href="' + esc(meta.externalUrl) + '" target="_blank" rel="noopener">▶ Играть на Игроутке</a>' +
+        '<p class="hint" style="margin-top:14px">Откроется в новой вкладке · igroutka.ru</p></div>';
+      if (raw) { raw.href = meta.externalUrl; raw.hidden = false; }
+    } else {
+      wrap.innerHTML = "<div class='missing'>Игра не найдена. <a href='index.html'>На портал</a></div>";
+      if (raw) raw.hidden = true;
+    }
+  }
+
+  function fillHeader() {
+    document.getElementById("gameTitle").textContent = (meta.emoji || "🎮") + " " + meta.title;
+    document.getElementById("gameGenre").textContent = (meta.genre || "") + (meta.rating ? " · ★ " + meta.rating : "");
+    document.title = meta.title + " · Blue Cat";
+    document.getElementById("descText").textContent = meta.desc || "—";
+    document.getElementById("descMeta").textContent =
+      "Жанр: " + (meta.genre || "—") + " · Оценка: " + (meta.rating || "—") +
+      (meta.externalUrl ? " · Внешняя игра" : " · На портале");
+  }
+
+  // tabs
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      const id = "panel-" + btn.getAttribute("data-tab");
+      const panel = document.getElementById(id);
+      if (panel) panel.classList.add("active");
+    });
+  });
+
+  document.getElementById("reloadBtn").addEventListener("click", () => {
+    const frame = document.getElementById("gameFrame");
+    if (frame) {
+      frame.src = frame.src;
+    } else {
+      mountPlay();
+    }
+  });
+
+  document.getElementById("reviewForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const rev = {
+      id: "r_" + Date.now(),
+      who: String(fd.get("who") || "").trim(),
+      game: meta.id || gameId,
+      stars: Number(fd.get("stars") || 5),
+      text: String(fd.get("text") || "").trim(),
+      date: new Date().toISOString()
+    };
+    if (!rev.who || !rev.text) return;
+    const list = loadUserReviews();
+    list.unshift(rev);
+    saveUserReviews(list.slice(0, 150));
+    e.target.reset();
+    document.getElementById("reviewNote").textContent = "✅ Отзыв добавлен!";
+    renderReviews();
+  });
+
+  // Try load igroutka title from session if only id given
+  if (gameId.indexOf("ig_") === 0 && !extUrl) {
+    try {
+      const cache = JSON.parse(sessionStorage.getItem("portal_ig_cache_v1") || "{}");
+      if (cache[gameId]) {
+        meta = window.metaForExternal(cache[gameId]);
+      }
+    } catch (_) {}
+  }
+
+  fillHeader();
+  mountPlay();
+  renderControls();
+  renderReviews();
+
+  // open tab from hash #reviews
+  const hash = (location.hash || "").replace("#", "");
+  if (hash && ["play", "desc", "reviews", "controls"].indexOf(hash) >= 0) {
+    const btn = document.querySelector('.tab[data-tab="' + hash + '"]');
+    if (btn) btn.click();
+  }
+})();
+  </script>
+</body>
+</html>

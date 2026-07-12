@@ -949,7 +949,7 @@
       <h2 data-i18n="classicsTitle">🕹️ Классика — играй сейчас</h2>
       <p class="menu-sub" data-i18n="classicsSub">Нажми «Играть» — игра откроется</p>
       <div class="classics-grid">
-        <a class="classic-card" href="games/minis/snake.html">
+        <a class="classic-card" href="play.html?id=snake">
           <div class="cc-art" style="background:linear-gradient(145deg,#0a3a1a,#062a10)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>🐍
           </div>
@@ -959,7 +959,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/minis/pacman.html">
+        <a class="classic-card" href="play.html?id=pacman">
           <div class="cc-art" style="background:linear-gradient(145deg,#0a0a40,#1a1a6a)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>
             <img src="images/pacman.png" alt="Пакман"
@@ -971,7 +971,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/minis/mario.html">
+        <a class="classic-card" href="play.html?id=mario">
           <div class="cc-art" style="background:linear-gradient(145deg,#5c94fc,#1a5a20)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>
             <img src="images/e091479ed98337ac93d30276ab079ea8.jpg" alt="Марио"
@@ -983,7 +983,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/smeshariki/index.html">
+        <a class="classic-card" href="play.html?id=smeshariki">
           <div class="cc-art" style="background:linear-gradient(145deg,#2d1b4e,#0f3460)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>
             <img src="games/smeshariki/images/smeshariki_kruglaya_kompaniya-square.jpg" alt="Смешарики"
@@ -996,7 +996,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/minis/tanks.html">
+        <a class="classic-card" href="play.html?id=tanks">
           <div class="cc-art" style="background:linear-gradient(145deg,#3a4a20,#1a2010)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>
             <span style="font-size:3.2rem">🪖</span>
@@ -1007,7 +1007,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/minis/labyrinth.html">
+        <a class="classic-card" href="play.html?id=labyrinth">
           <div class="cc-art" style="background:linear-gradient(145deg,#0a3a1a,#1a4a30)">
             <span class="cc-badge" data-i18n="hit">NEW</span>
             <span style="font-size:3.2rem">🌀</span>
@@ -1018,7 +1018,7 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
-        <a class="classic-card" href="games/minis/battle-all.html">
+        <a class="classic-card" href="play.html?id=battle">
           <div class="cc-art" style="background:linear-gradient(145deg,#3b1a5c,#1a0a20 50%,#4a2010)">
             <span class="cc-badge" data-i18n="hit">NEW</span>
             <span style="font-size:2.6rem">⚔️🪖🟡🐍🍄</span>
@@ -2639,17 +2639,31 @@
   ];
 
 
+    function igPlayUrl(g) {
+      return "play.html?id=" + encodeURIComponent(g.id) +
+        "&title=" + encodeURIComponent(g.title || "Игра") +
+        "&emoji=" + encodeURIComponent(g.emoji || "🎮") +
+        "&genre=" + encodeURIComponent(g.genre || "Лучшие") +
+        "&url=" + encodeURIComponent(g.url || "");
+    }
+
     function igroutkaAsGames() {
+      // cache for play.html
+      try {
+        const cache = {};
+        IGROUTKA_GAMES.forEach(g => { cache[g.id] = g; });
+        sessionStorage.setItem("portal_ig_cache_v1", JSON.stringify(cache));
+      } catch (_) {}
       return IGROUTKA_GAMES.map(g => ({
         id: g.id,
         title: g.title,
         genre: (g.genre || "Игроутка") + " · Игры 2",
         rating: "★",
-        url: g.url,
+        url: igPlayUrl(g),
         emoji: g.emoji || "🎮",
         bg: "linear-gradient(145deg,#2a1a10,#1a1010)",
         builtin: false,
-        external: true,
+        external: false,
         source: "igroutka"
       }));
     }
@@ -2658,13 +2672,19 @@
       const grid = document.getElementById("igroutkaGrid");
       if (!grid) return;
       const cnt = document.getElementById("igroutkaCount");
-      if (cnt) cnt.textContent = IGROUTKA_GAMES.length + " " + (currentLang === "en" ? "games" : "игр") + " · igroutka.ru/luchshie-igry";
+      if (cnt) cnt.textContent = IGROUTKA_GAMES.length + " " + (currentLang === "en" ? "games" : "игр") + " · описание · отзывы · управление";
+      // cache
+      try {
+        const cache = {};
+        IGROUTKA_GAMES.forEach(g => { cache[g.id] = g; });
+        sessionStorage.setItem("portal_ig_cache_v1", JSON.stringify(cache));
+      } catch (_) {}
       grid.innerHTML = IGROUTKA_GAMES.map(g =>
-        `<a class="ig-card" href="${esc(g.url)}" target="_blank" rel="noopener">
+        `<a class="ig-card" href="${esc(igPlayUrl(g))}">
           <div class="ig-thumb">${esc(g.emoji || "🎮")}</div>
           <div class="ig-body">
             <div class="ig-title">${esc(g.title)}</div>
-            <div class="ig-meta">${esc(g.genre || "Лучшие")} · Игроутка</div>
+            <div class="ig-meta">${esc(g.genre || "Лучшие")} · описание · отзывы</div>
             <div class="ig-play">${esc(t("play"))}</div>
           </div>
         </a>`
@@ -2679,7 +2699,7 @@
           title: t("gSnake"),
           genre: t("genreArcade"),
           rating: "4.8",
-          url: "games/minis/snake.html",
+          url: "play.html?id=snake",
           emoji: "🐍",
           bg: "linear-gradient(145deg,#0a3a1a,#062a10)",
           builtin: true
@@ -2689,7 +2709,7 @@
           title: t("gPacman"),
           genre: t("genreArcade"),
           rating: "4.9",
-          url: "games/minis/pacman.html",
+          url: "play.html?id=pacman",
           img: "images/pacman.png",
           emoji: "🟡",
           bg: "linear-gradient(145deg,#0a0a40,#1a1a6a)",
@@ -2700,7 +2720,7 @@
           title: t("gMario"),
           genre: t("genrePlatform"),
           rating: "4.9",
-          url: "games/minis/mario.html",
+          url: "play.html?id=mario",
           img: "images/e091479ed98337ac93d30276ab079ea8.jpg",
           emoji: "🍄",
           bg: "linear-gradient(145deg,#5c94fc,#00a800)",
@@ -2711,7 +2731,7 @@
           title: t("gSmesh"),
           genre: t("genreArcade"),
           rating: "4.9",
-          url: "games/smeshariki/index.html",
+          url: "play.html?id=smeshariki",
           img: "games/smeshariki/images/smeshariki_kruglaya_kompaniya-square.jpg",
           bg: "linear-gradient(145deg,#2d1b4e,#0f3460)",
           builtin: true
@@ -2721,7 +2741,7 @@
           title: t("gTanks"),
           genre: t("genreArcade"),
           rating: "4.7",
-          url: "games/minis/tanks.html",
+          url: "play.html?id=tanks",
           emoji: "🪖",
           bg: "linear-gradient(145deg,#3a4a20,#1a2010)",
           builtin: true
@@ -2731,7 +2751,7 @@
           title: t("gLaby"),
           genre: t("genreArcade"),
           rating: "4.8",
-          url: "games/minis/labyrinth.html",
+          url: "play.html?id=labyrinth",
           emoji: "🌀",
           bg: "linear-gradient(145deg,#0a3a1a,#1a4a30)",
           builtin: true
@@ -2741,7 +2761,7 @@
           title: t("gBattle"),
           genre: t("genreArcade"),
           rating: "5.0",
-          url: "games/minis/battle-all.html",
+          url: "play.html?id=battle",
           emoji: "⚔️",
           bg: "linear-gradient(145deg,#3b1a5c,#1a0a20)",
           builtin: true
@@ -2773,7 +2793,8 @@
         title: g.title,
         genre: "Создано на сайте · " + (g.type || "mini"),
         rating: "★",
-        url: "games/minis/maker-play.html#" + encodeURIComponent(g.id),
+        url: "play.html?id=" + encodeURIComponent(g.id) + "&created=1&title=" + encodeURIComponent(g.title || "Моя игра") +
+          "&emoji=" + encodeURIComponent(g.emoji || "🎮"),
         emoji: g.emoji || "🎮",
         bg: "linear-gradient(145deg," + (g.color || "#333") + "55,#111)",
         builtin: false,
@@ -2792,7 +2813,9 @@
         "<div style='background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap'>" +
         "<span style='font-size:1.4rem'>" + esc(g.emoji || "🎮") + "</span>" +
         "<div style='flex:1;min-width:120px'><b>" + esc(g.title) + "</b><br><span style='color:#888;font-size:12px'>" + esc(g.type) + " · сложн. " + esc(g.difficulty) + "</span></div>" +
-        "<a class='btn-play' href='games/minis/maker-play.html#" + encodeURIComponent(g.id) + "' style='height:36px;font-size:13px;min-width:100px;display:inline-grid;place-items:center;text-decoration:none'>▶ Играть</a>" +
+        "<a class='btn-play' href='play.html?id=" + encodeURIComponent(g.id) + "&created=1&title=" + encodeURIComponent(g.title || "") +
+        "&emoji=" + encodeURIComponent(g.emoji || "🎮") +
+        "' style='height:36px;font-size:13px;min-width:100px;display:inline-grid;place-items:center;text-decoration:none'>▶ Играть</a>" +
         "<button type='button' class='btn-secondary' data-del-created='" + esc(g.id) + "' style='height:36px;font-size:13px'>Удалить</button>" +
         "</div>"
       ).join("");
@@ -3115,12 +3138,11 @@
       }
       drop.hidden = false;
       drop.innerHTML = list.map(g => {
-        const ext = g.external ? " target=\"_blank\" rel=\"noopener\"" : "";
         const tag = g.source === "igroutka" ? "Игры 2" : (g.created ? "Создано" : (g.builtin ? "Портал" : "Каталог"));
-        return "<a class='search-item' role='option' href='" + esc(g.url) + "'" + ext + ">" +
+        return "<a class='search-item' role='option' href='" + esc(g.url) + "'>" +
           "<span class='si-emoji'>" + esc(g.emoji || "🎮") + "</span>" +
           "<span><div class='si-title'>" + esc(g.title) + "</div>" +
-          "<div class='si-meta'>" + esc(tag) + " · " + esc(g.genre || "") + "</div></span></a>";
+          "<div class='si-meta'>" + esc(tag) + " · описание · отзывы · " + esc(g.genre || "") + "</div></span></a>";
       }).join("");
     }
 
@@ -3376,7 +3398,8 @@
       renderMyCreated();
       renderAll();
       toast("Игра создана: " + game.title);
-      location.href = "games/minis/maker-play.html#" + encodeURIComponent(game.id);
+      location.href = "play.html?id=" + encodeURIComponent(game.id) + "&created=1&title=" +
+        encodeURIComponent(game.title) + "&emoji=" + encodeURIComponent(game.emoji);
     });
 
     document.addEventListener("click", (e) => {
