@@ -889,10 +889,94 @@
     }
     .toast[hidden] { display: none; }
 
+    /* Auth / Premium */
+    .auth-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .btn-auth, .btn-prem {
+      border: 0; border-radius: 999px; padding: 8px 12px; font-weight: 800; font: inherit;
+      font-size: 12px; cursor: pointer; white-space: nowrap; min-height: 36px;
+    }
+    .btn-auth { background: #222; color: #eee; border: 1px solid #444; }
+    .btn-auth:hover { border-color: #5eb0ff; color: #fff; }
+    .btn-prem {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1a1200;
+      box-shadow: 0 2px 12px rgba(251, 191, 36, .35);
+    }
+    .btn-prem:hover { filter: brightness(1.06); }
+    .btn-prem.is-on { background: linear-gradient(135deg, #4ade80, #22c55e); color: #052e16; }
+    .user-chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px;
+      background: #1a1a1a; border: 1px solid #333; border-radius: 999px; font-size: 12px; font-weight: 700;
+    }
+    .user-chip img, .user-chip .av {
+      width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #333;
+      display: grid; place-items: center; font-size: 14px;
+    }
+    .user-chip .prem-star { color: #fbbf24; }
+    .auth-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 300;
+      display: grid; place-items: center; padding: 16px;
+    }
+    .auth-modal[hidden] { display: none !important; }
+    .auth-box {
+      width: min(420px, 100%); background: #141414; border: 1px solid #333; border-radius: 18px;
+      padding: 20px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    }
+    .auth-box h2 { margin: 0 0 8px; font-size: 1.25rem; color: #ffcc00; }
+    .auth-box p { color: #aaa; font-size: 14px; line-height: 1.45; margin: 0 0 14px; }
+    .auth-box .benefits { list-style: none; margin: 0 0 14px; padding: 0; }
+    .auth-box .benefits li {
+      padding: 8px 10px; margin-bottom: 6px; background: #1a1a1a; border-radius: 10px;
+      border: 1px solid #2a2a2a; font-size: 13px; color: #ddd;
+    }
+    .auth-box .price {
+      font-size: 2rem; font-weight: 900; color: #fbbf24; margin: 4px 0 12px;
+    }
+    .auth-box .price small { font-size: 14px; color: #888; font-weight: 600; }
+    .auth-actions { display: grid; gap: 8px; }
+    .auth-actions .btn-play, .auth-actions .btn-secondary, .auth-actions button.google-btn {
+      width: 100%; min-height: 46px; border-radius: 12px; font-weight: 800; font: inherit; cursor: pointer; border: 0;
+    }
+    .google-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: #fff; color: #1f1f1f; border: 1px solid #dadce0 !important;
+    }
+    .google-btn:hover { background: #f7f8f8; }
+    .google-btn .g-icon {
+      width: 20px; height: 20px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/%3E%3Cpath fill='%23FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat;
+    }
+    .auth-divider { text-align: center; color: #666; font-size: 12px; margin: 10px 0; }
+    .auth-box label { display: grid; gap: 4px; font-size: 12px; color: #888; margin-bottom: 10px; }
+    .auth-box input {
+      padding: 12px 14px; border-radius: 10px; border: 1px solid #3a3a3a; background: #111; color: #fff; font: inherit;
+    }
+    .auth-close {
+      float: right; border: 0; background: #222; color: #aaa; width: 32px; height: 32px;
+      border-radius: 8px; cursor: pointer; font-size: 16px;
+    }
+    .prem-banner {
+      margin: 0 0 16px; padding: 12px 16px; border-radius: 14px;
+      background: linear-gradient(135deg, #2a2010, #1a1408);
+      border: 1px solid #5a4a20; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    }
+    .prem-banner b { color: #fbbf24; }
+    .prem-banner .btn-prem { margin-left: auto; }
+    body.is-premium .prem-only-hide { display: none !important; }
+    body:not(.is-premium) .prem-only { opacity: .85; }
+    body:not(.is-premium) .create-types .create-type[data-prem="1"] {
+      border-color: #5a4a20; position: relative;
+    }
+    body:not(.is-premium) .create-types .create-type[data-prem="1"]::after {
+      content: "⭐ PREM"; position: absolute; top: 6px; right: 6px; font-size: 10px; color: #fbbf24; font-weight: 800;
+    }
+
     @media (max-width: 800px) {
       .page { padding-bottom: 24px; }
+      .auth-bar { width: 100%; justify-content: flex-end; }
+      .btn-auth, .btn-prem { font-size: 11px; padding: 6px 10px; }
     }
   </style>
+  <script src="auth-config.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <header class="header">
@@ -906,6 +990,16 @@
     <div class="search">
       <input type="search" id="searchInput" placeholder="Поиск игр…" aria-label="Поиск" autocomplete="off" data-i18n-placeholder="searchPh" data-i18n-aria="searchAria">
       <div class="search-drop" id="searchDrop" hidden role="listbox" aria-label="Результаты поиска"></div>
+    </div>
+    <div class="auth-bar" id="authBar">
+      <button type="button" class="btn-prem" id="premiumBtn" title="Премиум">⭐ Premium 10₽</button>
+      <button type="button" class="btn-auth" id="loginBtn">Войти</button>
+      <div class="user-chip" id="userChip" hidden>
+        <span class="av" id="userAv">👤</span>
+        <span id="userName">Игрок</span>
+        <span class="prem-star" id="userPremStar" hidden>⭐</span>
+        <button type="button" class="btn-auth" id="logoutBtn" style="min-height:28px;padding:4px 8px;font-size:11px">Выйти</button>
+      </div>
     </div>
     <nav class="nav-cats">
       <a href="#menu" class="play-link" data-i18n="navAll">☰ Все игры</a>
@@ -958,7 +1052,69 @@
     </nav>
   </header>
 
+  <!-- Auth / Premium modals -->
+  <div class="auth-modal" id="loginModal" hidden>
+    <div class="auth-box">
+      <button type="button" class="auth-close" data-close-modal="loginModal" aria-label="Закрыть">✕</button>
+      <h2>🔐 Вход</h2>
+      <p>Войди через Google или по имени — чтобы сохранять прогресс и друзей удобнее.</p>
+      <div class="auth-actions">
+        <button type="button" class="google-btn" id="googleLoginBtn">
+          <span class="g-icon" aria-hidden="true"></span>
+          Войти через Google
+        </button>
+        <div id="googleBtnMount" style="display:flex;justify-content:center;min-height:0"></div>
+      </div>
+      <div class="auth-divider">— или —</div>
+      <label>Имя / ник
+        <input type="text" id="localNameInput" maxlength="40" placeholder="Как тебя зовут">
+      </label>
+      <div class="auth-actions">
+        <button type="button" class="btn-play" id="localLoginBtn" style="height:46px">Войти как гость</button>
+        <button type="button" class="btn-secondary" data-close-modal="loginModal" style="height:44px">Отмена</button>
+      </div>
+      <p class="hint-mini" id="loginHint" style="margin-top:10px">Для настоящего Google-входа владелец сайта указывает Client ID в auth-config.js</p>
+    </div>
+  </div>
+
+  <div class="auth-modal" id="premiumModal" hidden>
+    <div class="auth-box">
+      <button type="button" class="auth-close" data-close-modal="premiumModal" aria-label="Закрыть">✕</button>
+      <h2>⭐ Premium</h2>
+      <div class="price">10 ₽ <small>/ 30 дней</small></div>
+      <p>Поддержка портала Blue Cat и бонусы для игрока.</p>
+      <ul class="benefits">
+        <li>⭐ Значок Premium у имени</li>
+        <li>🧱 Все типы создания игр (постройка, гонка, пазл…)</li>
+        <li>⚔️ Метка Premium в Битве и каталоге</li>
+        <li>🎮 Больше слотов своих игр (до 100)</li>
+        <li>💛 Спасибо автору портала</li>
+      </ul>
+      <div class="auth-actions">
+        <button type="button" class="btn-prem" id="payPremiumBtn" style="width:100%;min-height:48px;border-radius:12px;font-size:16px">
+          💳 Оплатить 10 ₽
+        </button>
+        <button type="button" class="btn-secondary" id="activateAfterPayBtn" style="height:44px">
+          ✓ Я оплатил — активировать
+        </button>
+        <label style="margin:0">Код активации (тест)
+          <input type="text" id="premiumCodeInput" placeholder="BLUECAT10" maxlength="32">
+        </label>
+        <button type="button" class="btn-play" id="premiumCodeBtn" style="height:44px">Активировать код</button>
+        <button type="button" class="btn-secondary" data-close-modal="premiumModal" style="height:44px">Закрыть</button>
+      </div>
+      <p class="hint-mini" id="premiumHint" style="margin-top:10px">После оплаты нажми «Я оплатил». Код BLUECAT10 — для проверки.</p>
+    </div>
+  </div>
+
   <main class="page" id="top">
+    <div class="prem-banner" id="premBanner">
+      <div>
+        <b>⭐ Premium — 10 ₽</b>
+        <span style="color:#aaa;font-size:13px"> · все режимы создания игр · значок · поддержка портала</span>
+      </div>
+      <button type="button" class="btn-prem" id="premBannerBtn">Купить / Войти</button>
+    </div>
     <div class="brand-banner" aria-label="Название сайта">
       <span class="brand-banner-cat"><img src="images/blue-cat.svg" alt="Blue Cat"></span>
       <div>
@@ -1429,12 +1585,12 @@
           <button type="button" class="create-type" data-type="dodge"><b>🌀 Уворот</b><span>Бегай от шаров</span></button>
           <button type="button" class="create-type" data-type="catch"><b>⭐ Ловилка</b><span>Лови звёзды</span></button>
           <button type="button" class="create-type" data-type="memory"><b>🧠 Память</b><span>Повтори цвета</span></button>
-          <button type="button" class="create-type" data-type="runner"><b>🏃 Бегалка</b><span>Прыгай через ямы</span></button>
-          <button type="button" class="create-type" data-type="shooter"><b>🔫 Стрелялка</b><span>Бей цели</span></button>
-          <button type="button" class="create-type" data-type="builder"><b>🧱 Постройка</b><span>Строй и бегай</span></button>
-          <button type="button" class="create-type" data-type="race"><b>🏎️ Гонка</b><span>До финиша</span></button>
-          <button type="button" class="create-type" data-type="platform"><b>🍄 Платформы</b><span>Прыжки по блокам</span></button>
-          <button type="button" class="create-type" data-type="puzzle"><b>🧩 Пазл</b><span>Собери 3 в ряд</span></button>
+          <button type="button" class="create-type" data-type="runner" data-prem="1"><b>🏃 Бегалка</b><span>Прыгай через ямы · ⭐</span></button>
+          <button type="button" class="create-type" data-type="shooter" data-prem="1"><b>🔫 Стрелялка</b><span>Бей цели · ⭐</span></button>
+          <button type="button" class="create-type" data-type="builder" data-prem="1"><b>🧱 Постройка</b><span>Строй и бегай · ⭐</span></button>
+          <button type="button" class="create-type" data-type="race" data-prem="1"><b>🏎️ Гонка</b><span>До финиша · ⭐</span></button>
+          <button type="button" class="create-type" data-type="platform" data-prem="1"><b>🍄 Платформы</b><span>Прыжки по блокам · ⭐</span></button>
+          <button type="button" class="create-type" data-type="puzzle" data-prem="1"><b>🧩 Пазл</b><span>Собери 3 в ряд · ⭐</span></button>
         </div>
         <form class="add-form" id="createGameForm">
           <label><span>Название *</span>
@@ -1622,8 +1778,180 @@
     const STORAGE_REVIEWS = "portal_user_reviews_v1";
     const STORAGE_ADMIN_OK = "portal_admin_ok_v1";
     const STORAGE_FRIENDS = "portal_friends_v1";
+    const STORAGE_USER = "portal_user_v1";
+    const STORAGE_PREMIUM = "portal_premium_v1";
     let createTypeSelected = "clicker";
     let buildMap = null; // 16x8 grid for builder
+    const CFG = window.AUTH_CONFIG || {};
+    const PREMIUM_TYPES = { runner:1, shooter:1, builder:1, race:1, platform:1, puzzle:1 };
+
+    /* ========== Auth & Premium ========== */
+    function loadUser() {
+      try {
+        const u = JSON.parse(localStorage.getItem(STORAGE_USER) || "null");
+        return u && typeof u === "object" ? u : null;
+      } catch { return null; }
+    }
+    function saveUser(u) {
+      try {
+        if (u) localStorage.setItem(STORAGE_USER, JSON.stringify(u));
+        else localStorage.removeItem(STORAGE_USER);
+      } catch (_) {}
+    }
+    function loadPremium() {
+      try {
+        const p = JSON.parse(localStorage.getItem(STORAGE_PREMIUM) || "null");
+        if (!p || !p.until) return null;
+        if (Date.now() > Number(p.until)) {
+          localStorage.removeItem(STORAGE_PREMIUM);
+          return null;
+        }
+        return p;
+      } catch { return null; }
+    }
+    function isPremium() { return !!loadPremium(); }
+    function activatePremium(source) {
+      const days = Number(CFG.PREMIUM_DAYS) || 30;
+      const until = Date.now() + days * 24 * 60 * 60 * 1000;
+      const data = { until: until, source: source || "pay", at: new Date().toISOString() };
+      try { localStorage.setItem(STORAGE_PREMIUM, JSON.stringify(data)); } catch (_) {}
+      refreshAuthUI();
+      toast("⭐ Premium активен на " + days + " дней!");
+      return data;
+    }
+    function loginLocal(name) {
+      const n = String(name || "").trim().slice(0, 40);
+      if (!n) { toast("Введи имя"); return; }
+      saveUser({ id: "local_" + Date.now(), name: n, provider: "local", picture: "" });
+      refreshAuthUI();
+      closeModal("loginModal");
+      toast("Привет, " + n + "!");
+    }
+    function loginGoogleProfile(profile) {
+      saveUser({
+        id: "google_" + (profile.sub || profile.email || Date.now()),
+        name: profile.name || profile.email || "Google",
+        email: profile.email || "",
+        picture: profile.picture || "",
+        provider: "google"
+      });
+      refreshAuthUI();
+      closeModal("loginModal");
+      toast("Вход через Google: " + (profile.name || "ок"));
+    }
+    function logoutUser() {
+      saveUser(null);
+      refreshAuthUI();
+      toast("Вы вышли");
+    }
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.hidden = true;
+      if (!document.querySelector(".auth-modal:not([hidden])")) {
+        document.body.style.overflow = "";
+      }
+    }
+    function refreshAuthUI() {
+      const user = loadUser();
+      const prem = isPremium();
+      document.body.classList.toggle("is-premium", prem);
+      const loginBtn = document.getElementById("loginBtn");
+      const chip = document.getElementById("userChip");
+      const nameEl = document.getElementById("userName");
+      const av = document.getElementById("userAv");
+      const star = document.getElementById("userPremStar");
+      const premBtn = document.getElementById("premiumBtn");
+      const banner = document.getElementById("premBanner");
+      if (user) {
+        if (loginBtn) loginBtn.hidden = true;
+        if (chip) chip.hidden = false;
+        if (nameEl) nameEl.textContent = user.name || "Игрок";
+        if (av) {
+          if (user.picture) {
+            av.outerHTML = '<img id="userAv" src="' + String(user.picture).replace(/"/g, "") + '" alt="">';
+          } else {
+            const el = document.getElementById("userAv");
+            if (el && el.tagName === "IMG") {
+              el.replaceWith(Object.assign(document.createElement("span"), { id: "userAv", className: "av", textContent: "👤" }));
+            } else if (el) el.textContent = "👤";
+          }
+        }
+        if (star) star.hidden = !prem;
+      } else {
+        if (loginBtn) loginBtn.hidden = false;
+        if (chip) chip.hidden = true;
+      }
+      if (premBtn) {
+        premBtn.textContent = prem ? "⭐ Premium ✓" : "⭐ Premium 10₽";
+        premBtn.classList.toggle("is-on", prem);
+      }
+      if (banner) banner.hidden = prem;
+    }
+    function parseJwt(token) {
+      try {
+        const base = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const json = decodeURIComponent(atob(base).split("").map(c =>
+          "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join(""));
+        return JSON.parse(json);
+      } catch { return null; }
+    }
+    function initGoogleSignIn() {
+      const clientId = (CFG.GOOGLE_CLIENT_ID || "").trim();
+      const hint = document.getElementById("loginHint");
+      if (!clientId) {
+        if (hint) hint.textContent = "Google Client ID не задан в auth-config.js — пока доступен вход по имени. Владелец может добавить ID для настоящего Google.";
+        return;
+      }
+      if (hint) hint.textContent = "Нажми «Войти через Google» — откроется аккаунт Google.";
+      const tryInit = () => {
+        if (!window.google || !google.accounts || !google.accounts.id) return false;
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (resp) => {
+            const p = parseJwt(resp.credential);
+            if (p) loginGoogleProfile(p);
+            else toast("Не удалось прочитать Google-профиль");
+          },
+          auto_select: false
+        });
+        const mount = document.getElementById("googleBtnMount");
+        if (mount) {
+          mount.innerHTML = "";
+          google.accounts.id.renderButton(mount, {
+            theme: "outline", size: "large", width: 320, text: "signin_with", locale: "ru"
+          });
+        }
+        return true;
+      };
+      if (!tryInit()) {
+        let n = 0;
+        const t = setInterval(() => {
+          n++;
+          if (tryInit() || n > 40) clearInterval(t);
+        }, 250);
+      }
+    }
+    function payPremium() {
+      const url = (CFG.PAYMENT_URL || "").trim();
+      const sum = Number(CFG.PREMIUM_PRICE_RUB) || 10;
+      if (url) {
+        window.open(url, "_blank", "noopener");
+        toast("Открыта оплата " + sum + " ₽ — после оплаты нажми «Я оплатил»");
+        const h = document.getElementById("premiumHint");
+        if (h) h.textContent = "Оплата открыта. Когда деньги пройдут — нажми «Я оплатил — активировать».";
+      } else {
+        // Нет ссылки оплаты: показываем инструкцию + можно активировать после подтверждения
+        toast("Ссылка оплаты не задана. Для теста: код BLUECAT10");
+        const h = document.getElementById("premiumHint");
+        if (h) h.textContent = "Владелец: укажи PAYMENT_URL в auth-config.js (ЮMoney и т.п.). Сейчас: код " + (CFG.PREMIUM_TEST_CODE || "BLUECAT10");
+      }
+    }
     const ADMIN_PASSWORD = "bluecat";
     const REVIEWS_REPO = "zdapteka22/my-games-portal";
     const DEFAULT_SHARED_REVIEWS_URL = "https://crudcrud.com/api/69a6d57b5d794a17abf2b3ee0069358f/reviews";
@@ -3459,9 +3787,15 @@
     // Create-game type picker
     document.querySelectorAll("#createTypes .create-type").forEach(btn => {
       btn.addEventListener("click", () => {
+        const typ = btn.getAttribute("data-type") || "clicker";
+        if (PREMIUM_TYPES[typ] && !isPremium()) {
+          toast("⭐ Этот режим — в Premium за 10 ₽");
+          openModal("premiumModal");
+          return;
+        }
         document.querySelectorAll("#createTypes .create-type").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        createTypeSelected = btn.getAttribute("data-type") || "clicker";
+        createTypeSelected = typ;
         const bb = document.getElementById("builderBox");
         if (bb) {
           bb.hidden = !(createTypeSelected === "builder" || createTypeSelected === "platform");
@@ -3469,6 +3803,68 @@
         }
       });
     });
+
+    // Login / Premium UI
+    on("loginBtn", "click", () => { openModal("loginModal"); initGoogleSignIn(); });
+    on("premiumBtn", "click", () => {
+      if (isPremium()) { toast("Premium уже активен"); return; }
+      openModal("premiumModal");
+    });
+    on("premBannerBtn", "click", () => {
+      if (!loadUser()) openModal("loginModal");
+      else openModal("premiumModal");
+      initGoogleSignIn();
+    });
+    on("logoutBtn", "click", logoutUser);
+    on("localLoginBtn", "click", () => {
+      loginLocal((document.getElementById("localNameInput") || {}).value);
+    });
+    on("googleLoginBtn", "click", () => {
+      const clientId = (CFG.GOOGLE_CLIENT_ID || "").trim();
+      if (!clientId) {
+        // Демо-вход «как Google», если Client ID не настроен
+        const name = prompt("Имя для входа (Google ID не настроен — демо):", "Игрок Google");
+        if (name) loginGoogleProfile({ name: name.trim(), email: "", picture: "", sub: "demo_" + Date.now() });
+        toast("Демо Google-вход. Для настоящего — Client ID в auth-config.js");
+        return;
+      }
+      initGoogleSignIn();
+      if (window.google && google.accounts && google.accounts.id) {
+        google.accounts.id.prompt();
+      } else {
+        toast("Google SDK загружается… нажми ещё раз через секунду");
+      }
+    });
+    on("payPremiumBtn", "click", payPremium);
+    on("activateAfterPayBtn", "click", () => {
+      // На статическом сайте нет вебхука оплаты — активация после подтверждения пользователя
+      if (!loadUser()) {
+        toast("Сначала войди (Google или имя)");
+        openModal("loginModal");
+        return;
+      }
+      activatePremium("manual_confirm");
+      closeModal("premiumModal");
+    });
+    on("premiumCodeBtn", "click", () => {
+      const code = String((document.getElementById("premiumCodeInput") || {}).value || "").trim().toUpperCase();
+      const need = String(CFG.PREMIUM_TEST_CODE || "BLUECAT10").toUpperCase();
+      if (code !== need) {
+        toast("Неверный код");
+        return;
+      }
+      if (!loadUser()) loginLocal("Premium");
+      activatePremium("code");
+      closeModal("premiumModal");
+    });
+    document.querySelectorAll("[data-close-modal]").forEach(btn => {
+      btn.addEventListener("click", () => closeModal(btn.getAttribute("data-close-modal")));
+    });
+    ["loginModal", "premiumModal"].forEach(id => {
+      const m = document.getElementById(id);
+      if (m) m.addEventListener("click", (e) => { if (e.target.id === id) closeModal(id); });
+    });
+    try { refreshAuthUI(); } catch (_) {}
 
     function initBuilder() {
       const c = document.getElementById("buildCanvas");
@@ -3580,9 +3976,15 @@
         map: (createTypeSelected === "builder" || createTypeSelected === "platform") ? buildMap : null,
         date: new Date().toISOString()
       };
+      if (PREMIUM_TYPES[game.type] && !isPremium()) {
+        toast("⭐ Этот режим — Premium за 10 ₽");
+        openModal("premiumModal");
+        return;
+      }
       const list = loadCreated();
       list.unshift(game);
-      saveCreated(list.slice(0, 50));
+      const maxGames = isPremium() ? 100 : 20;
+      saveCreated(list.slice(0, maxGames));
       const note = document.getElementById("createNote");
       if (note) note.textContent = "Игра создана! Открываем…";
       renderMyCreated();
