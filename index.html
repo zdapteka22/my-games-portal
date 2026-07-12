@@ -872,10 +872,11 @@
     </div>
     <nav class="nav-cats">
       <a href="#menu" class="play-link" data-i18n="navAll">☰ Все игры</a>
-      <a href="#igroutka">Игры 2</a>
+      <a href="#igroutka" data-i18n="navGames2">Игры 2</a>
       <a href="#classics" data-i18n="navClassics">Классика</a>
       <a href="#videos" data-i18n="navVideos">Видео</a>
       <a href="#reviews" data-i18n="navReviews">Отзывы</a>
+      <a href="#friendsPanel" data-i18n="navFriends">Друзья</a>
       <a href="#catalog" data-i18n="navCatalog">Каталог</a>
       <a href="#add" data-i18n="navAdd">Добавить</a>
       <div class="theme-switch">
@@ -906,6 +907,15 @@
           <button type="button" data-lang="ru" class="active" role="option">🇷🇺 Русский</button>
           <button type="button" data-lang="en" role="option">🇬🇧 English</button>
           <button type="button" data-lang="uk" role="option">🇺🇦 Українська</button>
+          <button type="button" data-lang="de" role="option">🇩🇪 Deutsch</button>
+          <button type="button" data-lang="fr" role="option">🇫🇷 Français</button>
+          <button type="button" data-lang="es" role="option">🇪🇸 Español</button>
+          <button type="button" data-lang="pl" role="option">🇵🇱 Polski</button>
+          <button type="button" data-lang="tr" role="option">🇹🇷 Türkçe</button>
+          <button type="button" data-lang="zh" role="option">🇨🇳 中文</button>
+          <button type="button" data-lang="kk" role="option">🇰🇿 Қазақша</button>
+          <button type="button" data-lang="be" role="option">🇧🇾 Беларуская</button>
+          <button type="button" data-lang="ja" role="option">🇯🇵 日本語</button>
         </div>
       </div>
     </nav>
@@ -1271,8 +1281,9 @@
     </section>
 
     <section class="igroutka-block" id="igroutka">
-      <h2>🔥 Игры 2 — лучшие с Игроутки</h2>
-      <p class="menu-sub">Подборка с <a href="https://igroutka.ru/luchshie-igry/" target="_blank" rel="noopener" style="color:var(--yg-link)">igroutka.ru/luchshie-igry</a> · открываются на сайте Игроутка</p>
+      <h2 data-i18n="igroutkaTitle">🔥 Игры 2 — лучшие с Игроутки</h2>
+      <p class="menu-sub" data-i18n="igroutkaSub">Подборка с <a href="https://igroutka.ru/luchshie-igry/" target="_blank" rel="noopener" style="color:var(--yg-link)">igroutka.ru/luchshie-igry</a> · все лучшие игры</p>
+      <p class="menu-sub" id="igroutkaCount" style="margin-top:4px;color:#888"></p>
       <div class="ig-grid" id="igroutkaGrid"></div>
     </section>
 
@@ -1282,12 +1293,13 @@
     </div>
     <div class="catalog" id="catalogGrid"></div>
 
-    <div class="tabs" role="tablist">
+    <div class="tabs" role="tablist" id="mainTabs">
       <button class="tab active" data-tab="about" type="button" data-i18n="tabAbout">О портале</button>
       <button class="tab" data-tab="add" type="button" data-i18n="tabAdd">Отправить игру</button>
-      <button class="tab" data-tab="create" type="button">Создать игру</button>
-      <button class="tab" data-tab="review" type="button">Мой отзыв</button>
-      <button class="tab" data-tab="admin" type="button">Проверка</button>
+      <button class="tab" data-tab="create" type="button" data-i18n="tabCreate">Создать игру</button>
+      <button class="tab" data-tab="friends" type="button" data-i18n="tabFriends">Друзья</button>
+      <button class="tab" data-tab="review" type="button" data-i18n="tabReview">Мой отзыв</button>
+      <button class="tab" data-tab="admin" type="button" data-i18n="tabAdmin">Проверка</button>
     </div>
 
     <div id="panel-about" class="panel active">
@@ -1341,9 +1353,29 @@
       </div>
     </div>
 
+    <div id="panel-friends" class="panel">
+      <div class="card" id="friendsPanel">
+        <h3 data-i18n="friendsTitle">👥 Друзья</h3>
+        <p style="color:#aaa;font-size:14px;margin-bottom:12px" data-i18n="friendsHint">
+          Добавь друзей по имени. Можно играть с другом в «Битве всех игр» (2 игрока на одном устройстве).
+        </p>
+        <form class="add-form" id="addFriendForm">
+          <label><span data-i18n="friendsName">Имя друга *</span>
+            <input type="text" name="name" required maxlength="40" placeholder="Как зовут" data-i18n-placeholder="friendsNamePh">
+          </label>
+          <div class="row">
+            <button type="submit" class="btn-play" style="height:44px;font-size:15px;min-width:180px" data-i18n="friendsAdd">➕ Добавить</button>
+            <a class="btn-secondary" id="playWithFriendBtn" href="games/minis/battle-all.html?mode=2" style="height:44px;display:inline-grid;place-items:center;text-decoration:none;padding:0 16px" data-i18n="friendsPlay">🤝 Играть с другом</a>
+          </div>
+          <p class="hint-mini" id="friendFormNote"></p>
+        </form>
+        <div id="friendsPanelList" style="margin-top:16px"></div>
+      </div>
+    </div>
+
     <div id="panel-create" class="panel">
       <div class="card" id="createGame">
-        <h3>🛠️ Способ 2: Создать игру на сайте</h3>
+        <h3 data-i18n="createTitle">🛠️ Способ 2: Создать игру на сайте</h3>
         <p style="color:#aaa;font-size:14px;margin-bottom:10px">
           Выбери тип, имя и цвет — игра появится в каталоге и сразу запускается. Без ссылок и проверки.
         </p>
@@ -1534,7 +1566,13 @@
         logo1: "Портал любимых", logo2: "игр", logoBrand: "Blue Cat",
         searchPh: "Поиск игр", searchAria: "Поиск",
         navAll: "☰ Все игры", navClassics: "Классика", navVideos: "Видео", navReviews: "Отзывы",
-        navCatalog: "Каталог", navAdd: "Добавить",
+        navCatalog: "Каталог", navAdd: "Добавить", navGames2: "Игры 2", navFriends: "Друзья",
+        tabCreate: "Создать игру", tabFriends: "Друзья", tabReview: "Мой отзыв", tabAdmin: "Проверка",
+        friendsTitle: "👥 Друзья", friendsHint: "Добавь друзей по имени. Можно играть с другом в «Битве всех игр» (2 игрока на одном устройстве).",
+        friendsName: "Имя друга *", friendsNamePh: "Как зовут", friendsAdd: "➕ Добавить", friendsPlay: "🤝 Играть с другом",
+        friendsEmpty: "Пока нет друзей — добавь выше или нажми имя в отзывах",
+        friendsPlayOne: "В бой с другом", createTitle: "🛠️ Способ 2: Создать игру на сайте",
+        igroutkaTitle: "🔥 Игры 2 — лучшие с Игроутки", igroutkaSub: "Подборка лучших игр · открываются на igroutka.ru",
         themeBtn: "Цвет", themeAria: "Цвет интерфейса",
         themeBlack: "Чёрный", themeBlue: "Синий", themePurple: "Фиолет", themeGreen: "Зелёный", themeRed: "Красный",
         themeOrange: "Оранж", themePink: "Розовый", themeGold: "Золото", themeCyan: "Бирюза",
@@ -1600,7 +1638,13 @@
         tanksTitle: "Tanks", tanksDesc: "Classic tanks: drive, shoot, hide behind cover!",
         reviewsTitle: "💬 Reviews — kids, bloggers & AI", reviewsSub: "Reviews for every game",
         gTanks: "Tanks",
-        navCatalog: "Catalog", navAdd: "Add",
+        navCatalog: "Catalog", navAdd: "Add", navGames2: "Games 2", navFriends: "Friends",
+        tabCreate: "Create game", tabFriends: "Friends", tabReview: "My review", tabAdmin: "Review queue",
+        friendsTitle: "👥 Friends", friendsHint: "Add friends by name. Play together in Battle of All Games (2 players on one device).",
+        friendsName: "Friend name *", friendsNamePh: "Name", friendsAdd: "➕ Add", friendsPlay: "🤝 Play with friend",
+        friendsEmpty: "No friends yet — add above or tap a name in reviews",
+        friendsPlayOne: "Battle with friend", createTitle: "🛠️ Way 2: Create a game on the site",
+        igroutkaTitle: "🔥 Games 2 — best from Igroutka", igroutkaSub: "Best games collection · opens on igroutka.ru",
         themeBtn: "Color", themeAria: "Interface color",
         themeBlack: "Black", themeBlue: "Blue", themePurple: "Purple", themeGreen: "Green", themeRed: "Red",
         themeOrange: "Orange", themePink: "Pink", themeGold: "Gold", themeCyan: "Cyan",
@@ -1661,7 +1705,13 @@
         tanksTitle: "Танчики", tanksDesc: "Класичні танчики: їдь, стріляй, ховайся!",
         reviewsTitle: "💬 Відгуки — діти, блогери та ШІ", reviewsSub: "Відгуки до кожної гри",
         gTanks: "Танчики",
-        navCatalog: "Каталог", navAdd: "Додати",
+        navCatalog: "Каталог", navAdd: "Додати", navGames2: "Ігри 2", navFriends: "Друзі",
+        tabCreate: "Створити гру", tabFriends: "Друзі", tabReview: "Мій відгук", tabAdmin: "Перевірка",
+        friendsTitle: "👥 Друзі", friendsHint: "Додай друзів на ім’я. Можна грати з другом у «Битві всіх ігор» (2 гравці на одному пристрої).",
+        friendsName: "Ім’я друга *", friendsNamePh: "Як звати", friendsAdd: "➕ Додати", friendsPlay: "🤝 Грати з другом",
+        friendsEmpty: "Поки немає друзів — додай вище або натисни ім’я у відгуках",
+        friendsPlayOne: "В бій з другом", createTitle: "🛠️ Спосіб 2: Створити гру на сайті",
+        igroutkaTitle: "🔥 Ігри 2 — найкращі з Ігроутки", igroutkaSub: "Добірка найкращих ігор · відкриваються на igroutka.ru",
         themeBtn: "Колір", themeAria: "Колір інтерфейсу",
         themeBlack: "Чорний", themeBlue: "Синій", themePurple: "Фіолет", themeGreen: "Зелений", themeRed: "Червоний",
         themeOrange: "Помаранч", themePink: "Рожевий", themeGold: "Золото", themeCyan: "Бірюза",
@@ -1713,13 +1763,304 @@
         gSnake: "Змійка", gPacman: "Пакман", gMario: "Зелений Маріо (9 рівнів)", gSmesh: "Смішарики: Битва", gTanks: "Танчики", gLaby: "Лабіринт", gBattle: "Битва всіх ігор",
         battleTitle: "⚔️ Битва всіх ігор",
         battleDesc: "Обери героя: танчик, смішарик, пакман, привид, змійка, Маріо, Луїджі, ворог, Лунтик — у кожного здатність!",
+      },
+      de: {
+        logo1: "Lieblingsspiele", logo2: "Portal", logoBrand: "Blue Cat",
+        searchPh: "Spiele suchen", searchAria: "Suche",
+        navAll: "☰ Alle Spiele", navClassics: "Klassiker", navVideos: "Videos", navReviews: "Bewertungen",
+        navCatalog: "Katalog", navAdd: "Hinzufügen", navGames2: "Spiele 2", navFriends: "Freunde",
+        tabAbout: "Über uns", tabAdd: "Spiel senden", tabCreate: "Spiel erstellen", tabFriends: "Freunde", tabReview: "Meine Bewertung", tabAdmin: "Prüfung",
+        friendsTitle: "👥 Freunde", friendsHint: "Freunde nach Namen hinzufügen. Zusammen in „Kampf aller Spiele“ (2 Spieler auf einem Gerät).",
+        friendsName: "Name des Freundes *", friendsNamePh: "Name", friendsAdd: "➕ Hinzufügen", friendsPlay: "🤝 Mit Freund spielen",
+        friendsEmpty: "Noch keine Freunde", friendsPlayOne: "Kampf mit Freund", createTitle: "🛠️ Spiel auf der Seite erstellen",
+        igroutkaTitle: "🔥 Spiele 2 — Beste von Igroutka", igroutkaSub: "Beste Spiele · öffnet auf igroutka.ru",
+        themeBtn: "Farbe", themeAria: "Farbe", themeBlack: "Schwarz", themeBlue: "Blau", themePurple: "Lila", themeGreen: "Grün", themeRed: "Rot",
+        themeOrange: "Orange", themePink: "Rosa", themeGold: "Gold", themeCyan: "Cyan", themeToast: "Farbe: {n}",
+        heroBadge: "🐱 BLUE CAT · KOSTENLOS · IM BROWSER", heroTitle: "Lieblingsspiele-Portal — Blue Cat",
+        heroText: "Online spielen: Snake, Pac-Man, Mario, Smeshariki, Tanks!",
+        btnClassics: "🕹️ Klassiker", btnVideos: "▶ Videos", btnAll: "Alle Spiele", btnMenu: "☰ Menü",
+        classicsTitle: "🕹️ Klassiker", classicsSub: "Jetzt spielen", closeGame: "✕ Schließen", reloadGame: "↻ Neu",
+        hit: "HIT", play: "▶ Spielen", snakeTitle: "Snake", snakeDesc: "Essen, wachsen, Wände meiden!",
+        pacmanTitle: "Pac-Man", pacmanDesc: "Punkte fressen, Geistern ausweichen!", marioTitle: "Mario (9 Level)", marioDesc: "Plattformer mit Münzen und Feinden!",
+        labyTitle: "🌀 Labyrinth", labyDesc: "Finde den Ausgang!", battleTitle: "⚔️ Kampf aller Spiele", battleDesc: "Alle Helden + 2-Spieler-Modus!",
+        videosTitle: "▶ Videos", videosSub: "Trailer und Gameplay", allGamesTitle: "🎮 Alle Spiele", allGamesSub: "Karte antippen zum Spielen",
+        catalogTitle: "Katalog", addYours: "Eigenes hinzufügen →", aboutTitle: "Über das Portal",
+        aboutP1: "Browser-Minispiele: Klassiker und mehr.", aboutP2: "Mehr zu Smeshariki auf der Spielseite.",
+        addTitle: "Spiel hinzufügen", addHint: "Wird in diesem Browser gespeichert.", fieldTitle: "Titel *", fieldDesc: "Beschreibung",
+        fieldUrl: "Link *", fieldEmoji: "Emoji", phTitle: "Mein Spiel", phDesc: "Kurz", phUrl: "https://...",
+        btnAdd: "➕ Hinzufügen", btnClear: "Meine Spiele löschen", disclaimer: "Fan-Portal. Nicht mit Yandex verbunden.",
+        footerMenu: "Menü", footerClassics: "Klassiker", footerVideos: "Videos", footerSmeshariki: "Smeshariki",
+        footerCopy: "© Lieblingsspiele · Blue Cat", seoTitle: "Lieblingsspiele · Blue Cat", seoText: "Kostenlose Browser-Spiele.",
+        genreArcade: "Arcade", genrePlatform: "Plattformer", genreMine: "Mein Spiel", mine: "meins", notFound: "Nicht gefunden", del: "Löschen",
+        toastDeleted: "Gelöscht", toastAdded: "Hinzugefügt", toastFill: "Titel und Link ausfüllen", toastNoCustom: "Keine eigenen Spiele",
+        toastCleared: "Gelöscht", confirmClear: "Alle eigenen Spiele löschen?", addedNote: "Spiel „{t}“ hinzugefügt!",
+        videoTrailer: "Trailer", videoGameplay: "Gameplay", videoWatch: "Ansehen",
+        v1t: "Snake", v1d: "Klassiker", v2t: "Pac-Man", v2d: "Arcade", v3t: "Mario", v3d: "Plattformer", v4t: "Smeshariki", v4d: "Cartoon",
+        gSnake: "Snake", gPacman: "Pac-Man", gMario: "Mario", gSmesh: "Smeshariki", gTanks: "Tanks", gLaby: "Labyrinth", gBattle: "Kampf aller Spiele",
+        smeshTitle: "Smeshariki", smeshDesc: "Kampf und Fangspiel!", tanksTitle: "Tanks", tanksDesc: "Klassische Tanks!",
+        reviewsTitle: "💬 Bewertungen", reviewsSub: "Zu jedem Spiel", gTanks: "Tanks"
+      },
+      fr: {
+        logo1: "Jeux préférés", logo2: "Portail", logoBrand: "Blue Cat",
+        searchPh: "Rechercher", searchAria: "Recherche",
+        navAll: "☰ Tous les jeux", navClassics: "Classiques", navVideos: "Vidéos", navReviews: "Avis",
+        navCatalog: "Catalogue", navAdd: "Ajouter", navGames2: "Jeux 2", navFriends: "Amis",
+        tabAbout: "À propos", tabAdd: "Envoyer un jeu", tabCreate: "Créer un jeu", tabFriends: "Amis", tabReview: "Mon avis", tabAdmin: "Modération",
+        friendsTitle: "👥 Amis", friendsHint: "Ajoute des amis. Jouez ensemble dans Bataille de tous les jeux (2 joueurs).",
+        friendsName: "Nom de l’ami *", friendsNamePh: "Nom", friendsAdd: "➕ Ajouter", friendsPlay: "🤝 Jouer avec un ami",
+        friendsEmpty: "Pas encore d’amis", friendsPlayOne: "Combat avec ami", createTitle: "🛠️ Créer un jeu sur le site",
+        igroutkaTitle: "🔥 Jeux 2 — meilleurs d’Igroutka", igroutkaSub: "Meilleurs jeux · s’ouvrent sur igroutka.ru",
+        themeBtn: "Couleur", themeAria: "Couleur", themeBlack: "Noir", themeBlue: "Bleu", themePurple: "Violet", themeGreen: "Vert", themeRed: "Rouge",
+        themeOrange: "Orange", themePink: "Rose", themeGold: "Or", themeCyan: "Cyan", themeToast: "Couleur : {n}",
+        heroBadge: "🐱 BLUE CAT · GRATUIT · NAVIGATEUR", heroTitle: "Portail de jeux — Blue Cat",
+        heroText: "Joue en ligne : Snake, Pac-Man, Mario, Smeshariki, Tanks !",
+        btnClassics: "🕹️ Classiques", btnVideos: "▶ Vidéos", btnAll: "Tous les jeux", btnMenu: "☰ Menu",
+        classicsTitle: "🕹️ Classiques", classicsSub: "Joue maintenant", closeGame: "✕ Fermer", reloadGame: "↻ Rejouer",
+        hit: "HIT", play: "▶ Jouer", snakeTitle: "Snake", snakeDesc: "Mange, grandis, évite les murs !",
+        pacmanTitle: "Pac-Man", pacmanDesc: "Points et fantômes !", marioTitle: "Mario (9 niveaux)", marioDesc: "Plateforme classique !",
+        labyTitle: "🌀 Labyrinthe", labyDesc: "Trouve la sortie !", battleTitle: "⚔️ Bataille de tous les jeux", battleDesc: "Tous les héros + 2 joueurs !",
+        videosTitle: "▶ Vidéos", videosSub: "Bandes-annonces", allGamesTitle: "🎮 Tous les jeux", allGamesSub: "Clique pour jouer",
+        catalogTitle: "Catalogue", addYours: "Ajouter le tien →", aboutTitle: "À propos", aboutP1: "Mini-jeux navigateur.", aboutP2: "Smeshariki sur sa page.",
+        addTitle: "Ajouter un jeu", addHint: "Sauvé dans ce navigateur.", fieldTitle: "Titre *", fieldDesc: "Description",
+        fieldUrl: "Lien *", fieldEmoji: "Emoji", phTitle: "Mon jeu", phDesc: "Court", phUrl: "https://...",
+        btnAdd: "➕ Ajouter", btnClear: "Supprimer mes jeux", disclaimer: "Portail fan. Non affilié à Yandex.",
+        footerMenu: "Menu", footerClassics: "Classiques", footerVideos: "Vidéos", footerSmeshariki: "Smeshariki",
+        footerCopy: "© Jeux préférés · Blue Cat", seoTitle: "Jeux préférés · Blue Cat", seoText: "Jeux gratuits.",
+        genreArcade: "Arcade", genrePlatform: "Plateforme", genreMine: "Mon jeu", mine: "mien", notFound: "Introuvable", del: "Supprimer",
+        toastDeleted: "Supprimé", toastAdded: "Ajouté", toastFill: "Remplis titre et lien", toastNoCustom: "Aucun jeu perso",
+        toastCleared: "Effacé", confirmClear: "Tout supprimer ?", addedNote: "Jeu « {t} » ajouté !",
+        videoTrailer: "Trailer", videoGameplay: "Gameplay", videoWatch: "Voir",
+        v1t: "Snake", v1d: "Classique", v2t: "Pac-Man", v2d: "Arcade", v3t: "Mario", v3d: "Plateforme", v4t: "Smeshariki", v4d: "Dessin animé",
+        gSnake: "Snake", gPacman: "Pac-Man", gMario: "Mario", gSmesh: "Smeshariki", gTanks: "Tanks", gLaby: "Labyrinthe", gBattle: "Bataille",
+        smeshTitle: "Smeshariki", smeshDesc: "Bataille !", tanksTitle: "Tanks", tanksDesc: "Tanks classiques !", reviewsTitle: "💬 Avis", reviewsSub: "Par jeu"
+      },
+      es: {
+        logo1: "Juegos favoritos", logo2: "Portal", logoBrand: "Blue Cat",
+        searchPh: "Buscar juegos", searchAria: "Buscar",
+        navAll: "☰ Todos", navClassics: "Clásicos", navVideos: "Vídeos", navReviews: "Reseñas",
+        navCatalog: "Catálogo", navAdd: "Añadir", navGames2: "Juegos 2", navFriends: "Amigos",
+        tabAbout: "Acerca de", tabAdd: "Enviar juego", tabCreate: "Crear juego", tabFriends: "Amigos", tabReview: "Mi reseña", tabAdmin: "Revisión",
+        friendsTitle: "👥 Amigos", friendsHint: "Añade amigos. Juega en Batalla de todos los juegos (2 jugadores).",
+        friendsName: "Nombre *", friendsNamePh: "Nombre", friendsAdd: "➕ Añadir", friendsPlay: "🤝 Jugar con amigo",
+        friendsEmpty: "Sin amigos aún", friendsPlayOne: "Batalla con amigo", createTitle: "🛠️ Crear juego en el sitio",
+        igroutkaTitle: "🔥 Juegos 2 — mejores de Igroutka", igroutkaSub: "Mejores juegos · en igroutka.ru",
+        themeBtn: "Color", themeAria: "Color", themeBlack: "Negro", themeBlue: "Azul", themePurple: "Morado", themeGreen: "Verde", themeRed: "Rojo",
+        themeOrange: "Naranja", themePink: "Rosa", themeGold: "Oro", themeCyan: "Cian", themeToast: "Color: {n}",
+        heroBadge: "🐱 BLUE CAT · GRATIS · NAVEGADOR", heroTitle: "Portal de juegos — Blue Cat",
+        heroText: "Juega online: Snake, Pac-Man, Mario, Smeshariki, Tanques!",
+        btnClassics: "🕹️ Clásicos", btnVideos: "▶ Vídeos", btnAll: "Todos", btnMenu: "☰ Menú",
+        classicsTitle: "🕹️ Clásicos", classicsSub: "Juega ya", closeGame: "✕ Cerrar", reloadGame: "↻ Reiniciar",
+        hit: "HIT", play: "▶ Jugar", snakeTitle: "Snake", snakeDesc: "Come y crece!", pacmanTitle: "Pac-Man", pacmanDesc: "Puntos y fantasmas!",
+        marioTitle: "Mario (9 niveles)", marioDesc: "Plataformas!", labyTitle: "🌀 Laberinto", labyDesc: "Encuentra la salida!",
+        battleTitle: "⚔️ Batalla de todos", battleDesc: "Todos los héroes + 2 jugadores!", videosTitle: "▶ Vídeos", videosSub: "Trailers",
+        allGamesTitle: "🎮 Todos los juegos", allGamesSub: "Toca para jugar", catalogTitle: "Catálogo", addYours: "Añadir el tuyo →",
+        aboutTitle: "Acerca del portal", aboutP1: "Minijuegos en el navegador.", aboutP2: "Smeshariki en su página.",
+        addTitle: "Añadir juego", addHint: "Se guarda en este navegador.", fieldTitle: "Título *", fieldDesc: "Descripción",
+        fieldUrl: "Enlace *", fieldEmoji: "Emoji", phTitle: "Mi juego", phDesc: "Corto", phUrl: "https://...",
+        btnAdd: "➕ Añadir", btnClear: "Borrar mis juegos", disclaimer: "Portal fan. No afiliado a Yandex.",
+        footerMenu: "Menú", footerClassics: "Clásicos", footerVideos: "Vídeos", footerSmeshariki: "Smeshariki",
+        footerCopy: "© Juegos favoritos · Blue Cat", seoTitle: "Juegos · Blue Cat", seoText: "Juegos gratis.",
+        genreArcade: "Arcade", genrePlatform: "Plataformas", genreMine: "Mi juego", mine: "mío", notFound: "No encontrado", del: "Borrar",
+        toastDeleted: "Borrado", toastAdded: "Añadido", toastFill: "Rellena título y enlace", toastNoCustom: "Sin juegos propios",
+        toastCleared: "Borrados", confirmClear: "¿Borrar todos?", addedNote: "¡Juego «{t}» añadido!",
+        videoTrailer: "Trailer", videoGameplay: "Gameplay", videoWatch: "Ver",
+        v1t: "Snake", v1d: "Clásico", v2t: "Pac-Man", v2d: "Arcade", v3t: "Mario", v3d: "Plataformas", v4t: "Smeshariki", v4d: "Dibujo",
+        gSnake: "Snake", gPacman: "Pac-Man", gMario: "Mario", gSmesh: "Smeshariki", gTanks: "Tanques", gLaby: "Laberinto", gBattle: "Batalla",
+        smeshTitle: "Smeshariki", smeshDesc: "¡Batalla!", tanksTitle: "Tanques", tanksDesc: "¡Tanques clásicos!", reviewsTitle: "💬 Reseñas", reviewsSub: "Por juego"
+      },
+      pl: {
+        logo1: "Ulubione gry", logo2: "Portal", logoBrand: "Blue Cat", searchPh: "Szukaj gier", searchAria: "Szukaj",
+        navAll: "☰ Wszystkie", navClassics: "Klasyka", navVideos: "Wideo", navReviews: "Opinie", navCatalog: "Katalog", navAdd: "Dodaj",
+        navGames2: "Gry 2", navFriends: "Znajomi", tabAbout: "O portalu", tabAdd: "Wyślij grę", tabCreate: "Stwórz grę",
+        tabFriends: "Znajomi", tabReview: "Moja opinia", tabAdmin: "Moderacja",
+        friendsTitle: "👥 Znajomi", friendsHint: "Dodaj znajomych. Graj w Bitwie wszystkich gier (2 graczy).",
+        friendsName: "Imię *", friendsNamePh: "Imię", friendsAdd: "➕ Dodaj", friendsPlay: "🤝 Graj ze znajomym",
+        friendsEmpty: "Brak znajomych", friendsPlayOne: "Bitwa ze znajomym", createTitle: "🛠️ Stwórz grę na stronie",
+        igroutkaTitle: "🔥 Gry 2 — najlepsze z Igroutka", igroutkaSub: "Najlepsze gry · igroutka.ru",
+        themeBtn: "Kolor", themeAria: "Kolor", themeBlack: "Czarny", themeBlue: "Niebieski", themePurple: "Fiolet", themeGreen: "Zielony",
+        themeRed: "Czerwony", themeOrange: "Pomarańcz", themePink: "Róż", themeGold: "Złoty", themeCyan: "Cyjan", themeToast: "Kolor: {n}",
+        heroBadge: "🐱 BLUE CAT · ZA DARMO", heroTitle: "Portal gier — Blue Cat", heroText: "Graj online: Snake, Pac-Man, Mario!",
+        btnClassics: "🕹️ Klasyka", btnVideos: "▶ Wideo", btnAll: "Wszystkie", btnMenu: "☰ Menu",
+        classicsTitle: "🕹️ Klasyka", classicsSub: "Graj teraz", closeGame: "✕ Zamknij", reloadGame: "↻ Od nowa",
+        hit: "HIT", play: "▶ Graj", snakeTitle: "Snake", snakeDesc: "Jedz i rośnij!", pacmanTitle: "Pac-Man", pacmanDesc: "Kropki i duchy!",
+        marioTitle: "Mario", marioDesc: "Platformówka!", labyTitle: "🌀 Labirynt", labyDesc: "Znajdź wyjście!",
+        battleTitle: "⚔️ Bitwa wszystkich gier", battleDesc: "Wszyscy bohaterowie + 2 graczy!", videosTitle: "▶ Wideo", videosSub: "Zwiastuny",
+        allGamesTitle: "🎮 Wszystkie gry", allGamesSub: "Kliknij kartę", catalogTitle: "Katalog", addYours: "Dodaj swoją →",
+        aboutTitle: "O portalu", aboutP1: "Minigry w przeglądarce.", aboutP2: "Smeshariki na swojej stronie.",
+        addTitle: "Dodaj grę", addHint: "Zapis w tej przeglądarce.", fieldTitle: "Tytuł *", fieldDesc: "Opis", fieldUrl: "Link *", fieldEmoji: "Emoji",
+        phTitle: "Moja gra", phDesc: "Krótko", phUrl: "https://...", btnAdd: "➕ Dodaj", btnClear: "Usuń moje", disclaimer: "Portal fanowski.",
+        footerMenu: "Menu", footerClassics: "Klasyka", footerVideos: "Wideo", footerSmeshariki: "Smeshariki", footerCopy: "© Blue Cat",
+        seoTitle: "Gry · Blue Cat", seoText: "Darmowe gry.", genreArcade: "Arcade", genrePlatform: "Platformówka", genreMine: "Moja",
+        mine: "moja", notFound: "Brak", del: "Usuń", toastDeleted: "Usunięto", toastAdded: "Dodano", toastFill: "Wypełnij pola",
+        toastNoCustom: "Brak gier", toastCleared: "Wyczyszczono", confirmClear: "Usunąć wszystkie?", addedNote: "Gra «{t}» dodana!",
+        videoTrailer: "Zwiastun", videoGameplay: "Gameplay", videoWatch: "Oglądaj", v1t: "Snake", v1d: "Klasyka", v2t: "Pac-Man", v2d: "Arcade",
+        v3t: "Mario", v3d: "Platforma", v4t: "Smeshariki", v4d: "Bajka", gSnake: "Snake", gPacman: "Pac-Man", gMario: "Mario",
+        gSmesh: "Smeshariki", gTanks: "Czołgi", gLaby: "Labirynt", gBattle: "Bitwa", smeshTitle: "Smeshariki", smeshDesc: "Bitwa!",
+        tanksTitle: "Czołgi", tanksDesc: "Klasyczne czołgi!", reviewsTitle: "💬 Opinie", reviewsSub: "Do każdej gry"
+      },
+      tr: {
+        logo1: "Favori oyunlar", logo2: "Portal", logoBrand: "Blue Cat", searchPh: "Oyun ara", searchAria: "Ara",
+        navAll: "☰ Tümü", navClassics: "Klasikler", navVideos: "Videolar", navReviews: "Yorumlar", navCatalog: "Katalog", navAdd: "Ekle",
+        navGames2: "Oyunlar 2", navFriends: "Arkadaşlar", tabAbout: "Hakkında", tabAdd: "Oyun gönder", tabCreate: "Oyun yap",
+        tabFriends: "Arkadaşlar", tabReview: "Yorumum", tabAdmin: "Kontrol",
+        friendsTitle: "👥 Arkadaşlar", friendsHint: "Arkadaş ekle. Tüm oyunlar savaşında 2 oyuncu oyna.",
+        friendsName: "İsim *", friendsNamePh: "İsim", friendsAdd: "➕ Ekle", friendsPlay: "🤝 Arkadaşla oyna",
+        friendsEmpty: "Henüz yok", friendsPlayOne: "Arkadaşla savaş", createTitle: "🛠️ Sitede oyun oluştur",
+        igroutkaTitle: "🔥 Oyunlar 2 — Igroutka en iyiler", igroutkaSub: "En iyi oyunlar · igroutka.ru",
+        themeBtn: "Renk", themeAria: "Renk", themeBlack: "Siyah", themeBlue: "Mavi", themePurple: "Mor", themeGreen: "Yeşil",
+        themeRed: "Kırmızı", themeOrange: "Turuncu", themePink: "Pembe", themeGold: "Altın", themeCyan: "Camgöbeği", themeToast: "Renk: {n}",
+        heroBadge: "🐱 BLUE CAT · ÜCRETSİZ", heroTitle: "Oyun portalı — Blue Cat", heroText: "Çevrimiçi oyna: Snake, Pac-Man, Mario!",
+        btnClassics: "🕹️ Klasikler", btnVideos: "▶ Videolar", btnAll: "Tümü", btnMenu: "☰ Menü",
+        classicsTitle: "🕹️ Klasikler", classicsSub: "Hemen oyna", closeGame: "✕ Kapat", reloadGame: "↻ Yeniden",
+        hit: "HIT", play: "▶ Oyna", snakeTitle: "Snake", snakeDesc: "Ye ve büyü!", pacmanTitle: "Pac-Man", pacmanDesc: "Noktalar!",
+        marioTitle: "Mario", marioDesc: "Platform!", labyTitle: "🌀 Labirent", labyDesc: "Çıkışı bul!",
+        battleTitle: "⚔️ Tüm oyunlar savaşı", battleDesc: "Tüm kahramanlar + 2 oyuncu!", videosTitle: "▶ Videolar", videosSub: "Fragmanlar",
+        allGamesTitle: "🎮 Tüm oyunlar", allGamesSub: "Kartı aç", catalogTitle: "Katalog", addYours: "Kendini ekle →",
+        aboutTitle: "Hakkında", aboutP1: "Tarayıcı mini oyunları.", aboutP2: "Smeshariki sayfada.", addTitle: "Oyun ekle",
+        addHint: "Bu tarayıcıda kaydedilir.", fieldTitle: "Başlık *", fieldDesc: "Açıklama", fieldUrl: "Bağlantı *", fieldEmoji: "Emoji",
+        phTitle: "Oyunum", phDesc: "Kısa", phUrl: "https://...", btnAdd: "➕ Ekle", btnClear: "Sil", disclaimer: "Hayran portalı.",
+        footerMenu: "Menü", footerClassics: "Klasikler", footerVideos: "Videolar", footerSmeshariki: "Smeshariki", footerCopy: "© Blue Cat",
+        seoTitle: "Oyunlar · Blue Cat", seoText: "Ücretsiz oyunlar.", genreArcade: "Arcade", genrePlatform: "Platform", genreMine: "Benim",
+        mine: "benim", notFound: "Yok", del: "Sil", toastDeleted: "Silindi", toastAdded: "Eklendi", toastFill: "Doldur",
+        toastNoCustom: "Yok", toastCleared: "Temiz", confirmClear: "Hepsini sil?", addedNote: "«{t}» eklendi!",
+        videoTrailer: "Fragman", videoGameplay: "Oynanış", videoWatch: "İzle", v1t: "Snake", v1d: "Klasik", v2t: "Pac-Man", v2d: "Arcade",
+        v3t: "Mario", v3d: "Platform", v4t: "Smeshariki", v4d: "Çizgi", gSnake: "Snake", gPacman: "Pac-Man", gMario: "Mario",
+        gSmesh: "Smeshariki", gTanks: "Tanklar", gLaby: "Labirent", gBattle: "Savaş", smeshTitle: "Smeshariki", smeshDesc: "Savaş!",
+        tanksTitle: "Tanklar", tanksDesc: "Klasik tanklar!", reviewsTitle: "💬 Yorumlar", reviewsSub: "Her oyun"
+      },
+      zh: {
+        logo1: "喜爱的游戏", logo2: "门户", logoBrand: "Blue Cat", searchPh: "搜索游戏", searchAria: "搜索",
+        navAll: "☰ 全部游戏", navClassics: "经典", navVideos: "视频", navReviews: "评价", navCatalog: "目录", navAdd: "添加",
+        navGames2: "游戏2", navFriends: "好友", tabAbout: "关于", tabAdd: "提交游戏", tabCreate: "创建游戏", tabFriends: "好友",
+        tabReview: "我的评价", tabAdmin: "审核", friendsTitle: "👥 好友", friendsHint: "按名字添加好友。可在全游戏大战中双人玩。",
+        friendsName: "好友名字 *", friendsNamePh: "名字", friendsAdd: "➕ 添加", friendsPlay: "🤝 和好友玩",
+        friendsEmpty: "还没有好友", friendsPlayOne: "和好友对战", createTitle: "🛠️ 在网站上创建游戏",
+        igroutkaTitle: "🔥 游戏2 — Igroutka精选", igroutkaSub: "最佳游戏 · 在 igroutka.ru 打开",
+        themeBtn: "颜色", themeAria: "颜色", themeBlack: "黑色", themeBlue: "蓝色", themePurple: "紫色", themeGreen: "绿色",
+        themeRed: "红色", themeOrange: "橙色", themePink: "粉色", themeGold: "金色", themeCyan: "青色", themeToast: "颜色：{n}",
+        heroBadge: "🐱 BLUE CAT · 免费 · 浏览器", heroTitle: "游戏门户 — Blue Cat", heroText: "在线玩：贪吃蛇、吃豆人、马里奥！",
+        btnClassics: "🕹️ 经典", btnVideos: "▶ 视频", btnAll: "全部", btnMenu: "☰ 菜单",
+        classicsTitle: "🕹️ 经典", classicsSub: "立即开始", closeGame: "✕ 关闭", reloadGame: "↻ 重来",
+        hit: "热门", play: "▶ 开始", snakeTitle: "贪吃蛇", snakeDesc: "吃食物变长！", pacmanTitle: "吃豆人", pacmanDesc: "吃豆子躲幽灵！",
+        marioTitle: "马里奥", marioDesc: "平台跳跃！", labyTitle: "🌀 迷宫", labyDesc: "找到出口！",
+        battleTitle: "⚔️ 全游戏大战", battleDesc: "全部英雄 + 双人！", videosTitle: "▶ 视频", videosSub: "预告片",
+        allGamesTitle: "🎮 全部游戏", allGamesSub: "点击卡片", catalogTitle: "目录", addYours: "添加自己的 →",
+        aboutTitle: "关于门户", aboutP1: "浏览器小游戏合集。", aboutP2: "详见 Smeshariki 页面。", addTitle: "添加游戏",
+        addHint: "保存在此浏览器。", fieldTitle: "标题 *", fieldDesc: "描述", fieldUrl: "链接 *", fieldEmoji: "表情",
+        phTitle: "我的游戏", phDesc: "简介", phUrl: "https://...", btnAdd: "➕ 添加", btnClear: "删除我的", disclaimer: "粉丝门户。",
+        footerMenu: "菜单", footerClassics: "经典", footerVideos: "视频", footerSmeshariki: "Smeshariki", footerCopy: "© Blue Cat",
+        seoTitle: "游戏 · Blue Cat", seoText: "免费浏览器游戏。", genreArcade: "街机", genrePlatform: "平台", genreMine: "我的",
+        mine: "我的", notFound: "未找到", del: "删除", toastDeleted: "已删除", toastAdded: "已添加", toastFill: "请填写",
+        toastNoCustom: "没有自定义", toastCleared: "已清空", confirmClear: "删除全部？", addedNote: "已添加「{t}」！",
+        videoTrailer: "预告", videoGameplay: "实况", videoWatch: "观看", v1t: "贪吃蛇", v1d: "经典", v2t: "吃豆人", v2d: "街机",
+        v3t: "马里奥", v3d: "平台", v4t: "Smeshariki", v4d: "动画", gSnake: "贪吃蛇", gPacman: "吃豆人", gMario: "马里奥",
+        gSmesh: "Smeshariki", gTanks: "坦克", gLaby: "迷宫", gBattle: "大战", smeshTitle: "Smeshariki", smeshDesc: "对战！",
+        tanksTitle: "坦克", tanksDesc: "经典坦克！", reviewsTitle: "💬 评价", reviewsSub: "每款游戏"
+      },
+      kk: {
+        logo1: "Сүйікті ойындар", logo2: "порталы", logoBrand: "Blue Cat", searchPh: "Ойын іздеу", searchAria: "Іздеу",
+        navAll: "☰ Барлық ойындар", navClassics: "Классика", navVideos: "Бейне", navReviews: "Пікірлер", navCatalog: "Каталог",
+        navAdd: "Қосу", navGames2: "Ойындар 2", navFriends: "Достар", tabAbout: "Портал туралы", tabAdd: "Ойын жіберу",
+        tabCreate: "Ойын жасау", tabFriends: "Достар", tabReview: "Менің пікірім", tabAdmin: "Тексеру",
+        friendsTitle: "👥 Достар", friendsHint: "Досты атымен қос. «Барлық ойындар шайқасында» 2 ойыншы.",
+        friendsName: "Достың аты *", friendsNamePh: "Аты", friendsAdd: "➕ Қосу", friendsPlay: "🤝 Доспен ойнау",
+        friendsEmpty: "Достар жоқ", friendsPlayOne: "Доспен шайқас", createTitle: "🛠️ Сайтта ойын жасау",
+        igroutkaTitle: "🔥 Ойындар 2 — Igroutka үздіктері", igroutkaSub: "Үздік ойындар · igroutka.ru",
+        themeBtn: "Түс", themeAria: "Түс", themeBlack: "Қара", themeBlue: "Көк", themePurple: "Күлгін", themeGreen: "Жасыл",
+        themeRed: "Қызыл", themeOrange: "Қызғылт сары", themePink: "Қызғылт", themeGold: "Алтын", themeCyan: "Көгілдір", themeToast: "Түс: {n}",
+        heroBadge: "🐱 BLUE CAT · ТЕГІН", heroTitle: "Ойындар порталы — Blue Cat", heroText: "Онлайн ойна: Жылан, Пакман, Марио!",
+        btnClassics: "🕹️ Классика", btnVideos: "▶ Бейне", btnAll: "Барлығы", btnMenu: "☰ Мәзір",
+        classicsTitle: "🕹️ Классика", classicsSub: "Қазір ойна", closeGame: "✕ Жабу", reloadGame: "↻ Қайта",
+        hit: "ХИТ", play: "▶ Ойнау", snakeTitle: "Жылан", snakeDesc: "Же, өс!", pacmanTitle: "Пакман", pacmanDesc: "Нүктелер!",
+        marioTitle: "Марио", marioDesc: "Платформер!", labyTitle: "🌀 Лабиринт", labyDesc: "Шығуды тап!",
+        battleTitle: "⚔️ Барлық ойындар шайқасы", battleDesc: "Барлық кейіпкер + 2 ойыншы!", videosTitle: "▶ Бейне", videosSub: "Трейлерлер",
+        allGamesTitle: "🎮 Барлық ойындар", allGamesSub: "Картаны бас", catalogTitle: "Каталог", addYours: "Өзін қос →",
+        aboutTitle: "Портал туралы", aboutP1: "Браузер мини-ойындары.", aboutP2: "Smeshariki бетінде.", addTitle: "Ойын қосу",
+        addHint: "Осы браузерде сақталады.", fieldTitle: "Атауы *", fieldDesc: "Сипаттама", fieldUrl: "Сілтеме *", fieldEmoji: "Эмодзи",
+        phTitle: "Менің ойыным", phDesc: "Қысқаша", phUrl: "https://...", btnAdd: "➕ Қосу", btnClear: "Жою", disclaimer: "Фан портал.",
+        footerMenu: "Мәзір", footerClassics: "Классика", footerVideos: "Бейне", footerSmeshariki: "Smeshariki", footerCopy: "© Blue Cat",
+        seoTitle: "Ойындар · Blue Cat", seoText: "Тегін ойындар.", genreArcade: "Аркада", genrePlatform: "Платформер", genreMine: "Менің",
+        mine: "менің", notFound: "Табылмады", del: "Жою", toastDeleted: "Жойылды", toastAdded: "Қосылды", toastFill: "Толтыр",
+        toastNoCustom: "Жоқ", toastCleared: "Таза", confirmClear: "Барлығын жою?", addedNote: "«{t}» қосылды!",
+        videoTrailer: "Трейлер", videoGameplay: "Геймплей", videoWatch: "Көру", v1t: "Жылан", v1d: "Классика", v2t: "Пакман", v2d: "Аркада",
+        v3t: "Марио", v3d: "Платформер", v4t: "Smeshariki", v4d: "Мульт", gSnake: "Жылан", gPacman: "Пакман", gMario: "Марио",
+        gSmesh: "Smeshariki", gTanks: "Танктер", gLaby: "Лабиринт", gBattle: "Шайқас", smeshTitle: "Smeshariki", smeshDesc: "Шайқас!",
+        tanksTitle: "Танктер", tanksDesc: "Классикалық танктер!", reviewsTitle: "💬 Пікірлер", reviewsSub: "Әр ойынға"
+      },
+      be: {
+        logo1: "Партал улюбёных", logo2: "гульняў", logoBrand: "Blue Cat", searchPh: "Пошук гульняў", searchAria: "Пошук",
+        navAll: "☰ Усе гульні", navClassics: "Класіка", navVideos: "Відэа", navReviews: "Водгукі", navCatalog: "Каталог", navAdd: "Дадаць",
+        navGames2: "Гульні 2", navFriends: "Сябры", tabAbout: "Пра партал", tabAdd: "Даслаць гульню", tabCreate: "Стварыць гульню",
+        tabFriends: "Сябры", tabReview: "Мой водгук", tabAdmin: "Праверка",
+        friendsTitle: "👥 Сябры", friendsHint: "Дадай сяброў. Гуляйце ў «Бітве ўсіх гульняў» (2 гульцы).",
+        friendsName: "Імя сябра *", friendsNamePh: "Імя", friendsAdd: "➕ Дадаць", friendsPlay: "🤝 Гуляць з сябрам",
+        friendsEmpty: "Пакуль пуста", friendsPlayOne: "У бой з сябрам", createTitle: "🛠️ Стварыць гульню на сайце",
+        igroutkaTitle: "🔥 Гульні 2 — лепшыя з Igroutka", igroutkaSub: "Лепшыя гульні · igroutka.ru",
+        themeBtn: "Колер", themeAria: "Колер", themeBlack: "Чорны", themeBlue: "Сіні", themePurple: "Фіялетавы", themeGreen: "Зялёны",
+        themeRed: "Чырвоны", themeOrange: "Аранжавы", themePink: "Ружовы", themeGold: "Залаты", themeCyan: "Бірузовы", themeToast: "Колер: {n}",
+        heroBadge: "🐱 BLUE CAT · БЕСПЛАТНА", heroTitle: "Партал гульняў — Blue Cat", heroText: "Гуляй онлайн: Змейка, Пакман, Марыа!",
+        btnClassics: "🕹️ Класіка", btnVideos: "▶ Відэа", btnAll: "Усе", btnMenu: "☰ Меню",
+        classicsTitle: "🕹️ Класіка", classicsSub: "Гуляй зараз", closeGame: "✕ Закрыць", reloadGame: "↻ Зноў",
+        hit: "ХІТ", play: "▶ Гуляць", snakeTitle: "Змейка", snakeDesc: "Еш і расці!", pacmanTitle: "Пакман", pacmanDesc: "Кропкі!",
+        marioTitle: "Марыа", marioDesc: "Платформер!", labyTitle: "🌀 Лабірынт", labyDesc: "Знайдзі выхад!",
+        battleTitle: "⚔️ Бітва ўсіх гульняў", battleDesc: "Усе героі + 2 гульцы!", videosTitle: "▶ Відэа", videosSub: "Трэйлеры",
+        allGamesTitle: "🎮 Усе гульні", allGamesSub: "Націсні картку", catalogTitle: "Каталог", addYours: "Дадаць сваю →",
+        aboutTitle: "Пра партал", aboutP1: "Браўзерныя міні-гульні.", aboutP2: "Smeshariki на сваёй старонцы.", addTitle: "Дадаць гульню",
+        addHint: "Захоўваецца ў браўзеры.", fieldTitle: "Назва *", fieldDesc: "Апісанне", fieldUrl: "Спасылка *", fieldEmoji: "Эмодзі",
+        phTitle: "Мая гульня", phDesc: "Коратка", phUrl: "https://...", btnAdd: "➕ Дадаць", btnClear: "Выдаліць", disclaimer: "Фан-партал.",
+        footerMenu: "Меню", footerClassics: "Класіка", footerVideos: "Відэа", footerSmeshariki: "Smeshariki", footerCopy: "© Blue Cat",
+        seoTitle: "Гульні · Blue Cat", seoText: "Бясплатныя гульні.", genreArcade: "Аркада", genrePlatform: "Платформер", genreMine: "Мая",
+        mine: "мая", notFound: "Не знойдзена", del: "Выдаліць", toastDeleted: "Выдалена", toastAdded: "Дададзена", toastFill: "Запоўні",
+        toastNoCustom: "Няма", toastCleared: "Ачышчана", confirmClear: "Выдаліць усё?", addedNote: "«{t}» дададзена!",
+        videoTrailer: "Трэйлер", videoGameplay: "Геймплэй", videoWatch: "Глядзець", v1t: "Змейка", v1d: "Класіка", v2t: "Пакман", v2d: "Аркада",
+        v3t: "Марыа", v3d: "Платформер", v4t: "Smeshariki", v4d: "Мульт", gSnake: "Змейка", gPacman: "Пакман", gMario: "Марыа",
+        gSmesh: "Smeshariki", gTanks: "Танчыкі", gLaby: "Лабірынт", gBattle: "Бітва", smeshTitle: "Smeshariki", smeshDesc: "Бітва!",
+        tanksTitle: "Танчыкі", tanksDesc: "Класічныя танчыкі!", reviewsTitle: "💬 Водгукі", reviewsSub: "Да кожнай гульні"
+      },
+      ja: {
+        logo1: "好きなゲーム", logo2: "ポータル", logoBrand: "Blue Cat", searchPh: "ゲーム検索", searchAria: "検索",
+        navAll: "☰ すべて", navClassics: "クラシック", navVideos: "動画", navReviews: "レビュー", navCatalog: "カタログ", navAdd: "追加",
+        navGames2: "ゲーム2", navFriends: "友達", tabAbout: "について", tabAdd: "ゲーム送信", tabCreate: "ゲーム作成", tabFriends: "友達",
+        tabReview: "マイレビュー", tabAdmin: "審査", friendsTitle: "👥 友達", friendsHint: "名前で友達を追加。「全ゲームバトル」で2人プレイ。",
+        friendsName: "友達の名前 *", friendsNamePh: "名前", friendsAdd: "➕ 追加", friendsPlay: "🤝 友達と遊ぶ",
+        friendsEmpty: "まだいません", friendsPlayOne: "友達とバトル", createTitle: "🛠️ サイトでゲーム作成",
+        igroutkaTitle: "🔥 ゲーム2 — Igroutkaベスト", igroutkaSub: "人気ゲーム · igroutka.ru",
+        themeBtn: "色", themeAria: "色", themeBlack: "黒", themeBlue: "青", themePurple: "紫", themeGreen: "緑",
+        themeRed: "赤", themeOrange: "オレンジ", themePink: "ピンク", themeGold: "金", themeCyan: "シアン", themeToast: "色: {n}",
+        heroBadge: "🐱 BLUE CAT · 無料", heroTitle: "ゲームポータル — Blue Cat", heroText: "オンラインでプレイ：スネーク、パックマン、マリオ！",
+        btnClassics: "🕹️ クラシック", btnVideos: "▶ 動画", btnAll: "すべて", btnMenu: "☰ メニュー",
+        classicsTitle: "🕹️ クラシック", classicsSub: "今すぐプレイ", closeGame: "✕ 閉じる", reloadGame: "↻ やり直す",
+        hit: "HIT", play: "▶ プレイ", snakeTitle: "スネーク", snakeDesc: "食べて伸びろ！", pacmanTitle: "パックマン", pacmanDesc: "ドットを食べよう！",
+        marioTitle: "マリオ", marioDesc: "アクション！", labyTitle: "🌀 迷路", labyDesc: "出口を探せ！",
+        battleTitle: "⚔️ 全ゲームバトル", battleDesc: "全ヒーロー + 2人プレイ！", videosTitle: "▶ 動画", videosSub: "トレーラー",
+        allGamesTitle: "🎮 すべてのゲーム", allGamesSub: "カードをタップ", catalogTitle: "カタログ", addYours: "自分のを追加 →",
+        aboutTitle: "ポータルについて", aboutP1: "ブラウザミニゲーム集。", aboutP2: "Smeshariki は専用ページへ。", addTitle: "ゲーム追加",
+        addHint: "このブラウザに保存。", fieldTitle: "タイトル *", fieldDesc: "説明", fieldUrl: "リンク *", fieldEmoji: "絵文字",
+        phTitle: "マイゲーム", phDesc: "短く", phUrl: "https://...", btnAdd: "➕ 追加", btnClear: "削除", disclaimer: "ファンポータル。",
+        footerMenu: "メニュー", footerClassics: "クラシック", footerVideos: "動画", footerSmeshariki: "Smeshariki", footerCopy: "© Blue Cat",
+        seoTitle: "ゲーム · Blue Cat", seoText: "無料ブラウザゲーム。", genreArcade: "アーケード", genrePlatform: "アクション", genreMine: "自分の",
+        mine: "自分", notFound: "見つかりません", del: "削除", toastDeleted: "削除しました", toastAdded: "追加しました", toastFill: "入力して",
+        toastNoCustom: "なし", toastCleared: "クリア", confirmClear: "全部削除？", addedNote: "「{t}」を追加！",
+        videoTrailer: "予告", videoGameplay: "実況", videoWatch: "見る", v1t: "スネーク", v1d: "クラシック", v2t: "パックマン", v2d: "アーケード",
+        v3t: "マリオ", v3d: "アクション", v4t: "Smeshariki", v4d: "アニメ", gSnake: "スネーク", gPacman: "パックマン", gMario: "マリオ",
+        gSmesh: "Smeshariki", gTanks: "タンク", gLaby: "迷路", gBattle: "バトル", smeshTitle: "Smeshariki", smeshDesc: "バトル！",
+        tanksTitle: "タンク", tanksDesc: "クラシック戦車！", reviewsTitle: "💬 レビュー", reviewsSub: "各ゲーム"
       }
     };
 
     const LANG_META = {
       ru: { flag: "🇷🇺", label: "RU" },
       en: { flag: "🇬🇧", label: "EN" },
-      uk: { flag: "🇺🇦", label: "UA" }
+      uk: { flag: "🇺🇦", label: "UA" },
+      de: { flag: "🇩🇪", label: "DE" },
+      fr: { flag: "🇫🇷", label: "FR" },
+      es: { flag: "🇪🇸", label: "ES" },
+      pl: { flag: "🇵🇱", label: "PL" },
+      tr: { flag: "🇹🇷", label: "TR" },
+      zh: { flag: "🇨🇳", label: "中文" },
+      kk: { flag: "🇰🇿", label: "KK" },
+      be: { flag: "🇧🇾", label: "BE" },
+      ja: { flag: "🇯🇵", label: "JP" }
     };
 
     let currentLang = "ru";
@@ -1737,12 +2078,12 @@
       document.querySelectorAll("[data-i18n]").forEach(el => {
         const key = el.getAttribute("data-i18n");
         if (!key || t(key) === key) return;
-        // preserve simple inner HTML for seoText with strong tags — use text for most
-        if (key === "seoText" || key === "aboutP2") {
-          el.textContent = t(key);
-        } else {
-          el.textContent = t(key);
+        // skip nodes that must keep nested links
+        if (key === "igroutkaSub") {
+          el.innerHTML = esc(t(key)) + ' · <a href="https://igroutka.ru/luchshie-igry/" target="_blank" rel="noopener" style="color:var(--yg-link)">igroutka.ru</a>';
+          return;
         }
+        el.textContent = t(key);
       });
       document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
         const key = el.getAttribute("data-i18n-placeholder");
@@ -1761,6 +2102,10 @@
         btn.classList.toggle("active", btn.getAttribute("data-lang") === currentLang);
       });
       document.title = t("seoTitle");
+      try { renderAll(document.getElementById("searchInput")?.value || ""); } catch (_) {}
+      try { renderIgroutka(); } catch (_) {}
+      try { renderFriends(); } catch (_) {}
+      try { renderVideos(); } catch (_) {}
       var si = document.getElementById("searchInput");
       renderAll(si ? si.value : "");
       renderVideos();
@@ -1891,70 +2236,408 @@
 
     /* ========== Игры 2 (лучшее с igroutka.ru) ========== */
     const IGROUTKA_GAMES = [
-      { id:"ig_firewater1", title:"Огонь и Вода 1", genre:"На двоих", emoji:"🔥", url:"https://igroutka.ru/ogon-i-voda/1309-zelenyy-kristall.html" },
-      { id:"ig_firewater2", title:"Огонь и Вода 2", genre:"На двоих", emoji:"💧", url:"https://igroutka.ru/ogon-i-voda/2143-ogon-i-voda-2.html" },
-      { id:"ig_firewater4", title:"Огонь и Вода 4", genre:"На двоих", emoji:"💎", url:"https://igroutka.ru/ogon-i-voda/2141-ogon-i-voda-4.html" },
-      { id:"ig_firewater5", title:"Огонь и Вода 5", genre:"На двоих", emoji:"🌋", url:"https://igroutka.ru/ogon-i-voda/27121-ogon-i-voda-5-elementy.html" },
-      { id:"ig_firewater_solo", title:"Огонь и Вода (1 игрок)", genre:"Платформер", emoji:"🧡", url:"https://igroutka.ru/ogon-i-voda/16197-ogon-i-voda-na-1-igroka.html" },
-      { id:"ig_pvz", title:"Растения против зомби", genre:"Стратегия", emoji:"🌻", url:"https://igroutka.ru/dlya-malchikov/zombi/1257-rasteniya-protiv-zombi.html" },
-      { id:"ig_pvz2", title:"Растения против зомби 2", genre:"Стратегия", emoji:"🧟", url:"https://igroutka.ru/dlya-malchikov/zombi/17324-rasteniya-protiv-zombi-2.html" },
-      { id:"ig_flyordie", title:"FlyOrDie.io", genre:"IO", emoji:"🦅", url:"https://igroutka.ru/igry-io/26765-flyordieio.html" },
-      { id:"ig_talkingtom", title:"Говорящий Том: бег", genre:"Раннер", emoji:"🐱", url:"https://igroutka.ru/igry-govoryaschiy-kot/19720-govoryaschiy-tom-beg-za-zolotom.html" },
-      { id:"ig_hide", title:"Прятки онлайн", genre:"Мульти", emoji:"👻", url:"https://igroutka.ru/igry-strelyalki/22742-pryatki-onlayn.html" },
-      { id:"ig_words", title:"Слова из слова", genre:"Слова", emoji:"🔤", url:"https://igroutka.ru/igry-v-slova/31180-slova-iz-slova.html" },
-      { id:"ig_tanks1990", title:"Танчики Денди 1990", genre:"Танки", emoji:"🪖", url:"https://igroutka.ru/dlya-malchikov/tanki/17951-igra-tanchiki-dendi-1990.html" },
-      { id:"ig_akinator", title:"Акинатор", genre:"Угадайка", emoji:"🧞", url:"https://igroutka.ru/interesnye-igry/20500-akinator.html" },
-      { id:"ig_driftbmw", title:"Дрифт на БМВ", genre:"Гонки", emoji:"🚗", url:"https://igroutka.ru/igry-mashiny/18443-drift-na-bmv.html" },
-      { id:"ig_elastic", title:"Эластичный человек", genre:"Аркада", emoji:"🤸", url:"https://igroutka.ru/smeshnye-igry/31551-elastichnyy-chelovek.html" },
-      { id:"ig_fighters", title:"Супер бойцы 2", genre:"Файтинг", emoji:"👊", url:"https://igroutka.ru/igry-strelyalki/22814-super-boycy-2.html" },
-      { id:"ig_mc_classic", title:"Майнкрафт классик", genre:"Песочница", emoji:"⛏️", url:"https://igroutka.ru/igry-maynkraft/28423-maynkraft-klassik.html" },
-      { id:"ig_lbs", title:"Little Big Snake.io", genre:"IO", emoji:"🐍", url:"https://igroutka.ru/igry-io/22102-little-big-snakeio.html" },
-      { id:"ig_cs16", title:"Контр-Страйк 1.6", genre:"Шутер", emoji:"🔫", url:"https://igroutka.ru/igry-kontr-strayk/28646-kontr-strayk-16.html" },
-      { id:"ig_tiles", title:"Tiles Hop EDM", genre:"Ритм", emoji:"🎵", url:"https://igroutka.ru/igry-arkady/30285-tiles-hop-edm-rush.html" },
-      { id:"ig_happy", title:"Happy Wheels", genre:"Аркада", emoji:"🚲", url:"https://igroutka.ru/dlya-malchikov/14377-happy-wheels.html" },
-      { id:"ig_moomoo", title:"Moomoo.io", genre:"IO", emoji:"🐄", url:"https://igroutka.ru/igry-io/18491-moomooio.html" },
-      { id:"ig_balls3d", title:"Два мяча 3Д", genre:"На двоих", emoji:"⚽", url:"https://igroutka.ru/igry-na-dvoih/29535-dva-myacha-3d.html" },
-      { id:"ig_among", title:"Among Us онлайн", genre:"Мульти", emoji:"🚀", url:"https://igroutka.ru/igry-among-as/34580-among-as-onlayn.html" },
-      { id:"ig_slither", title:"Slither.io", genre:"IO", emoji:"🟢", url:"https://igroutka.ru/igry-io/17587-slither-io.html" },
-      { id:"ig_catsim", title:"Симулятор кота", genre:"Симулятор", emoji:"🐈", url:"https://igroutka.ru/igry-simulyatory/20882-simulyator-kota.html" },
-      { id:"ig_mahjong_pkm", title:"Маджонг покемоны", genre:"Головоломка", emoji:"🧩", url:"https://igroutka.ru/madzhong/23774-madzhong-pokemony.html" },
-      { id:"ig_paper_mc", title:"Бумажный майнкрафт", genre:"Песочница", emoji:"📄", url:"https://igroutka.ru/igry-maynkraft/16213-bumazhnyy-maynkraft.html" },
-      { id:"ig_vaz", title:"Симулятор ВАЗ 2108", genre:"Гонки", emoji:"🚙", url:"https://igroutka.ru/dlya-malchikov/gonki/17389-simulyator-vozhdeniya-vaz-2108.html" },
-      { id:"ig_pirates", title:"Сокровища пиратов", genre:"Приключения", emoji:"🏴‍☠️", url:"https://igroutka.ru/igry-sokrovischa/22911-sokrovische-piratov.html" },
-      { id:"ig_rusdriver", title:"Русский водитель", genre:"Гонки", emoji:"🚕", url:"https://igroutka.ru/dlya-malchikov/22739-russkiy-voditel.html" },
-      { id:"ig_more_slov", title:"Море слов", genre:"Слова", emoji:"🌊", url:"https://igroutka.ru/igry-krossvord/34903-more-slov.html" },
-      { id:"ig_bubbles", title:"Стрелялка шариками", genre:"Аркада", emoji:"🫧", url:"https://igroutka.ru/shariki-strelyalki/32703-strelyalka-sharikami.html" },
-      { id:"ig_agar", title:"Agar.io", genre:"IO", emoji:"⚪", url:"https://igroutka.ru/igry-io/14361-agario.html" },
-      { id:"ig_fwe3", title:"Огонь, вода и земля", genre:"На троих", emoji:"🌍", url:"https://igroutka.ru/igry-na-troih/33950-ogon-voda-i-zemlya-na-3-igroka.html" },
-      { id:"ig_balltower", title:"Шариковая башня 3Д", genre:"Аркада", emoji:"🗼", url:"https://igroutka.ru/shariki-strelyalki/33233-sharikovaya-bashnya-3d.html" },
-      { id:"ig_mahjong_flower", title:"Маджонг цветочная страна", genre:"Головоломка", emoji:"🌸", url:"https://igroutka.ru/madzhong/23720-madzhong-cvetochnaya-strana.html" },
-      { id:"ig_moto2", title:"Мото гонки на двоих", genre:"На двоих", emoji:"🏍️", url:"https://igroutka.ru/gonki-na-dvoih/33047-gorodskie-moto-gonki-na-dvoih.html" },
-      { id:"ig_seabattle", title:"Морской бой на двоих", genre:"На двоих", emoji:"🚢", url:"https://igroutka.ru/igry-morskoy-boy/28273-morskoy-boy-na-dvoih.html" },
-      { id:"ig_hedgehogs", title:"Ёжики", genre:"Ферма", emoji:"🦔", url:"https://igroutka.ru/igry-ferma/36455-ezhiki.html" },
-      { id:"ig_crocword", title:"Крокворд", genre:"Слова", emoji:"📝", url:"https://igroutka.ru/yandeks-igry/34111-krokvord.html" },
-      { id:"ig_strike_heroes", title:"Герои ударного отряда", genre:"Стратегия", emoji:"🛡️", url:"https://igroutka.ru/geroi-udarnogo-otryada/22746-geroi-udarnogo-otryada-1.html" },
-      { id:"ig_mahjong_butter", title:"Маджонг бабочки", genre:"Головоломка", emoji:"🦋", url:"https://igroutka.ru/igry-golovolomki/20035-madzhong-babochki.html" },
-      { id:"ig_zil", title:"Русский водитель: ЗИЛ", genre:"Гонки", emoji:"🚛", url:"https://igroutka.ru/igry-gruzoviki/26083-russkiy-voditel-zil-130.html" },
-      { id:"ig_pool", title:"8 шаров классика", genre:"Бильярд", emoji:"🎱", url:"https://igroutka.ru/igry-bilyard/24708-8-sharov-klassika.html" },
-      { id:"ig_mope", title:"Mope.io", genre:"IO", emoji:"🦁", url:"https://igroutka.ru/igry-io/17580-mopeio.html" },
-      { id:"ig_lines98", title:"Линии 98", genre:"Головоломка", emoji:"🔵", url:"https://igroutka.ru/igry-linii/30681-linii-98-starye.html" },
-      { id:"ig_kitchen", title:"Кухонная лихорадка", genre:"Для девочек", emoji:"🍳", url:"https://igroutka.ru/dlya-devochek/gotovim-edu/24106-kuhonnaya-lihoradka.html" },
-      { id:"ig_mario", title:"Супер Марио Брос", genre:"Платформер", emoji:"🍄", url:"https://igroutka.ru/mario/17154-super-mario-bros.html" },
-      { id:"ig_mario_dendy", title:"Супер Марио Денди", genre:"Платформер", emoji:"🕹️", url:"https://igroutka.ru/mario/18023-super-mario-bros-dendi.html" },
-      { id:"ig_mineio", title:"Mine-Craft.io", genre:"IO", emoji:"🧱", url:"https://igroutka.ru/igry-maynkraft/29436-mine-craft-io.html" },
-      { id:"ig_redball", title:"Красный шар 4", genre:"Платформер", emoji:"🔴", url:"https://igroutka.ru/igry-krasnyy-shar/14820-krasnyy-shar-4.html" },
-      { id:"ig_blockpost", title:"Блокпост", genre:"Шутер", emoji:"🎯", url:"https://igroutka.ru/igry-strelyalki/22119-blokpost.html" },
-      { id:"ig_tiger", title:"Симулятор тигра", genre:"Симулятор", emoji:"🐯", url:"https://igroutka.ru/igry-simulyatory/24551-simulyator-tigra.html" },
-      { id:"ig_paintnum", title:"Раскраски по номерам", genre:"Рисовалки", emoji:"🎨", url:"https://igroutka.ru/igry-risovalki/30320-raskraski-po-nomeram.html" },
-      { id:"ig_durak", title:"Подкидной дурак", genre:"Карты", emoji:"🃏", url:"https://igroutka.ru/kartochnye-igry/37069-podkidnoy-durak-s-kompyuterom.html" },
-      { id:"ig_among1", title:"Among Us на одного", genre:"Логика", emoji:"🕵️", url:"https://igroutka.ru/igry-among-as/34308-among-as-na-odnogo-igroka.html" },
-      { id:"ig_fnf", title:"Friday Night Funkin'", genre:"Ритм", emoji:"🎤", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/37413-friday-night-funkin-corruption-mod.html" },
-      { id:"ig_mahjong_pairs", title:"Маджонг соедини пары", genre:"Головоломка", emoji:"🀄", url:"https://igroutka.ru/madzhong/23716-madzhong-soedini-pary.html" },
-      { id:"ig_mystic_sea", title:"Сокровища мистического моря", genre:"Поиск", emoji:"🧜", url:"https://igroutka.ru/igry-sokrovischa/22615-sokrovischa-misticheskogo-morya.html" },
-      { id:"ig_pony", title:"Пони креатор v3", genre:"Для девочек", emoji:"🦄", url:"https://igroutka.ru/pony/16349-igra-poni-kreator-v3.html" },
-      { id:"ig_beam", title:"Бемиджи драйв", genre:"Гонки", emoji:"🛻", url:"https://igroutka.ru/igry-gonki-3d/28206-bemidzhi-drayv.html" },
-      { id:"ig_csgo", title:"КС ГО без скачивания", genre:"Шутер", emoji:"💥", url:"https://igroutka.ru/igry-kontr-strayk/28692-kc-go-bez-skachivaniya.html" }
-    ];
+      { id:"ig_16255_1_noch_s_flampi_2", title:"1 Ночь с Флампи 2", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/5-nochey-s-freddi/16255-1-noch-s-flampi-2.html" },
+      { id:"ig_34130_100_dverey_pobeg_iz_komnaty", title:"100 Дверей: Побег из Комнаты", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-vyhod-iz-komnaty/34130-100-dverey-pobeg-iz-komnaty.html" },
+      { id:"ig_18471_logicheskaya_10x10", title:"10x10", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-logicheskie/18471-logicheskaya-10x10.html" },
+      { id:"ig_26228_12_mini_bitv", title:"12 Мини Битв", genre:"На двоих", emoji:"🏎️", url:"https://igroutka.ru/igry-na-dvoih/26228-12-mini-bitv.html" },
+      { id:"ig_25433_2048_sliyanie", title:"2048 Слияние", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-2048/25433-2048-sliyanie.html" },
+      { id:"ig_14353_5_nochey_s_freddi_1", title:"5 ночей с Фредди 1", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/5-nochey-s-freddi/14353-5-nochey-s-freddi-1.html" },
+      { id:"ig_14348_5_nochey_s_freddi_2", title:"5 ночей с Фредди 2", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/5-nochey-s-freddi/14348-5-nochey-s-freddi-2.html" },
+      { id:"ig_14350_5_nochey_s_freddi_3", title:"5 ночей с Фредди 3", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/5-nochey-s-freddi/14350-5-nochey-s-freddi-3.html" },
+      { id:"ig_22951_8_ball_pool", title:"8 Ball Pool", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-bilyard/22951-8-ball-pool.html" },
+      { id:"ig_28765_8_sharov_bilyard", title:"8 Шаров Бильярд", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-bilyard/28765-8-sharov-bilyard.html" },
+      { id:"ig_24708_8_sharov_klassika", title:"8 Шаров Классика", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-bilyard/24708-8-sharov-klassika.html" },
+      { id:"ig_24217_80_dney_vokrug_sveta", title:"80 Дней Вокруг Света", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-alavar/24217-80-dney-vokrug-sveta.html" },
+      { id:"ig_14361_agario", title:"Agar.io | Агарио", genre:"IO", emoji:"🎮", url:"https://igroutka.ru/igry-io/14361-agario.html" },
+      { id:"ig_28216_age_of_war", title:"Age of War", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/flesh-igry/28216-age-of-war.html" },
+      { id:"ig_21341_angry_birds_2", title:"Angry Birds 2", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/angry-birds/21341-angry-birds-2.html" },
+      { id:"ig_28126_battle_city", title:"Battle City", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/dlya-malchikov/tanki/28126-battle-city.html" },
+      { id:"ig_35257_battletoads_double_dragon_the_ultimate_tea", title:"Battletoads & Double Dragon - The Ultimate Team", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry_draki/35257-battletoads-double-dragon-the-ultimate-team.html" },
+      { id:"ig_35264_bomberman", title:"Bomberman", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-dendi/35264-bomberman.html" },
+      { id:"ig_36828_bubble_hit", title:"Bubble Hit", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/shariki-strelyalki/36828-bubble-hit.html" },
+      { id:"ig_35258_chip_n_dale_rescue_rangers", title:"Chip 'n Dale Rescue Rangers", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-dendi/35258-chip-n-dale-rescue-rangers.html" },
+      { id:"ig_18025_contra_kontra_dendi", title:"Contra - Контра Денди", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-dendi/18025-contra-kontra-dendi.html" },
+      { id:"ig_23129_cooking_mama_mama_kills_animals", title:"Cooking Mama: Mama Kills Animals", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-prikoly/23129-cooking-mama-mama-kills-animals.html" },
+      { id:"ig_27675_devast_io", title:"Devast.io | Разруха ио", genre:"IO", emoji:"🎲", url:"https://igroutka.ru/igry-io/27675-devast-io.html" },
+      { id:"ig_27697_doomed_io_2", title:"Doomed.io 2 | Думед ио 2", genre:"IO", emoji:"🎪", url:"https://igroutka.ru/igry-io/27697-doomed-io-2.html" },
+      { id:"ig_28463_drawaria_online", title:"Drawaria.online", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/yandeks-igry/28463-drawaria-online.html" },
+      { id:"ig_37250_dynast_io", title:"Dynast.io", genre:"IO", emoji:"🔥", url:"https://igroutka.ru/igry-io/37250-dynast-io.html" },
+      { id:"ig_23562_evowarsio", title:"Evowars.io | Эвоварс ио", genre:"IO", emoji:"⭐", url:"https://igroutka.ru/igry-io/23562-evowarsio.html" },
+      { id:"ig_26765_flyordieio", title:"FlyOrDie.io | Флай ор дай ио", genre:"IO", emoji:"🏎️", url:"https://igroutka.ru/igry-io/26765-flyordieio.html" },
+      { id:"ig_36968_friday_night_funkin_vs_sky_full_week", title:"Friday Night Funkin VS Sky Full Week", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/36968-friday-night-funkin-vs-sky-full-week.html" },
+      { id:"ig_37413_friday_night_funkin_corruption_mod", title:"Friday NIght Funkin' Corruption mod", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/37413-friday-night-funkin-corruption-mod.html" },
+      { id:"ig_36459_friday_night_funkin_vs_whitty_full_week", title:"Friday Night Funkin' vs Whitty Full Week", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/36459-friday-night-funkin-vs-whitty-full-week.html" },
+      { id:"ig_36458_friday_night_funkin_vs_hex_mod", title:"Friday Night Funkin': Vs Hex Mod", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/36458-friday-night-funkin-vs-hex-mod.html" },
+      { id:"ig_36969_friday_night_funkin_the_tricky_mod", title:"Friday Night Funkin’ The Tricky Mod", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/36969-friday-night-funkin-the-tricky-mod.html" },
+      { id:"ig_22802_happy_room", title:"Happy Room", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-prikoly/22802-happy-room.html" },
+      { id:"ig_14377_happy_wheels", title:"Happy Wheels", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/dlya-malchikov/14377-happy-wheels.html" },
+      { id:"ig_27650_krunker_io", title:"Krunker.io | Кранкер ио", genre:"IO", emoji:"🎪", url:"https://igroutka.ru/igry-io/27650-krunker-io.html" },
+      { id:"ig_23117_life_the_game", title:"Life: The Game", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-simulyatory/23117-life-the-game.html" },
+      { id:"ig_22102_little_big_snakeio", title:"Little Big Snake.io | Большая Змейка ио", genre:"IO", emoji:"🔥", url:"https://igroutka.ru/igry-io/22102-little-big-snakeio.html" },
+      { id:"ig_23739_mahjong_dream_pet_link", title:"Mahjong Dream Pet Link", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/madzhong/23739-mahjong-dream-pet-link.html" },
+      { id:"ig_29436_mine_craft_io", title:"Mine-Craft.io", genre:"Майнкрафт", emoji:"🏎️", url:"https://igroutka.ru/igry-maynkraft/29436-mine-craft-io.html" },
+      { id:"ig_18491_moomooio", title:"Moomoo.io | Муму ио", genre:"IO", emoji:"🧩", url:"https://igroutka.ru/igry-io/18491-moomooio.html" },
+      { id:"ig_17580_mopeio", title:"Mope.io | Мопио", genre:"IO", emoji:"🐍", url:"https://igroutka.ru/igry-io/17580-mopeio.html" },
+      { id:"ig_22726_mutilate_a_doll_2", title:"Mutilate a Doll 2", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-prikoly/22726-mutilate-a-doll-2.html" },
+      { id:"ig_17579_paper_io_2", title:"Paper.io 2 | Пайпер ио 2", genre:"IO", emoji:"🏆", url:"https://igroutka.ru/igry-io/17579-paper-io-2.html" },
+      { id:"ig_17587_slither_io", title:"Slither.io | Слизарио", genre:"IO", emoji:"💥", url:"https://igroutka.ru/igry-io/17587-slither-io.html" },
+      { id:"ig_18488_starveio", title:"Starve.io | Старв ио", genre:"IO", emoji:"🌟", url:"https://igroutka.ru/igry-io/18488-starveio.html" },
+      { id:"ig_21487_super_mario_bros_3", title:"Super Mario Bros 3", genre:"Марио", emoji:"🎲", url:"https://igroutka.ru/mario/21487-super-mario-bros-3.html" },
+      { id:"ig_27651_surviv_io", title:"Surviv.io | Сурвив ио", genre:"IO", emoji:"🎪", url:"https://igroutka.ru/igry-io/27651-surviv-io.html" },
+      { id:"ig_34545_taming_io", title:"Taming.io | Таминг ио", genre:"IO", emoji:"🎮", url:"https://igroutka.ru/igry-io/34545-taming-io.html" },
+      { id:"ig_23870_the_visitor", title:"The Visitor", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-monstry/23870-the-visitor.html" },
+      { id:"ig_30285_tiles_hop_edm_rush", title:"Tiles Hop: EDM Rush!", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-arkady/30285-tiles-hop-edm-rush.html" },
+      { id:"ig_33717_voxiom_io", title:"Voxiom.io", genre:"Майнкрафт", emoji:"🏎️", url:"https://igroutka.ru/igry-maynkraft/33717-voxiom-io.html" },
+      { id:"ig_28999_warfare_1917", title:"Warfare 1917", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/flesh-igry/28999-warfare-1917.html" },
+      { id:"ig_17584_wormateio", title:"Wormate.io | Вормейт ио", genre:"IO", emoji:"🐍", url:"https://igroutka.ru/igry-io/17584-wormateio.html" },
+      { id:"ig_17586_wormaxio", title:"Wormax.io", genre:"IO", emoji:"🎯", url:"https://igroutka.ru/igry-io/17586-wormaxio.html" },
+      { id:"ig_28470_vormaksio_2", title:"Wormax2.io| Вормаксио 2", genre:"IO", emoji:"🏆", url:"https://igroutka.ru/igry-io/28470-vormaksio-2.html" },
+      { id:"ig_30138_zombeat_io", title:"Zombeat.io", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/raznye-igry/30138-zombeat-io.html" },
+      { id:"ig_20850_zombsio", title:"Zombs.io | Зомби ио", genre:"IO", emoji:"🌟", url:"https://igroutka.ru/igry-io/20850-zombsio.html" },
+      { id:"ig_20500_akinator", title:"Акинатор", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/interesnye-igry/20500-akinator.html" },
+      { id:"ig_17530_alisa_v_strane_zabav", title:"Алиса В Стране Забав", genre:"Для девочек", emoji:"🎪", url:"https://igroutka.ru/dlya-devochek/brodilki/17530-alisa-v-strane-zabav.html" },
+      { id:"ig_22787_alhimiya", title:"Алхимия", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/interesnye-igry/22787-alhimiya.html" },
+      { id:"ig_34383_among_as_3d", title:"Амонг Ас 3Д", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-among-as/34383-among-as-3d.html" },
+      { id:"ig_34308_among_as_na_odnogo_igroka", title:"Амонг Ас на Одного Игрока", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-among-as/34308-among-as-na-odnogo-igroka.html" },
+      { id:"ig_34580_among_as_onlayn", title:"Амонг Ас Онлайн", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-among-as/34580-among-as-onlayn.html" },
+      { id:"ig_34640_among_as_online_edition", title:"Амонг Ас: Online Edition", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-among-as/34640-among-as-online-edition.html" },
+      { id:"ig_33940_among_as_predatel_sredi_nas", title:"Амонг Ас: Предатель Среди Нас", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-among-as/33940-among-as-predatel-sredi-nas.html" },
+      { id:"ig_33872_among_as_pryatatsya_ili_iskat", title:"Амонг Ас: Прятки", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-among-as/33872-among-as-pryatatsya-ili-iskat.html" },
+      { id:"ig_36721_babl_shuter_s_druzyami", title:"Бабл Шутер с Друзьями", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-bubble-shooter/36721-babl-shuter-s-druzyami.html" },
+      { id:"ig_23886_badminton", title:"Бадминтон", genre:"На двоих", emoji:"💥", url:"https://igroutka.ru/igry-na-dvoih/23886-badminton.html" },
+      { id:"ig_26471_baldi_v1_4_3", title:"Балди v1.4.3 Образование и Обучение", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/nashi-igry/26471-baldi-v1.4.3.html" },
+      { id:"ig_23878_barmen", title:"Бармен", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-prikoly/23878-barmen.html" },
+      { id:"ig_33434_bashnya_puzyrey_3d", title:"Башня Пузырей 3Д", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry_puzyri/33434-bashnya-puzyrey-3d.html" },
+      { id:"ig_30475_bashnya_yanychar", title:"Башня Янычар", genre:"На двоих", emoji:"🎮", url:"https://igroutka.ru/na-dvoih-dlya-malchikov/30475-bashnya-yanychar.html" },
+      { id:"ig_23306_begun_3", title:"Бегун 3", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-begalki/23306-begun-3.html" },
+      { id:"ig_21207_beguschiy_fred", title:"Бегущий Фред", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-begalki/21207-beguschiy-fred.html" },
+      { id:"ig_22796_bezumie_proekt_neksus", title:"Безумие Проект Нексус", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-bezumie/22796-bezumie-proekt-neksus.html" },
+      { id:"ig_25628_bekon_mozhet_umeret_na_dvoih", title:"Бекон Может Умереть на Двоих", genre:"На двоих", emoji:"🧩", url:"https://igroutka.ru/igry-na-dvoih/25628-bekon-mozhet-umeret-na-dvoih.html" },
+      { id:"ig_28206_bemidzhi_drayv", title:"Бемиджи Драйв", genre:"Гонки", emoji:"🐍", url:"https://igroutka.ru/igry-gonki-3d/28206-bemidzhi-drayv.html" },
+      { id:"ig_30358_bilyard_vosmerka", title:"Бильярд Восьмерка", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-bilyard/30358-bilyard-vosmerka.html" },
+      { id:"ig_24099_bitva_za_glorton", title:"Битва за Глортон", genre:"На двоих", emoji:"🏆", url:"https://igroutka.ru/draki-na-dvoih/24099-bitva-za-glorton.html" },
+      { id:"ig_17457_bitva_mutantov_za_kubok_2", title:"Битва Мутантов За Кубок 2", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry_draki/17457-bitva-mutantov-za-kubok-2.html" },
+      { id:"ig_34317_blic_bilyard", title:"Блиц Бильярд", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-bilyard/34317-blic-bilyard.html" },
+      { id:"ig_31286_blok_kraft", title:"Блок Крафт", genre:"Майнкрафт", emoji:"🎲", url:"https://igroutka.ru/igry-maynkraft/31286-blok-kraft.html" },
+      { id:"ig_22119_blokpost", title:"Блокпост", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-strelyalki/22119-blokpost.html" },
+      { id:"ig_33376_bravo_stars", title:"Браво Старс", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-strelyalki/33376-bravo-stars.html" },
+      { id:"ig_16213_bumazhnyy_maynkraft", title:"Бумажный Майнкрафт", genre:"Майнкрафт", emoji:"🔥", url:"https://igroutka.ru/igry-maynkraft/16213-bumazhnyy-maynkraft.html" },
+      { id:"ig_22817_vex_3", title:"Векс 3", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-veks/22817-vex-3.html" },
+      { id:"ig_34322_veks_5_oficialnyy", title:"Векс 5. Официальный", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-veks/34322-veks-5.-oficialnyy.html" },
+      { id:"ig_21275_veselaya_ferma_2", title:"Веселая Ферма 2", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-veselaya-ferma/21275-veselaya-ferma-2.html" },
+      { id:"ig_21746_vzorvi_eto_6", title:"Взорви Это 6", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-vzorvi-eto/21746-vzorvi-eto-6.html" },
+      { id:"ig_22734_vzryv_plazmy_2", title:"Взрыв Плазмы 2", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-vzryv-plazmy/22734-vzryv-plazmy-2.html" },
+      { id:"ig_14804_mashinka_villi", title:"Вилли 1", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-villi/14804-mashinka-villi.html" },
+      { id:"ig_35811_vodnaya_golovolomka", title:"Водная Головоломка", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-sortirovka/35811-vodnaya-golovolomka.html" },
+      { id:"ig_32906_vozhdenie_niva_po_vnedorozhyu", title:"Вождение: Нива по Внедорожью", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-vaz-zhiguli-lada/32906-vozhdenie-niva-po-vnedorozhyu.html" },
+      { id:"ig_19732_voyna_stikmenov", title:"Война Стикменов", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-stikmen/19732-voyna-stikmenov.html" },
+      { id:"ig_25326_vratar", title:"Вратарь", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-futbol/25326-vratar.html" },
+      { id:"ig_35512_gacha_zhizn_odevalka", title:"Гача Жизнь Одевалка", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-sozday-svoego-personazha/35512-gacha-zhizn-odevalka.html" },
+      { id:"ig_37511_gacha_layf", title:"Гача Лайф", genre:"Для девочек", emoji:"🔥", url:"https://igroutka.ru/dlya-devochek/brodilki/37511-gacha-layf.html" },
+      { id:"ig_21416_geometriya_dash", title:"Геометрия Даш", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/geometry-dash/21416-geometriya-dash.html" },
+      { id:"ig_22746_geroi_udarnogo_otryada_1", title:"Герои Ударного Отряда 1", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/geroi-udarnogo-otryada/22746-geroi-udarnogo-otryada-1.html" },
+      { id:"ig_22747_geroi_udarnogo_otryada_2", title:"Герои Ударного Отряда 2", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/geroi-udarnogo-otryada/22747-geroi-udarnogo-otryada-2.html" },
+      { id:"ig_22748_geroi_udarnogo_otryada_3", title:"Герои Ударного Отряда 3", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/geroi-udarnogo-otryada/22748-geroi-udarnogo-otryada-3.html" },
+      { id:"ig_12598_gitara", title:"Гитара", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-muzyka/12598-gitara.html" },
+      { id:"ig_23900_govoryaschiy_ben", title:"Говорящий Бен", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-govoryaschiy-kot/23900-govoryaschiy-ben.html" },
+      { id:"ig_19720_govoryaschiy_tom_beg_za_zolotom", title:"Говорящий Том: Бег за Золотом", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-govoryaschiy-kot/19720-govoryaschiy-tom-beg-za-zolotom.html" },
+      { id:"ig_27937_gonki_letayuschih_mashin_na_2_igroka", title:"Гонки Летающих Машин на 2 Игрока", genre:"Гонки", emoji:"🌟", url:"https://igroutka.ru/gonki-na-dvoih/27937-gonki-letayuschih-mashin-na-2-igroka.html" },
+      { id:"ig_34151_gonki_na_turbo_mashinah", title:"Гонки на Турбо Машинах", genre:"Гонки", emoji:"🎲", url:"https://igroutka.ru/dlya-malchikov/gonki/34151-gonki-na-turbo-mashinah.html" },
+      { id:"ig_33047_gorodskie_moto_gonki_na_dvoih", title:"Городские Мото Гонки На Двоих", genre:"Гонки", emoji:"🎪", url:"https://igroutka.ru/gonki-na-dvoih/33047-gorodskie-moto-gonki-na-dvoih.html" },
+      { id:"ig_33673_grenni_glava_vtoraya", title:"Гренни: Глава Вторая", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-grenni/33673-grenni-glava-vtoraya.html" },
+      { id:"ig_23075_grind_kraft", title:"Гринд Крафт", genre:"Майнкрафт", emoji:"🔥", url:"https://igroutka.ru/igry-maynkraft/23075-grind-kraft.html" },
+      { id:"ig_34712_gta_vays_siti", title:"ГТА: Вайс Сити", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-gta/34712-gta-vays-siti.html" },
+      { id:"ig_27525_gta_san_andreas_multipleer", title:"ГТА: Сан Андреас - Мультиплеер", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-gta/27525-gta-san-andreas-multipleer.html" },
+      { id:"ig_22856_dva_mecha", title:"Два Меча", genre:"На двоих", emoji:"🧩", url:"https://igroutka.ru/igry-na-dvoih/22856-dva-mecha.html" },
+      { id:"ig_29535_dva_myacha_3d", title:"Два Мяча 3Д", genre:"На двоих", emoji:"🐍", url:"https://igroutka.ru/igry-na-dvoih/29535-dva-myacha-3d.html" },
+      { id:"ig_37692_devushka_s_dlinnymi_volosami", title:"Девушка с Длинными Волосами", genre:"Для девочек", emoji:"🎯", url:"https://igroutka.ru/dlya-devochek/37692-devushka-s-dlinnymi-volosami.html" },
+      { id:"ig_24105_delat_oruzhie", title:"Делать Оружие", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-1234567890/24105-delat-oruzhie.html" },
+      { id:"ig_36974_derevyannye_bloki", title:"Деревянные Блоки", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-bloki/36974-derevyannye-bloki.html" },
+      { id:"ig_22869_jack_smith", title:"Джек Смит", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-na-1-igroka/22869-jack-smith.html" },
+      { id:"ig_22821_dzhim_lyubit_meri", title:"Джим Любит Мэри", genre:"Для девочек", emoji:"🎲", url:"https://igroutka.ru/dlya-devochek/brodilki/22821-dzhim-lyubit-meri.html" },
+      { id:"ig_23322_digger", title:"Диггер", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/starye-igry/23322-digger.html" },
+      { id:"ig_24113_dom_s_privideniyami", title:"Дом с Привидениями", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/strashnye-igry/24113-dom-s-privideniyami.html" },
+      { id:"ig_32107_domino_klassicheskoe", title:"Домино Классическое", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-domino/32107-domino-klassicheskoe.html" },
+      { id:"ig_28247_domino_kozel", title:"Домино Козел", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-domino/28247-domino-kozel.html" },
+      { id:"ig_18443_drift_na_bmv", title:"Дрифт на БМВ", genre:"Гонки", emoji:"🏎️", url:"https://igroutka.ru/igry-mashiny/18443-drift-na-bmv.html" },
+      { id:"ig_29332_russkiy_drift_3d", title:"Дрифт на Русских Машинах", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-drift/29332-russkiy-drift-3d.html" },
+      { id:"ig_22913_dusha_assasina_3", title:"Душа Ассасина 3", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-rycari/22913-dusha-assasina-3.html" },
+      { id:"ig_29881_holeio_dyra_io_2", title:"Дыра ИО | Hole.io", genre:"IO", emoji:"🎯", url:"https://igroutka.ru/igry-io/29881-holeio-dyra-io-2.html" },
+      { id:"ig_32227_evo_f4", title:"Ево Ф4", genre:"Гонки", emoji:"🏆", url:"https://igroutka.ru/dlya-malchikov/gonki/32227-evo-f4.html" },
+      { id:"ig_23094_zhertvoprinoshenie_ayzeka", title:"Жертвоприношение Айзека", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-kvesty/23094-zhertvoprinoshenie-ayzeka.html" },
+      { id:"ig_25771_zabroshennyy_dom_v_lesu", title:"Заброшенный Дом в Лесу", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-poisk-predmetov/25771-zabroshennyy-dom-v-lesu.html" },
+      { id:"ig_34503_zahvatio", title:"Захват.ио", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/yandeks-igry/34503-zahvatio.html" },
+      { id:"ig_24119_zlaya_babushka_bezhit_iz_psihushki", title:"Злая Бабушка Бежит из Психушки", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-zlaya-babushka/24119-zlaya-babushka-bezhit-iz-psihushki.html" },
+      { id:"ig_23045_zombotron_1", title:"Зомботрон 1", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-zombotron/23045-zombotron-1.html" },
+      { id:"ig_23046_zombotron_2", title:"Зомботрон 2", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-zombotron/23046-zombotron-2.html" },
+      { id:"ig_23047_zombotron_2_mashina_vremeni", title:"Зомботрон 2: Машина Времени", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-zombotron/23047-zombotron-2-mashina-vremeni.html" },
+      { id:"ig_23048_zombotron_3", title:"Зомботрон 3", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-zombotron/23048-zombotron-3.html" },
+      { id:"ig_27992_zona_chervyachkov", title:"Зона Червячков", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-chervyachki/27992-zona-chervyachkov.html" },
+      { id:"ig_21861_zuma_delyuks", title:"Зума Делюкс", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/zuma/21861-zuma-delyuks.html" },
+      { id:"ig_21824_zuma_mayya", title:"Зума: Майя", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/zuma/21824-zuma-mayya.html" },
+      { id:"ig_40885_igra_v_kalmara_3d", title:"Игра в Кальмара: Выживи или Умри", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-vyzhivanie/40885-igra-v-kalmara-3d.html" },
+      { id:"ig_28692_kc_go_bez_skachivaniya", title:"КC ГО Без Скачивания", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-kontr-strayk/28692-kc-go-bez-skachivaniya.html" },
+      { id:"ig_23027_kavay_ran", title:"Кавай Ран", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-begalki/23027-kavay-ran.html" },
+      { id:"ig_26635_kamennyy_sbor_2", title:"Каменный Сбор 2", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/tri-v-ryad/26635-kamennyy-sbor-2.html" },
+      { id:"ig_32146_kamen_nozhnicy_bumaga_na_dvoih", title:"Камень Ножницы Бумага на Двоих", genre:"На двоих", emoji:"🎪", url:"https://igroutka.ru/igry-na-dvoih/32146-kamen-nozhnicy-bumaga-na-dvoih.html" },
+      { id:"ig_32912_kar_parking", title:"Кар Паркинг", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-simulyatory-vozhdeniya/32912-kar-parking.html" },
+      { id:"ig_22309_kartonnye_zombi", title:"Картонные Зомби на 2 игрока", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/dlya-malchikov/zombi/22309-kartonnye-zombi.html" },
+      { id:"ig_19204_kassir_v_produktovom_magazine", title:"Кассир в Продуктовом Магазине", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-magazin/19204-kassir-v-produktovom-magazine.html" },
+      { id:"ig_23685_katalizator_bezumiya", title:"Катализатор Безумия", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-bezumie/23685-katalizator-bezumiya.html" },
+      { id:"ig_24220_kinder_syurpriz", title:"Киндер Сюрприз", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/interesnye-igry/24220-kinder-syurpriz.html" },
+      { id:"ig_21495_klassicheskiy_mario", title:"Классический Марио", genre:"Марио", emoji:"🐍", url:"https://igroutka.ru/mario/21495-klassicheskiy-mario.html" },
+      { id:"ig_19922_klassicheskiy_tetris", title:"Классический Тетрис", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-tetris/19922-klassicheskiy-tetris.html" },
+      { id:"ig_21023_kliker_drovoseka", title:"Кликер Дровосека", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-klikery/21023-kliker-drovoseka.html" },
+      { id:"ig_20983_kliker_kakashki", title:"Кликер Какашки", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-klikery/20983-kliker-kakashki.html" },
+      { id:"ig_26863_kogama_4_voyny", title:"Когама: 4 Войны", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-kogama/26863-kogama-4-voyny.html" },
+      { id:"ig_21113_kogama_beshenyy_parkur", title:"Когама: Бешеный Паркур", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-kogama/21113-kogama-beshenyy-parkur.html" },
+      { id:"ig_21064_kogama_voyna_4", title:"Когама: Война", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-kogama/21064-kogama-voyna-4.html" },
+      { id:"ig_26870_kogama_lift", title:"Когама: Лифт", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-kogama/26870-kogama-lift.html" },
+      { id:"ig_32891_kogama_piggi", title:"Когама: Пигги", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-kogama/32891-kogama-piggi.html" },
+      { id:"ig_21077_kogama_privet_sosed", title:"Когама: Привет Сосед", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-kogama/21077-kogama-privet-sosed.html" },
+      { id:"ig_32039_kogama_usynovi_menya", title:"Когама: Усынови Меня", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-kogama/32039-kogama-usynovi-menya.html" },
+      { id:"ig_28646_kontr_strayk_16", title:"Контр Страйк 1.6", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-kontr-strayk/28646-kontr-strayk-16.html" },
+      { id:"ig_16240_kopiya_maynkrafta", title:"Копия Майнкрафта", genre:"Майнкрафт", emoji:"🐍", url:"https://igroutka.ru/igry-maynkraft/16240-kopiya-maynkrafta.html" },
+      { id:"ig_28254_korolevskiy_ubiyca", title:"Королевский Убийца", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/flesh-igry/28254-korolevskiy-ubiyca.html" },
+      { id:"ig_37068_korotkie_nardy_s_kompyuterom", title:"Короткие Нарды с Компьютером", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/nastolnye/37068-korotkie-nardy-s-kompyuterom.html" },
+      { id:"ig_21481_ket_mario", title:"Кот Марио", genre:"Марио", emoji:"💥", url:"https://igroutka.ru/mario/21481-ket-mario.html" },
+      { id:"ig_28639_kot_tom_beg", title:"Кот Том: Бег", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-govoryaschiy-kot/28639-kot-tom-beg.html" },
+      { id:"ig_37113_kotovasiya_bashni_slov", title:"Котовасия: Башни Слов", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-v-slova/37113-kotovasiya-bashni-slov.html" },
+      { id:"ig_14820_krasnyy_shar_4", title:"Красный Шар 4 часть 1", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-krasnyy-shar/14820-krasnyy-shar-4.html" },
+      { id:"ig_28774_krasnyy_shar_navsegda", title:"Красный Шар Навсегда", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-krasnyy-shar/28774-krasnyy-shar-navsegda.html" },
+      { id:"ig_16362_poni_krestiki_noliki_s_pinki_pay", title:"Крестики-Нолики с Пинки Пай", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/pony/16362-poni-krestiki-noliki-s-pinki-pay.html" },
+      { id:"ig_37741_kristalliki", title:"Кристаллики", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/tri-v-ryad/37741-kristalliki.html" },
+      { id:"ig_37184_kristally_na_russkom", title:"Кристаллы на Русском", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-dragocennye-kamni/37184-kristally-na-russkom.html" },
+      { id:"ig_34111_krokvord", title:"Крокворд", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/yandeks-igry/34111-krokvord.html" },
+      { id:"ig_22914_krutoy_rycar_2", title:"Крутой Рыцарь 2", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-rycari/22914-krutoy-rycar-2.html" },
+      { id:"ig_22789_kresh_bandikut", title:"Крэш Бандикут", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-brodilki/22789-kresh-bandikut.html" },
+      { id:"ig_28950_kubok_mutantov_koty", title:"Кубок Мутантов: Коты", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/flesh-igry/28950-kubok-mutantov-koty.html" },
+      { id:"ig_22863_kuznec_dzhek", title:"Кузнец Джек", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/interesnye-igry/22863-kuznec-dzhek.html" },
+      { id:"ig_21039_kukla_iz_maynkrafta_2", title:"Кукла из Майнкрафта 2", genre:"Майнкрафт", emoji:"🌟", url:"https://igroutka.ru/igry-maynkraft/21039-kukla-iz-maynkrafta-2.html" },
+      { id:"ig_22971_kulak_drakona_3", title:"Кулак Дракона 3", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-kulak-drakona/22971-kulak-drakona-3.html" },
+      { id:"ig_37734_kuoday_babochki_hd", title:"Куодай Бабочки HD", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-madzhong-babochki/37734-kuoday-babochki-hd.html" },
+      { id:"ig_24106_kuhonnaya_lihoradka", title:"Кухонная Лихорадка", genre:"Для девочек", emoji:"🎮", url:"https://igroutka.ru/dlya-devochek/gotovim-edu/24106-kuhonnaya-lihoradka.html" },
+      { id:"ig_26815_lambordzhini_drift_simulyator", title:"Ламборджини Дрифт Симулятор", genre:"Гонки", emoji:"🔥", url:"https://igroutka.ru/dlya-malchikov/gonki/26815-lambordzhini-drift-simulyator.html" },
+      { id:"ig_37116_les_chudes", title:"Лес Чудес", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/tri-v-ryad/37116-les-chudes.html" },
+      { id:"ig_29067_letayuschie_homyaki", title:"Летающие Хомяки", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/flesh-igry/29067-letayuschie-homyaki.html" },
+      { id:"ig_30681_linii_98_starye", title:"Линии 98 Старые", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-linii/30681-linii-98-starye.html" },
+      { id:"ig_21415_lovkie_vory", title:"Ловкие Воры", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-grabiteli/21415-lovkie-vory.html" },
+      { id:"ig_21417_lovkie_vory_2", title:"Ловкие Воры 2", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-grabiteli/21417-lovkie-vory-2.html" },
+      { id:"ig_21418_lovkie_vory_3", title:"Ловкие Воры 3: Страж Порядка", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-grabiteli/21418-lovkie-vory-3.html" },
+      { id:"ig_20035_madzhong_babochki", title:"Маджонг Бабочки", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-golovolomki/20035-madzhong-babochki.html" },
+      { id:"ig_23744_madzhong_kvest", title:"Маджонг Квест", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/madzhong/23744-madzhong-kvest.html" },
+      { id:"ig_23782_madzhong_link", title:"Маджонг Линк", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/madzhong/23782-madzhong-link.html" },
+      { id:"ig_23794_madzhong_lica", title:"Маджонг Лица", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/madzhong/23794-madzhong-lica.html" },
+      { id:"ig_23774_madzhong_pokemony", title:"Маджонг Покемоны", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/madzhong/23774-madzhong-pokemony.html" },
+      { id:"ig_23718_madzhong_soedini_zverkov", title:"Маджонг Соедини Зверьков", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/madzhong/23718-madzhong-soedini-zverkov.html" },
+      { id:"ig_23716_madzhong_soedini_pary", title:"Маджонг Соедини Пары", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/madzhong/23716-madzhong-soedini-pary.html" },
+      { id:"ig_23779_madzhong_flagi", title:"Маджонг Флаги", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/madzhong/23779-madzhong-flagi.html" },
+      { id:"ig_23787_madzhong_frukty_3", title:"Маджонг Фрукты 3", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/madzhong/23787-madzhong-frukty-3.html" },
+      { id:"ig_23720_madzhong_cvetochnaya_strana", title:"Маджонг Цветочная Страна", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/madzhong/23720-madzhong-cvetochnaya-strana.html" },
+      { id:"ig_28423_maynkraft_klassik", title:"Майнкрафт Классик", genre:"Майнкрафт", emoji:"🎯", url:"https://igroutka.ru/igry-maynkraft/28423-maynkraft-klassik.html" },
+      { id:"ig_21044_maynkraft_kogama", title:"Майнкрафт Когама", genre:"Майнкрафт", emoji:"🏆", url:"https://igroutka.ru/igry-maynkraft/21044-maynkraft-kogama.html" },
+      { id:"ig_34827_maynkraft_skayblok", title:"Майнкрафт Скайблок", genre:"Майнкрафт", emoji:"💥", url:"https://igroutka.ru/igry-maynkraft/34827-maynkraft-skayblok.html" },
+      { id:"ig_26166_maynkraft_stroitel", title:"Майнкрафт Строитель", genre:"Майнкрафт", emoji:"🌟", url:"https://igroutka.ru/igry-maynkraft/26166-maynkraft-stroitel.html" },
+      { id:"ig_30836_master_shahmat_multipleer", title:"Мастер Шахмат: Мультиплеер", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-shahmaty/30836-master-shahmat-multipleer.html" },
+      { id:"ig_33155_match_arena", title:"Матч Арена", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/tri-v-ryad/33155-match-arena.html" },
+      { id:"ig_14827_mashina_est_mashinu_2", title:"Машина Ест Машину 2", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-mashina-est-mashinu/14827-mashina-est-mashinu-2.html" },
+      { id:"ig_14828_mashina_est_mashinu_3", title:"Машина Ест Машину 3", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-mashina-est-mashinu/14828-mashina-est-mashinu-3.html" },
+      { id:"ig_23561_mashina_est_mashinu_6", title:"Машина Ест Машину 6", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-mashina-est-mashinu/23561-mashina-est-mashinu-6.html" },
+      { id:"ig_23061_mashinarium", title:"Машинариум", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-kvesty/23061-mashinarium.html" },
+      { id:"ig_23309_metallolom_2", title:"Металлолом 2", genre:"Гонки", emoji:"🧩", url:"https://igroutka.ru/dlya-malchikov/gonki/23309-metallolom-2.html" },
+      { id:"ig_30445_metallolom_6_gran_turizmo", title:"Металлолом 6: Гран Туризмо", genre:"Гонки", emoji:"🐍", url:"https://igroutka.ru/igry-mashiny/30445-metallolom-6-gran-turizmo.html" },
+      { id:"ig_25316_metro_3d", title:"Метро 3Д", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-strelyalki/25316-metro-3d.html" },
+      { id:"ig_22147_mechi_i_dushi", title:"Мечи и Души", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry_draki/22147-mechi-i-dushi.html" },
+      { id:"ig_22099_mechi_i_sandali_2", title:"Мечи и Сандали 2", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/mechi-i-sandali/22099-mechi-i-sandali-2.html" },
+      { id:"ig_33430_mini_bitvy_na_2_3_4_5_6", title:"Мини Битвы на 2, 3, 4, 5, 6 игроков", genre:"На двоих", emoji:"🌟", url:"https://igroutka.ru/igry-na-dvoih/33430-mini-bitvy-na-2-3-4-5-6.html" },
+      { id:"ig_31210_mini_shahmaty_na_dvoih", title:"Мини Шахматы на Двоих", genre:"На двоих", emoji:"🎲", url:"https://igroutka.ru/igry-shahmaty/31210-mini-shahmaty-na-dvoih.html" },
+      { id:"ig_23026_mitoza", title:"Митоза", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/smeshnye-igry/23026-mitoza.html" },
+      { id:"ig_22919_moguchiy_rycar_2", title:"Могучий Рыцарь 2", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-moguchiy-rycar/22919-moguchiy-rycar-2.html" },
+      { id:"ig_24317_moy_drug_pedro", title:"Мой Друг Педро", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/strelyalki-s-oruzhiem/24317-moy-drug-pedro.html" },
+      { id:"ig_24233_monopoliya", title:"Монополия", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/nastolnye/24233-monopoliya.html" },
+      { id:"ig_23189_monstr_kraft", title:"Монстр Крафт", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-monstry/23189-monstr-kraft.html" },
+      { id:"ig_34903_more_slov", title:"Море Слов", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-krossvord/34903-more-slov.html" },
+      { id:"ig_33529_morskoy_boy_na_bumage", title:"Морской Бой на Бумаге", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-morskoy-boy/33529-morskoy-boy-na-bumage.html" },
+      { id:"ig_28273_morskoy_boy_na_dvoih", title:"Морской Бой На Двоих", genre:"На двоих", emoji:"🎯", url:"https://igroutka.ru/igry-morskoy-boy/28273-morskoy-boy-na-dvoih.html" },
+      { id:"ig_37023_mortal_kombat_3_ultimatum", title:"Мортал Комбат 3: Ультиматум", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-mortal-kombat/37023-mortal-kombat-3-ultimatum.html" },
+      { id:"ig_21319_moya_ferma", title:"Моя Ферма", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-ferma/21319-moya-ferma.html" },
+      { id:"ig_38781_neveroyatnye_priklyucheniya_dzhodzho", title:"Невероятные Приключения ДжоДжо", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/playstation/38781-neveroyatnye-priklyucheniya-dzhodzho.html" },
+      { id:"ig_29939_novogodnie_strelyalki_3d", title:"Новогодние Стрелялки 3Д", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-novyy-god/29939-novogodnie-strelyalki-3d.html" },
+      { id:"ig_9036_nuzhny_dengi", title:"Нужны Деньги", genre:"На двоих", emoji:"🎪", url:"https://igroutka.ru/igry-na-dvoih/9036-nuzhny-dengi.html" },
+      { id:"ig_17929_nuzhny_dengi_3_sluzhba_ohrany", title:"Нужны Деньги 3", genre:"На двоих", emoji:"🎮", url:"https://igroutka.ru/igry-na-dvoih/17929-nuzhny-dengi-3-sluzhba-ohrany.html" },
+      { id:"ig_22731_nyan_ket", title:"Нян Кэт", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-na-1-igroka/22731-nyan-ket.html" },
+      { id:"ig_37998_obmen_bashnyami", title:"Обмен Башнями", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-bashni/37998-obmen-bashnyami.html" },
+      { id:"ig_33950_ogon_voda_i_zemlya_na_3_igroka", title:"Огонь Вода и Земля на 3 Игрока", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-na-troih/33950-ogon-voda-i-zemlya-na-3-igroka.html" },
+      { id:"ig_1309_zelenyy_kristall", title:"Огонь и Вода 1 - В лесном храме", genre:"Огонь и Вода", emoji:"🧩", url:"https://igroutka.ru/ogon-i-voda/1309-zelenyy-kristall.html" },
+      { id:"ig_2143_ogon_i_voda_2", title:"Огонь и Вода 2 - В светлом храме", genre:"Огонь и Вода", emoji:"🐍", url:"https://igroutka.ru/ogon-i-voda/2143-ogon-i-voda-2.html" },
+      { id:"ig_1311_ledyanoy_hram", title:"Огонь и Вода 3 - В ледяном храме", genre:"Огонь и Вода", emoji:"🎯", url:"https://igroutka.ru/ogon-i-voda/1311-ledyanoy-hram.html" },
+      { id:"ig_2141_ogon_i_voda_4", title:"Огонь и Вода 4 В хрустальном храме", genre:"Огонь и Вода", emoji:"🏆", url:"https://igroutka.ru/ogon-i-voda/2141-ogon-i-voda-4.html" },
+      { id:"ig_27121_ogon_i_voda_5_elementy", title:"Огонь и Вода 5: Элементы", genre:"Огонь и Вода", emoji:"💥", url:"https://igroutka.ru/ogon-i-voda/27121-ogon-i-voda-5-elementy.html" },
+      { id:"ig_21157_ogon_i_voda_bratya", title:"Огонь и Вода Братья", genre:"Огонь и Вода", emoji:"🌟", url:"https://igroutka.ru/ogon-i-voda/21157-ogon-i-voda-bratya.html" },
+      { id:"ig_16207_ogon_i_voda_idut_domoy", title:"Огонь и Вода идут домой", genre:"Огонь и Вода", emoji:"🎲", url:"https://igroutka.ru/ogon-i-voda/16207-ogon-i-voda-idut-domoy.html" },
+      { id:"ig_2148_ogon_i_voda_labirint", title:"Огонь и Вода Лабиринт", genre:"Огонь и Вода", emoji:"🎪", url:"https://igroutka.ru/ogon-i-voda/2148-ogon-i-voda-labirint.html" },
+      { id:"ig_16197_ogon_i_voda_na_1_igroka", title:"Огонь и Вода на 1 Игрока", genre:"Огонь и Вода", emoji:"🎮", url:"https://igroutka.ru/ogon-i-voda/16197-ogon-i-voda-na-1-igroka.html" },
+      { id:"ig_26469_ogon_i_voda_rybalka", title:"Огонь и Вода: Рыбалка", genre:"Огонь и Вода", emoji:"🔥", url:"https://igroutka.ru/ogon-i-voda/26469-ogon-i-voda-rybalka.html" },
+      { id:"ig_12838_odinochnyy_bilyard", title:"Одиночный Бильярд", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-bilyard/12838-odinochnyy-bilyard.html" },
+      { id:"ig_22908_opasnoe_oruzhie_2", title:"Опасное Оружие 2", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-opasnoe-oruzhie/22908-opasnoe-oruzhie-2.html" },
+      { id:"ig_18062_orion_pesochnica_uluchshennyy", title:"Орион Улучшенный", genre:"Майнкрафт", emoji:"🧩", url:"https://igroutka.ru/igry-maynkraft/18062-orion-pesochnica-uluchshennyy.html" },
+      { id:"ig_22855_oruzheynyy_bespredel", title:"Оружейный Беспредел", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-strelyalki/22855-oruzheynyy-bespredel.html" },
+      { id:"ig_23102_oruzhie_haosa", title:"Оружие Хаоса", genre:"На двоих", emoji:"🎯", url:"https://igroutka.ru/strelyalki-na-dvoih/23102-oruzhie-haosa.html" },
+      { id:"ig_30323_ohota_na_utok", title:"Охота На Уток", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-ohota/30323-ohota-na-utok.html" },
+      { id:"ig_23313_pao_pao", title:"Пао Пао", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-golovolomki/23313-pao-pao.html" },
+      { id:"ig_9374_papa_lui_2", title:"Папа Луи 2: Атака Гамбургеров", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-papa-lui/9374-papa-lui-2.html" },
+      { id:"ig_9382_picca", title:"Папа Луи: Пиццерия", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-papa-lui/9382-picca.html" },
+      { id:"ig_21183_papa_lui_sushi", title:"Папа Луи: Суши", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-papa-lui/21183-papa-lui-sushi.html" },
+      { id:"ig_23331_pereklyuchay_3", title:"Переключай 3", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-pereklyuchay/23331-pereklyuchay-3.html" },
+      { id:"ig_33454_piramida_bilyard", title:"Пирамида Бильярд", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-bilyard/33454-piramida-bilyard.html" },
+      { id:"ig_22052_plohoe_morozhenoe_1", title:"Плохое Мороженое 1", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-plohoe-morozhenoe/22052-plohoe-morozhenoe-1.html" },
+      { id:"ig_22053_plohoe_morozhenoe_2", title:"Плохое Мороженое 2", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-plohoe-morozhenoe/22053-plohoe-morozhenoe-2.html" },
+      { id:"ig_22054_plohoe_morozhenoe_3", title:"Плохое Мороженое 3", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-plohoe-morozhenoe/22054-plohoe-morozhenoe-3.html" },
+      { id:"ig_19670_pobeg_iz_tyurmy_na_dvoih", title:"Побег из Тюрьмы на Двоих", genre:"На двоих", emoji:"🐍", url:"https://igroutka.ru/igry-pobeg-iz-tyurmy/19670-pobeg-iz-tyurmy-na-dvoih.html" },
+      { id:"ig_37069_podkidnoy_durak_s_kompyuterom", title:"Подкидной Дурак с Компьютером", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/kartochnye-igry/37069-podkidnoy-durak-s-kompyuterom.html" },
+      { id:"ig_22732_pole_chudes", title:"Поле Чудес (флеш)", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/poznavatelnye-igry/22732-pole-chudes.html" },
+      { id:"ig_16348_poni_kreator_3d_sozday_svoyu_poni_3d", title:"Пони Креатор 3д на Русском", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/pony/16348-poni-kreator-3d-sozday-svoyu-poni-3d.html" },
+      { id:"ig_16349_igra_poni_kreator_v3", title:"Пони Креатор v3: Создай Свою Пони 3", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/pony/16349-igra-poni-kreator-v3.html" },
+      { id:"ig_34811_poni_kreator_s_animaciyami", title:"Пони Креатор С Анимациями", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/pony/34811-poni-kreator-s-animaciyami.html" },
+      { id:"ig_42448_poppi_pleytaym", title:"Поппи Плейтайм", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-hagi-vagi/42448-poppi-pleytaym.html" },
+      { id:"ig_23895_portal", title:"Портал", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-priklyucheniya/23895-portal.html" },
+      { id:"ig_23324_portal_2", title:"Портал 2", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-priklyucheniya/23324-portal-2.html" },
+      { id:"ig_18279_poslednie_iz_vyzhivshih", title:"Последние Из Выживших", genre:"На двоих", emoji:"⭐", url:"https://igroutka.ru/igry-na-dvoih/18279-poslednie-iz-vyzhivshih.html" },
+      { id:"ig_31545_priklyucheniya_fruktovyh_stikmenov_3", title:"Приключения Фруктовых Стикменов 3", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-na-troih/31545-priklyucheniya-fruktovyh-stikmenov-3.html" },
+      { id:"ig_23675_prygayuschiy_kubik", title:"Прыгающий Кубик", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-pryzhki/23675-prygayuschiy-kubik.html" },
+      { id:"ig_22742_pryatki_onlayn", title:"Прятки Онлайн", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-strelyalki/22742-pryatki-onlayn.html" },
+      { id:"ig_36952_pytochnaya_2x", title:"Пыточная 2X", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-izdevatelstvo/36952-pytochnaya-2x.html" },
+      { id:"ig_20767_pyanyy_stikmen", title:"Пьяный Стикмен", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-stikmen/20767-pyanyy-stikmen.html" },
+      { id:"ig_27978_pyat_nochey_u_ezhika", title:"Пять Ночей У Ёжика", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/strashnye-igry/27978-pyat-nochey-u-ezhika.html" },
+      { id:"ig_30320_raskraski_po_nomeram", title:"Раскраски по Номерам", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-risovalki/30320-raskraski-po-nomeram.html" },
+      { id:"ig_1257_rasteniya_protiv_zombi", title:"Растения Против Зомби", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/dlya-malchikov/zombi/1257-rasteniya-protiv-zombi.html" },
+      { id:"ig_17324_rasteniya_protiv_zombi_2", title:"Растения Против Зомби 2", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/dlya-malchikov/zombi/17324-rasteniya-protiv-zombi-2.html" },
+      { id:"ig_34344_rebenok_v_zheltom", title:"Ребенок В Желтом", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/strashnye-igry/34344-rebenok-v-zheltom.html" },
+      { id:"ig_36501_rebenok_iz_ada", title:"Ребенок из Ада", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/horror-igry/36501-rebenok-iz-ada.html" },
+      { id:"ig_23888_risovat_i_ugadyvat", title:"Рисовать и Угадывать", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-risovalki/23888-risovat-i-ugadyvat.html" },
+      { id:"ig_25244_risuem_po_nomeram", title:"Рисуем по Номерам", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-risovalki/25244-risuem-po-nomeram.html" },
+      { id:"ig_31856_russkaya_gta", title:"Русская ГТА", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-gta/31856-russkaya-gta.html" },
+      { id:"ig_22739_russkiy_voditel", title:"Русский Водитель", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/dlya-malchikov/22739-russkiy-voditel.html" },
+      { id:"ig_30006_russkiy_voditel_3d_vaz_2107", title:"Русский Водитель 3Д: Ваз 2107", genre:"Гонки", emoji:"🎯", url:"https://igroutka.ru/igry-gonki-na-russkih-mashinah/30006-russkiy-voditel-3d-vaz-2107.html" },
+      { id:"ig_26083_russkiy_voditel_zil_130", title:"Русский Водитель: Зил 130", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-gruzoviki/26083-russkiy-voditel-zil-130.html" },
+      { id:"ig_30804_rybka_est_rybku_2_na_3_igroka", title:"Рыбка Ест Рыбку 2: на 3 Игрока", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-rybka-est-rybku/30804-rybka-est-rybku-2-na-3-igroka.html" },
+      { id:"ig_23044_rybka_est_rybku_3_na_igroka", title:"Рыбка Ест Рыбку: 3 Игрока", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-rybka-est-rybku/23044-rybka-est-rybku-3-na-igroka.html" },
+      { id:"ig_18261_rycari_na_dvoih", title:"Рыцари на Двоих", genre:"На двоих", emoji:"🎲", url:"https://igroutka.ru/igry-rycari/18261-rycari-na-dvoih.html" },
+      { id:"ig_36484_sadovye_istorii", title:"Садовые Истории", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/tri-v-ryad/36484-sadovye-istorii.html" },
+      { id:"ig_28939_sdelay_slaym", title:"Сделай Слайм", genre:"Для девочек", emoji:"🎮", url:"https://igroutka.ru/dlya-devochek/28939-sdelay-slaym.html" },
+      { id:"ig_22499_simulyator_bitvy_s_sansom", title:"Симулятор Битвы с Сансом", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-anderteyl/22499-simulyator-bitvy-s-sansom.html" },
+      { id:"ig_22431_simulyator_boga", title:"Симулятор Бога", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-simulyatory/22431-simulyator-boga.html" },
+      { id:"ig_22432_simulyator_bomzha", title:"Симулятор Бомжа", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-simulyatory/22432-simulyator-bomzha.html" },
+      { id:"ig_31015_simulyator_vozhdeniya_2", title:"Симулятор Вождения 2", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-simulyatory-vozhdeniya/31015-simulyator-vozhdeniya-2.html" },
+      { id:"ig_17389_simulyator_vozhdeniya_vaz_2108", title:"Симулятор Вождения ВАЗ 2108", genre:"Гонки", emoji:"🐍", url:"https://igroutka.ru/dlya-malchikov/gonki/17389-simulyator-vozhdeniya-vaz-2108.html" },
+      { id:"ig_22861_simulyator_volka", title:"Симулятор Волка", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-simulyatory/22861-simulyator-volka.html" },
+      { id:"ig_29867_simulyator_vyzhivaniya_na_plotu", title:"Симулятор Выживания на Плоту", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-simulyatory/29867-simulyator-vyzhivaniya-na-plotu.html" },
+      { id:"ig_30652_simulyator_drakona_3d", title:"Симулятор Дракона 3Д", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-drakony/30652-simulyator-drakona-3d.html" },
+      { id:"ig_22502_simulyator_izdevatelstva_2", title:"Симулятор Издевательства 2", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-simulyatory/22502-simulyator-izdevatelstva-2.html" },
+      { id:"ig_22749_simulyator_kachka", title:"Симулятор Качка", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-simulyatory/22749-simulyator-kachka.html" },
+      { id:"ig_20882_simulyator_kota", title:"Симулятор Кота", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-simulyatory/20882-simulyator-kota.html" },
+      { id:"ig_28831_simulyator_letayuschey_mashiny", title:"Симулятор Летающей Машины", genre:"Гонки", emoji:"🎮", url:"https://igroutka.ru/igry-mashiny/28831-simulyator-letayuschey-mashiny.html" },
+      { id:"ig_25841_simulyator_loshadi_3d", title:"Симулятор Лошади 3Д", genre:"Для девочек", emoji:"🔥", url:"https://igroutka.ru/dlya-devochek/pro-loshadey/25841-simulyator-loshadi-3d.html" },
+      { id:"ig_30442_simulyator_mehanika_vaz", title:"Симулятор Механика ВАЗ", genre:"Гонки", emoji:"⭐", url:"https://igroutka.ru/igry-mashiny/30442-simulyator-mehanika-vaz.html" },
+      { id:"ig_31472_simulyator_olenya", title:"Симулятор Оленя", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-simulyatory-zhivotnyh/31472-simulyator-olenya.html" },
+      { id:"ig_32618_simulyator_pantery", title:"Симулятор Пантеры", genre:"Для девочек", emoji:"🧩", url:"https://igroutka.ru/dlya-devochek/zhivotnye/32618-simulyator-pantery.html" },
+      { id:"ig_22428_simulyator_sansa", title:"Симулятор Санса", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-anderteyl/22428-simulyator-sansa.html" },
+      { id:"ig_22393_simulyator_semi_lisy", title:"Симулятор Семьи Лисы", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-simulyatory-zhivotnyh/22393-simulyator-semi-lisy.html" },
+      { id:"ig_22500_simulyator_sobaki", title:"Симулятор Собаки", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-simulyatory/22500-simulyator-sobaki.html" },
+      { id:"ig_24551_simulyator_tigra", title:"Симулятор Тигра", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-simulyatory/24551-simulyator-tigra.html" },
+      { id:"ig_21910_skazochnyy_zamok_shariki", title:"Сказочный Замок: Шарики", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/shariki/21910-skazochnyy-zamok-shariki.html" },
+      { id:"ig_37092_skaydom_tri_v_ryad_arena", title:"Скайдом: Три в Ряд!", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/tri-v-ryad/37092-skaydom-tri-v-ryad-arena.html" },
+      { id:"ig_36413_slova_iz_slov", title:"Слова из Слов", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-v-slova/36413-slova-iz-slov.html" },
+      { id:"ig_31180_slova_iz_slova", title:"Слова Из Слова", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-v-slova/31180-slova-iz-slova.html" },
+      { id:"ig_31356_sluchaynyy_basketbol", title:"Случайный Баскетбол", genre:"На двоих", emoji:"🔥", url:"https://igroutka.ru/igry-na-dvoih/31356-sluchaynyy-basketbol.html" },
+      { id:"ig_31549_smeshnoy_hor", title:"Смешной Хор", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/smeshnye-igry/31549-smeshnoy-hor.html" },
+      { id:"ig_23194_snaypery_na_kryshe", title:"Снайперы на Крыше", genre:"На двоих", emoji:"🏎️", url:"https://igroutka.ru/igry-na-dvoih/23194-snaypery-na-kryshe.html" },
+      { id:"ig_37884_soedinennoe_korolevstvo", title:"Соединенное Королевство", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-strategii/37884-soedinennoe-korolevstvo.html" },
+      { id:"ig_24327_sozday_svoy_mir", title:"Создай Свой Мир", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-na-1-igroka/24327-sozday-svoy-mir.html" },
+      { id:"ig_28120_sozday_svoy_multik", title:"Создай Свой Мультик", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/flesh-igry/28120-sozday-svoy-multik.html" },
+      { id:"ig_19656_sozday_svoyu_igru", title:"Создай Свою Игру", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/raznye-igry/19656-sozday-svoyu-igru.html" },
+      { id:"ig_22868_sozday_svoyu_chiku", title:"Создай Свою Чику", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/smeshnye-igry/22868-sozday-svoyu-chiku.html" },
+      { id:"ig_36692_sokrovischa_mayya", title:"Сокровища Майя", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-sokrovischa/36692-sokrovischa-mayya.html" },
+      { id:"ig_22615_sokrovischa_misticheskogo_morya", title:"Сокровища Мистического Моря", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-sokrovischa/22615-sokrovischa-misticheskogo-morya.html" },
+      { id:"ig_36572_sokrovischa_misticheskogo_morya_na_russkom", title:"Сокровища Мистического Моря: На Русском Языке", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-sokrovischa/36572-sokrovischa-misticheskogo-morya-na-russkom-yazyke.html" },
+      { id:"ig_22891_sokrovischa_montesumy_1", title:"Сокровища Монтесумы 1", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-sokrovischa-montesumy/22891-sokrovischa-montesumy-1.html" },
+      { id:"ig_22911_sokrovische_piratov", title:"Сокровища Пиратов", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-sokrovischa/22911-sokrovische-piratov.html" },
+      { id:"ig_35288_sonic_the_hedgehog_2", title:"Соник 2 / Sonic The Hedgehog 2", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/sega-mega-drive/35288-sonic-the-hedgehog-2.html" },
+      { id:"ig_35287_sonic_the_hedgehog_3", title:"Соник 3 / Sonic The Hedgehog 3", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/sega-mega-drive/35287-sonic-the-hedgehog-3.html" },
+      { id:"ig_23659_sonik_maniya", title:"Соник Мания", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/sonik/23659-sonik-maniya.html" },
+      { id:"ig_36005_sortirovka_vody", title:"Сортировка Воды", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-sortirovka/36005-sortirovka-vody.html" },
+      { id:"ig_29062_sosiska_begi", title:"Сосиска Беги", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-begalki/29062-sosiska-begi.html" },
+      { id:"ig_34953_standoff_2", title:"Стандофф 2", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-kontr-strayk/34953-standoff-2.html" },
+      { id:"ig_30024_stickman_party", title:"Стикмен Вечеринка", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-stikmen/30024-stickman-party.html" },
+      { id:"ig_19671_stikmen_pobeg_iz_tyurmy", title:"Стикмен Побег из Тюрьмы", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-stikmen/19671-stikmen-pobeg-iz-tyurmy.html" },
+      { id:"ig_31336_stikmen_huk", title:"Стикмен Хук", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-stikmen/31336-stikmen-huk.html" },
+      { id:"ig_32930_stikmen_draki_na_2_igroka", title:"Стикмен: Драки на 2 Игрока", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-stikmen/32930-stikmen-draki-na-2-igroka.html" },
+      { id:"ig_32703_strelyalka_sharikami", title:"Стрелялка Шариками", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/shariki-strelyalki/32703-strelyalka-sharikami.html" },
+      { id:"ig_29537_strelyalki_v_aeroportu_3d", title:"Стрелялки в Аэропорту 3Д", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-strelyalki/29537-strelyalki-v-aeroportu-3d.html" },
+      { id:"ig_22312_sumasshedshie_zombi_90", title:"Сумасшедшие Зомби 9.0", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/dlya-malchikov/zombi/22312-sumasshedshie-zombi-90.html" },
+      { id:"ig_22814_super_boycy_2", title:"Супер Бойцы 2", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-strelyalki/22814-super-boycy-2.html" },
+      { id:"ig_24140_super_boycy_nochnye_perestrelki", title:"Супер Бойцы: Ночные Перестрелки", genre:"На двоих", emoji:"🧩", url:"https://igroutka.ru/strelyalki-na-dvoih/24140-super-boycy-nochnye-perestrelki.html" },
+      { id:"ig_17154_super_mario_bros", title:"Супер Марио Брос", genre:"Марио", emoji:"🐍", url:"https://igroutka.ru/mario/17154-super-mario-bros.html" },
+      { id:"ig_18023_super_mario_bros_dendi", title:"Супер Марио Брос Денди", genre:"Марио", emoji:"🎯", url:"https://igroutka.ru/mario/18023-super-mario-bros-dendi.html" },
+      { id:"ig_21489_super_mario_meyker", title:"Супер Марио Мейкер", genre:"Марио", emoji:"🏆", url:"https://igroutka.ru/mario/21489-super-mario-meyker.html" },
+      { id:"ig_23879_super_hot", title:"Супер Хот", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/igry-strelyalki/23879-super-hot.html" },
+      { id:"ig_23316_tayny_egipta", title:"Тайны Египта", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-golovolomki/23316-tayny-egipta.html" },
+      { id:"ig_22873_tanki_v_labirinte_2", title:"Танки в Лабиринте 2", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-tanki-v-labirinte/22873-tanki-v-labirinte-2.html" },
+      { id:"ig_22874_tanki_v_labirinte_3", title:"Танки в Лабиринте 3", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-tanki-v-labirinte/22874-tanki-v-labirinte-3.html" },
+      { id:"ig_22875_tanki_v_labirinte_5", title:"Танки в Лабиринте 5", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-tanki-v-labirinte/22875-tanki-v-labirinte-5.html" },
+      { id:"ig_17951_igra_tanchiki_dendi_1990", title:"Танчики Денди 1990", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/dlya-malchikov/tanki/17951-igra-tanchiki-dendi-1990.html" },
+      { id:"ig_26669_draki_tekken_3", title:"Теккен 3", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/playstation/26669-draki-tekken-3.html" },
+      { id:"ig_34135_kubiki_tetris", title:"Тетрис Кубики", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-tetris/34135-kubiki-tetris.html" },
+      { id:"ig_21710_bombery_tom_i_dzherri", title:"Том и Джерри Бомберы", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/tom-i-djerri/21710-bombery-tom-i-dzherri.html" },
+      { id:"ig_21709_transformays", title:"Трансформайс", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/interesnye-igry/21709-transformays.html" },
+      { id:"ig_22375_tri_v_ryad_lesnaya_saga", title:"Три в Ряд: Лесная Сага", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/tri-v-ryad/22375-tri-v-ryad-lesnaya-saga.html" },
+      { id:"ig_30809_tryuki_s_butylkami_2", title:"Трюки с Бутылками 2", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/igry-myshkoy-bez-klaviatury/30809-tryuki-s-butylkami-2.html" },
+      { id:"ig_30357_uaz_gonki", title:"УАЗ Гонки", genre:"Гонки", emoji:"💥", url:"https://igroutka.ru/igry-na-1-igroka/30357-uaz-gonki.html" },
+      { id:"ig_22744_ugaday_melodiyu", title:"Угадай Мелодию", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/igry-muzyka/22744-ugaday-melodiyu.html" },
+      { id:"ig_23199_ugolki", title:"Уголки", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-logicheskie/23199-ugolki.html" },
+      { id:"ig_24043_udali_kvadratiki", title:"Удали Квадратики", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-logicheskie/24043-udali-kvadratiki.html" },
+      { id:"ig_22381_udarnyy_otryad_kotyat_1", title:"Ударный Отряд Котят 1", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-udarnyy-otryad-kotyat/22381-udarnyy-otryad-kotyat-1.html" },
+      { id:"ig_22378_udarnyy_otryad_kotyat_2", title:"Ударный Отряд Котят 2", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-udarnyy-otryad-kotyat/22378-udarnyy-otryad-kotyat-2.html" },
+      { id:"ig_22379_udarnyy_otryad_kotyat_4_liga_voinov", title:"Ударный Отряд Котят 4", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-udarnyy-otryad-kotyat/22379-udarnyy-otryad-kotyat-4-liga-voinov.html" },
+      { id:"ig_22785_uno", title:"Уно", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/kartochnye-igry/22785-uno.html" },
+      { id:"ig_27965_fnaf_1", title:"ФНАФ 1", genre:"FNAF", emoji:"🧩", url:"https://igroutka.ru/igry-fnaf/27965-fnaf-1.html" },
+      { id:"ig_27966_fnaf_2", title:"ФНАФ 2", genre:"FNAF", emoji:"🐍", url:"https://igroutka.ru/igry-fnaf/27966-fnaf-2.html" },
+      { id:"ig_27967_fnaf_3", title:"ФНАФ 3", genre:"FNAF", emoji:"🎯", url:"https://igroutka.ru/igry-fnaf/27967-fnaf-3.html" },
+      { id:"ig_27968_fnaf_4", title:"ФНАФ 4", genre:"FNAF", emoji:"🏆", url:"https://igroutka.ru/igry-fnaf/27968-fnaf-4.html" },
+      { id:"ig_27987_fnaf_5_sister_lokeyshn", title:"ФНАФ 5: Систер Локейшн", genre:"FNAF", emoji:"💥", url:"https://igroutka.ru/igry-fnaf/27987-fnaf-5-sister-lokeyshn.html" },
+      { id:"ig_27970_fnaf_7", title:"ФНАФ 7: Финальное Чистилище", genre:"FNAF", emoji:"🌟", url:"https://igroutka.ru/igry-fnaf/27970-fnaf-7.html" },
+      { id:"ig_27977_fnaf_8", title:"ФНАФ 8: Виртуальные Камеры", genre:"FNAF", emoji:"🎲", url:"https://igroutka.ru/igry-fnaf/27977-fnaf-8.html" },
+      { id:"ig_27990_fnaf_world", title:"ФНАФ Ворлд", genre:"FNAF", emoji:"🎪", url:"https://igroutka.ru/igry-fnaf/27990-fnaf-world.html" },
+      { id:"ig_26375_fortnayt", title:"Фортнайт", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/igry-strelyalki/26375-fortnayt.html" },
+      { id:"ig_36103_fraydey_nayt_fankin", title:"Фрайдей Найт Фанкин", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/36103-fraydey-nayt-fankin.html" },
+      { id:"ig_38931_fraydey_nayt_fankin_2_igroka", title:"Фрайдей Найт Фанкин на Двоих", genre:"На двоих", emoji:"⭐", url:"https://igroutka.ru/igry-na-dvoih/38931-fraydey-nayt-fankin-2-igroka.html" },
+      { id:"ig_37132_fraydey_nayt_fankin_7_nedelya", title:"Фрайдей Найт Фанкин: 7 Неделя", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/37132-fraydey-nayt-fankin-7-nedelya.html" },
+      { id:"ig_36957_fraydey_nayt_fankin_sarvente", title:"Фрайдей Найт Фанкин: Сарвенте", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/36957-fraydey-nayt-fankin-sarvente.html" },
+      { id:"ig_23018_frakciya_haosa_2", title:"Фракция Хаоса 2", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry_draki/23018-frakciya-haosa-2.html" },
+      { id:"ig_30274_futbol_golovami_2019_20_liga_chempionov", title:"Футбол Головами: 2019-20 Лига Чемпионов", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-futbol-golovami/30274-futbol-golovami-2019-20-liga-chempionov.html" },
+      { id:"ig_29949_half_layf", title:"Халф Лайф", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/starye-igry/29949-half-layf.html" },
+      { id:"ig_22862_hill_klimb_reysing", title:"Хилл Климб Рейсинг", genre:"Гонки", emoji:"💥", url:"https://igroutka.ru/igry-mashiny/22862-hill-klimb-reysing.html" },
+      { id:"ig_21289_hischnye_mashiny_2", title:"Хищные Машины 2", genre:"Гонки", emoji:"🌟", url:"https://igroutka.ru/igry-mashiny/21289-hischnye-mashiny-2.html" },
+      { id:"ig_33270_homescapes", title:"Хоумскейпс | Homescapes", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/igry-golovolomki/33270-homescapes.html" },
+      { id:"ig_23872_hranitel_lev_zaschitniki_zemel_prayda", title:"Хранитель Лев: Защитники Земель Прайда", genre:"Лучшие", emoji:"🎪", url:"https://igroutka.ru/igry-disney/23872-hranitel-lev-zaschitniki-zemel-prayda.html" },
+      { id:"ig_22793_huligany_na_skeytah", title:"Хулиганы на Скейтах", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/dlya-malchikov/22793-huligany-na-skeytah.html" },
+      { id:"ig_28966_chelovek_pauk_las_vegas", title:"Человек Паук: Лас Вегас", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/chelovek-pauk/28966-chelovek-pauk-las-vegas.html" },
+      { id:"ig_27830_chelovechki_i_boby_3", title:"Человечки и Бобы 3", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-na-troih/27830-chelovechki-i-boby-3.html" },
+      { id:"ig_37103_chervy", title:"Червы", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/kartochnye-igry/37103-chervy.html" },
+      { id:"ig_27986_chervyachki_i_sladosti", title:"Червячки и Сладости", genre:"Лучшие", emoji:"🧩", url:"https://igroutka.ru/igry-chervyachki/27986-chervyachki-i-sladosti.html" },
+      { id:"ig_26674_chervyachnaya_zona", title:"Червячная Зона", genre:"Лучшие", emoji:"🐍", url:"https://igroutka.ru/igry-zmeyka/26674-chervyachnaya-zona.html" },
+      { id:"ig_28003_chervyachok_ubiyca", title:"Червячок Убийца", genre:"Лучшие", emoji:"🎯", url:"https://igroutka.ru/igry-chervyachki/28003-chervyachok-ubiyca.html" },
+      { id:"ig_34305_chetyre_v_ryad", title:"Четыре в Ряд", genre:"Лучшие", emoji:"🏆", url:"https://igroutka.ru/tri-v-ryad/34305-chetyre-v-ryad.html" },
+      { id:"ig_21938_shariki_metkiy_strelok", title:"Шарики Меткий Стрелок", genre:"Лучшие", emoji:"💥", url:"https://igroutka.ru/shariki-strelyalki/21938-shariki-metkiy-strelok.html" },
+      { id:"ig_21915_shariki_tochnyy_udar", title:"Шарики Точный Удар", genre:"Лучшие", emoji:"🌟", url:"https://igroutka.ru/shariki/21915-shariki-tochnyy-udar.html" },
+      { id:"ig_33233_sharikovaya_bashnya_3d", title:"Шариковая Башня 3Д", genre:"Лучшие", emoji:"🎲", url:"https://igroutka.ru/shariki-strelyalki/33233-sharikovaya-bashnya-3d.html" },
+      { id:"ig_24685_evo_f", title:"Эво-Ф", genre:"Гонки", emoji:"🎪", url:"https://igroutka.ru/igry-mashiny/24685-evo-f.html" },
+      { id:"ig_31551_elastichnyy_chelovek", title:"Эластичный Человек", genre:"Лучшие", emoji:"🎮", url:"https://igroutka.ru/smeshnye-igry/31551-elastichnyy-chelovek.html" },
+      { id:"ig_23053_epoha_voyny", title:"Эпоха Войны", genre:"Лучшие", emoji:"🔥", url:"https://igroutka.ru/igry-strategii/23053-epoha-voyny.html" },
+      { id:"ig_22912_epoha_voyny_2", title:"Эпоха Войны 2", genre:"Лучшие", emoji:"⭐", url:"https://igroutka.ru/igry-strategii/22912-epoha-voyny-2.html" },
+      { id:"ig_36455_ezhiki", title:"Ёжики", genre:"Лучшие", emoji:"🏎️", url:"https://igroutka.ru/igry-ferma/36455-ezhiki.html" }
+  ];
+
 
     function igroutkaAsGames() {
       return IGROUTKA_GAMES.map(g => ({
@@ -1974,13 +2657,15 @@
     function renderIgroutka() {
       const grid = document.getElementById("igroutkaGrid");
       if (!grid) return;
+      const cnt = document.getElementById("igroutkaCount");
+      if (cnt) cnt.textContent = IGROUTKA_GAMES.length + " " + (currentLang === "en" ? "games" : "игр") + " · igroutka.ru/luchshie-igry";
       grid.innerHTML = IGROUTKA_GAMES.map(g =>
         `<a class="ig-card" href="${esc(g.url)}" target="_blank" rel="noopener">
           <div class="ig-thumb">${esc(g.emoji || "🎮")}</div>
           <div class="ig-body">
             <div class="ig-title">${esc(g.title)}</div>
             <div class="ig-meta">${esc(g.genre || "Лучшие")} · Игроутка</div>
-            <div class="ig-play">▶ Играть</div>
+            <div class="ig-play">${esc(t("play"))}</div>
           </div>
         </a>`
       ).join("");
@@ -2290,18 +2975,43 @@
     }
 
     function renderFriends() {
-      const box = document.getElementById("friendsList");
-      if (!box) return;
       const list = loadFriends();
-      if (!list.length) {
-        box.innerHTML = "<span class='friend-empty'>Пока пусто — нажми на имя в отзыве</span>";
-        return;
+      const box = document.getElementById("friendsList");
+      if (box) {
+        if (!list.length) {
+          box.innerHTML = "<span class='friend-empty'>" + esc(t("friendsEmpty")) + "</span>";
+        } else {
+          box.innerHTML = list.map(f =>
+            "<span class='friend-chip' title='друг'>" +
+            esc(f.name) +
+            " <button type='button' data-unfriend='" + esc(f.id) + "' aria-label='Удалить'>×</button></span>"
+          ).join("");
+        }
       }
-      box.innerHTML = list.map(f =>
-        "<span class='friend-chip' title='друг'>" +
-        esc(f.name) +
-        " <button type='button' data-unfriend='" + esc(f.id) + "' aria-label='Удалить'>×</button></span>"
-      ).join("");
+      const panel = document.getElementById("friendsPanelList");
+      if (panel) {
+        if (!list.length) {
+          panel.innerHTML = "<p style='color:#666;font-size:13px'>" + esc(t("friendsEmpty")) + "</p>";
+        } else {
+          panel.innerHTML = "<h4 style='margin:0 0 10px'>" + esc(t("tabFriends")) + " (" + list.length + ")</h4>" +
+            list.map(f =>
+              "<div style='background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap'>" +
+              "<span style='font-size:1.3rem'>👤</span>" +
+              "<div style='flex:1;min-width:120px;font-weight:800'>" + esc(f.name) + "</div>" +
+              "<a class='btn-play' href='games/minis/battle-all.html?mode=2&friend=" + encodeURIComponent(f.name) +
+              "' style='height:36px;font-size:13px;min-width:140px;display:inline-grid;place-items:center;text-decoration:none'>" +
+              esc(t("friendsPlayOne")) + "</a>" +
+              "<button type='button' class='btn-secondary' data-unfriend='" + esc(f.id) + "' style='height:36px;font-size:13px'>×</button>" +
+              "</div>"
+            ).join("");
+        }
+      }
+      const playBtn = document.getElementById("playWithFriendBtn");
+      if (playBtn && list.length) {
+        playBtn.href = "games/minis/battle-all.html?mode=2&friend=" + encodeURIComponent(list[0].name);
+      } else if (playBtn) {
+        playBtn.href = "games/minis/battle-all.html?mode=2";
+      }
     }
 
     function openFriendModal(name, meta) {
@@ -2620,6 +3330,27 @@
         document.querySelectorAll("#createTypes .create-type").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         createTypeSelected = btn.getAttribute("data-type") || "clicker";
+      });
+    });
+
+    on("addFriendForm", "submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const name = String(fd.get("name") || "").trim();
+      if (!name) return toast(t("toastFill"));
+      addFriend(name);
+      e.target.reset();
+      const note = document.getElementById("friendFormNote");
+      if (note) note.textContent = "✓ " + name;
+      // switch to friends tab content already visible
+      renderFriends();
+    });
+
+    // Nav friends scroll opens friends tab
+    document.querySelectorAll('a[href="#friendsPanel"]').forEach(function (a) {
+      a.addEventListener("click", function () {
+        var tab = document.querySelector('.tab[data-tab="friends"]');
+        if (tab) tab.click();
       });
     });
 
