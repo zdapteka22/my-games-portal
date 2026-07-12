@@ -1204,16 +1204,16 @@
     if (/^https?:\/\//i.test(src) || src.startsWith("data:")) {
       try {
         const u = new URL(src);
-        u.searchParams.set("v", "7");
+        u.searchParams.set("v", "9");
         return u.href;
-      } catch (_) { return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=7"; }
+      } catch (_) { return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=9"; }
     }
     try {
       const u = new URL(src, location.href);
-      u.searchParams.set("v", "7"); // cache-bust: arts always show
+      u.searchParams.set("v", "9"); // real character portraits
       return u.href;
     } catch (_) {
-      return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=7";
+      return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=9";
     }
   }
 
