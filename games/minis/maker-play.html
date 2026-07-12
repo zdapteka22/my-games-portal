@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Моя игра · Blue Cat</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #eee; font-family: "Segoe UI", system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    .top { width: min(960px, 100%); padding: 10px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .top a { color: #5eb0ff; text-decoration: none; font-weight: 700; }
+    .top h1 { font-size: 1.05rem; flex: 1; color: #ffcc00; }
+    .btn { border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 800; cursor: pointer; font: inherit; }
+    .btn-go { background: linear-gradient(135deg,#3d8bfd,#1a5fd0); color: #fff; }
+    .btn-sec { background: #222; color: #ddd; border: 1px solid #444; }
+    canvas { background: #111; border: 2px solid #333; border-radius: 14px; max-width: 96vw; touch-action: none; display: block; margin: 8px auto; }
+    .hud { width: min(960px, 100%); padding: 0 14px 8px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; color: #aaa; }
+    .hud b { color: #ffcc00; }
+    .msg { color: #888; padding: 40px 20px; text-align: center; }
+    .pads { display: none; gap: 10px; margin: 8px; flex-wrap: wrap; justify-content: center; }
+    .is-touch .pads { display: flex; }
+    .pad { width: 56px; height: 56px; border-radius: 14px; border: 1px solid #444; background: #1a1a1a; color: #fff; font-size: 20px; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a href="../../index.html">⬅ На сайт</a>
+    <h1 id="title">Моя игра</h1>
+    <button type="button" class="btn btn-sec" id="restartBtn">Заново</button>
+  </div>
+  <div class="hud">
+    <span>Очки: <b id="score">0</b></span>
+    <span>Жизни: <b id="lives">3</b></span>
+    <span id="hint">—</span>
+  </div>
+  <canvas id="c" width="800" height="480"></canvas>
+  <div class="pads" id="pads">
+    <button type="button" class="pad" data-k="left">◀</button>
+    <button type="button" class="pad" data-k="up">▲</button>
+    <button type="button" class="pad" data-k="down">▼</button>
+    <button type="button" class="pad" data-k="right">▶</button>
+    <button type="button" class="pad" data-k="action">⚡</button>
+  </div>
+  <p class="msg" id="err" hidden></p>
+  <script>
+(function () {
+  const STORAGE = "portal_created_games_v1";
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  let game = null;
+  let state = null;
+  let keys = {};
+  let last = 0;
+  let running = false;
+
+  if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
+    document.documentElement.classList.add("is-touch");
+  }
+
+  function loadGame() {
+    const id = (location.hash || "").replace(/^#/, "") || new URLSearchParams(location.search).get("id");
+    if (!id) return null;
+    try {
+      const list = JSON.parse(localStorage.getItem(STORAGE) || "[]");
+      return (list || []).find(g => g && g.id === id) || null;
+    } catch { return null; }
+  }
+
+  function showError(msg) {
+    document.getElementById("err").hidden = false;
+    document.getElementById("err").textContent = msg;
+    canvas.style.display = "none";
+  }
+
+  function init() {
+    game = loadGame();
+    if (!game) {
+      showError("Игра не найдена. Создай её на сайте → вкладка «Создать игру».");
+      return;
+    }
+    document.getElementById("title").textContent = (game.emoji || "🎮") + " " + game.title;
+    const hints = {
+      clicker: "Кликай / тапай по цели",
+      dodge: "Стрелки / WASD — уворачивайся",
+      catch: "Стрелки — лови падающее",
+      memory: "Запомни и повтори цвета (клик)"
+    };
+    document.getElementById("hint").textContent = hints[game.type] || "Играй!";
+    reset();
+    running = true;
+    last = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function difficultyMul() {
+    const d = Number(game.difficulty) || 2;
+    return 0.7 + d * 0.35;
+  }
+
+  function reset() {
+    const mul = difficultyMul();
+    state = {
+      score: 0,
+      lives: 3,
+      t: 0,
+      over: false,
+      won: false,
+      player: { x: W/2, y: H - 60, r: 18, vx: 0 },
+      entities: [],
+      target: { x: W/2, y: H/2, r: 28, pulse: 0 },
+      spawn: 0,
+      memorySeq: [],
+      memoryStep: 0,
+      memoryShow: true,
+      memoryFlash: -1,
+      memoryWait: 0.8,
+      memoryInput: [],
+      pads: [{ color: "#e74c3c" }, { color: "#3498db" }, { color: "#2ecc71" }, { color: "#f1c40f" }]
+    };
+    if (game.type === "memory") {
+      state.memorySeq = [Math.floor(Math.random() * 4)];
+      state.memoryWait = 1;
+      state.memoryShow = true;
+      state.memoryFlash = state.memorySeq[0];
+    }
+    updateHud();
+  }
+
+  function updateHud() {
+    document.getElementById("score").textContent = String(state.score);
+    document.getElementById("lives").textContent = String(state.lives);
+  }
+
+  function endGame(win) {
+    state.over = true;
+    state.won = !!win;
+  }
+
+  function update(dt) {
+    if (!state || state.over) return;
+    state.t += dt;
+    const mul = difficultyMul();
+    const type = game.type;
+
+    if (type === "clicker") {
+      state.target.pulse += dt * 4;
+      // auto shrink difficulty
+    } else if (type === "dodge") {
+      const spd = 220 * mul;
+      let dx = 0, dy = 0;
+      if (keys.ArrowLeft || keys.a || keys.left) dx -= 1;
+      if (keys.ArrowRight || keys.d || keys.right) dx += 1;
+      if (keys.ArrowUp || keys.w || keys.up) dy -= 1;
+      if (keys.ArrowDown || keys.s || keys.down) dy += 1;
+      if (dx || dy) {
+        const len = Math.hypot(dx, dy) || 1;
+        state.player.x += (dx / len) * spd * dt;
+        state.player.y += (dy / len) * spd * dt;
+      }
+      state.player.x = Math.max(20, Math.min(W - 20, state.player.x));
+      state.player.y = Math.max(20, Math.min(H - 20, state.player.y));
+      state.spawn -= dt;
+      if (state.spawn <= 0) {
+        state.spawn = Math.max(0.25, 0.9 / mul);
+        const side = Math.floor(Math.random() * 4);
+        let x, y, vx, vy;
+        const s = 80 + Math.random() * 120 * mul;
+        if (side === 0) { x = Math.random()*W; y = -20; vx = (Math.random()-0.5)*60; vy = s; }
+        else if (side === 1) { x = Math.random()*W; y = H+20; vx = (Math.random()-0.5)*60; vy = -s; }
+        else if (side === 2) { x = -20; y = Math.random()*H; vx = s; vy = (Math.random()-0.5)*60; }
+        else { x = W+20; y = Math.random()*H; vx = -s; vy = (Math.random()-0.5)*60; }
+        state.entities.push({ x, y, vx, vy, r: 10 + Math.random()*10 });
+      }
+      for (let i = state.entities.length - 1; i >= 0; i--) {
+        const e = state.entities[i];
+        e.x += e.vx * dt; e.y += e.vy * dt;
+        if (e.x < -40 || e.x > W+40 || e.y < -40 || e.y > H+40) { state.entities.splice(i, 1); continue; }
+        if (Math.hypot(e.x - state.player.x, e.y - state.player.y) < e.r + state.player.r) {
+          state.entities.splice(i, 1);
+          state.lives--;
+          updateHud();
+          if (state.lives <= 0) endGame(false);
+        }
+      }
+      state.score = Math.floor(state.t * 10);
+      updateHud();
+      if (state.score >= 300) endGame(true);
+    } else if (type === "catch") {
+      const spd = 280 * mul;
+      let dx = 0;
+      if (keys.ArrowLeft || keys.a || keys.left) dx -= 1;
+      if (keys.ArrowRight || keys.d || keys.right) dx += 1;
+      state.player.x += dx * spd * dt;
+      state.player.x = Math.max(30, Math.min(W - 30, state.player.x));
+      state.player.y = H - 50;
+      state.spawn -= dt;
+      if (state.spawn <= 0) {
+        state.spawn = Math.max(0.35, 0.85 / mul);
+        state.entities.push({
+          x: 40 + Math.random() * (W - 80),
+          y: -20,
+          vy: 120 + Math.random() * 80 * mul,
+          r: 14,
+          good: Math.random() > 0.25
+        });
+      }
+      for (let i = state.entities.length - 1; i >= 0; i--) {
+        const e = state.entities[i];
+        e.y += e.vy * dt;
+        if (e.y > H + 30) {
+          state.entities.splice(i, 1);
+          if (e.good) {
+            state.lives--;
+            updateHud();
+            if (state.lives <= 0) endGame(false);
+          }
+          continue;
+        }
+        if (Math.hypot(e.x - state.player.x, e.y - state.player.y) < e.r + 22) {
+          state.entities.splice(i, 1);
+          if (e.good) { state.score += 10; }
+          else {
+            state.lives--;
+            if (state.lives <= 0) endGame(false);
+          }
+          updateHud();
+        }
+      }
+      if (state.score >= 200) endGame(true);
+    } else if (type === "memory") {
+      if (state.memoryShow) {
+        state.memoryWait -= dt;
+        if (state.memoryWait <= 0) {
+          state.memoryFlash = -1;
+          state.memoryStep++;
+          if (state.memoryStep >= state.memorySeq.length) {
+            state.memoryShow = false;
+            state.memoryStep = 0;
+            state.memoryInput = [];
+          } else {
+            state.memoryFlash = state.memorySeq[state.memoryStep];
+            state.memoryWait = 0.55;
+          }
+        }
+      }
+    }
+  }
+
+  function draw() {
+    const color = game.color || "#5eb0ff";
+    ctx.fillStyle = "#0d0d12";
+    ctx.fillRect(0, 0, W, H);
+    // grid
+    ctx.strokeStyle = "rgba(255,255,255,.04)";
+    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    const type = game.type;
+    if (type === "clicker") {
+      const p = state.target;
+      const r = p.r + Math.sin(state.target.pulse) * 4;
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 28px Segoe UI";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(game.emoji || "🎯", p.x, p.y);
+      ctx.fillStyle = "#aaa";
+      ctx.font = "16px Segoe UI";
+      ctx.fillText("Кликай! Цель: 50 очков", W/2, 36);
+    } else if (type === "dodge") {
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(state.player.x, state.player.y, state.player.r, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "18px Segoe UI";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(game.emoji || "🐱", state.player.x, state.player.y);
+      for (const e of state.entities) {
+        ctx.fillStyle = "#e74c3c";
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill();
+      }
+    } else if (type === "catch") {
+      ctx.fillStyle = color;
+      ctx.fillRect(state.player.x - 36, state.player.y - 12, 72, 24);
+      ctx.font = "20px Segoe UI";
+      ctx.textAlign = "center";
+      ctx.fillText(game.emoji || "🧺", state.player.x, state.player.y - 28);
+      for (const e of state.entities) {
+        ctx.fillStyle = e.good ? "#4ade80" : "#f87171";
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill();
+        ctx.fillText(e.good ? "⭐" : "💣", e.x, e.y + 1);
+      }
+    } else if (type === "memory") {
+      const padW = 160, padH = 140, gap = 24;
+      const ox = (W - (padW * 2 + gap)) / 2;
+      const oy = (H - (padH * 2 + gap)) / 2;
+      state.pads.forEach((p, i) => {
+        const col = i % 2, row = Math.floor(i / 2);
+        const x = ox + col * (padW + gap);
+        const y = oy + row * (padH + gap);
+        p.x = x; p.y = y; p.w = padW; p.h = padH;
+        ctx.fillStyle = state.memoryFlash === i ? "#fff" : p.color;
+        ctx.globalAlpha = state.memoryFlash === i ? 1 : 0.75;
+        ctx.fillRect(x, y, padW, padH);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = "#222";
+        ctx.strokeRect(x, y, padW, padH);
+      });
+      ctx.fillStyle = "#aaa";
+      ctx.font = "16px Segoe UI";
+      ctx.textAlign = "center";
+      ctx.fillText(state.memoryShow ? "Смотри последовательность…" : "Повтори!", W/2, 36);
+    }
+
+    if (state.over) {
+      ctx.fillStyle = "rgba(0,0,0,.7)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = state.won ? "#4ade80" : "#f87171";
+      ctx.font = "bold 42px Segoe UI";
+      ctx.textAlign = "center";
+      ctx.fillText(state.won ? "🏆 Победа!" : "💀 Конец", W/2, H/2 - 10);
+      ctx.fillStyle = "#fff";
+      ctx.font = "20px Segoe UI";
+      ctx.fillText("Очки: " + state.score + " · Enter / кнопка «Заново»", W/2, H/2 + 30);
+    }
+  }
+
+  function loop(now) {
+    if (!running) return;
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function clickerHit(mx, my) {
+    const p = state.target;
+    if (Math.hypot(mx - p.x, my - p.y) <= p.r + 8) {
+      state.score++;
+      p.x = 60 + Math.random() * (W - 120);
+      p.y = 60 + Math.random() * (H - 120);
+      updateHud();
+      if (state.score >= 50) endGame(true);
+    }
+  }
+
+  function memoryClick(mx, my) {
+    if (state.memoryShow || state.over) return;
+    for (let i = 0; i < state.pads.length; i++) {
+      const p = state.pads[i];
+      if (mx >= p.x && mx <= p.x + p.w && my >= p.y && my <= p.y + p.h) {
+        state.memoryFlash = i;
+        setTimeout(() => { if (state.memoryFlash === i) state.memoryFlash = -1; }, 200);
+        const need = state.memorySeq[state.memoryInput.length];
+        if (i !== need) {
+          state.lives--;
+          updateHud();
+          if (state.lives <= 0) endGame(false);
+          else {
+            state.memoryInput = [];
+            state.memoryShow = true;
+            state.memoryStep = 0;
+            state.memoryFlash = state.memorySeq[0];
+            state.memoryWait = 0.7;
+          }
+          return;
+        }
+        state.memoryInput.push(i);
+        if (state.memoryInput.length >= state.memorySeq.length) {
+          state.score += 10;
+          updateHud();
+          if (state.memorySeq.length >= 8) { endGame(true); return; }
+          state.memorySeq.push(Math.floor(Math.random() * 4));
+          state.memoryInput = [];
+          state.memoryShow = true;
+          state.memoryStep = 0;
+          state.memoryFlash = state.memorySeq[0];
+          state.memoryWait = 0.7;
+        }
+        return;
+      }
+    }
+  }
+
+  function pointer(e) {
+    if (!state || state.over) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (W / rect.width);
+    const my = (e.clientY - rect.top) * (H / rect.height);
+    if (game.type === "clicker") clickerHit(mx, my);
+    if (game.type === "memory") memoryClick(mx, my);
+  }
+
+  canvas.addEventListener("pointerdown", pointer);
+  window.addEventListener("keydown", (e) => {
+    keys[e.key] = true;
+    if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(e.key)) e.preventDefault();
+    if (e.key === "Enter" && state && state.over) reset();
+  });
+  window.addEventListener("keyup", (e) => { keys[e.key] = false; });
+
+  document.querySelectorAll(".pad").forEach(btn => {
+    const k = btn.getAttribute("data-k");
+    const down = (e) => { e.preventDefault(); keys[k] = true; };
+    const up = (e) => { e.preventDefault(); keys[k] = false; };
+    btn.addEventListener("pointerdown", down);
+    btn.addEventListener("pointerup", up);
+    btn.addEventListener("pointerleave", up);
+  });
+
+  document.getElementById("restartBtn").addEventListener("click", () => { if (game) reset(); });
+
+  init();
+})();
+  </script>
+</body>
+</html>

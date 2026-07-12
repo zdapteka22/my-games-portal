@@ -222,7 +222,7 @@
       display: block; font-size: 10px; font-weight: 700; color: var(--yg-accent);
       letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px;
     }
-    .search { flex: 1; max-width: 420px; position: relative; }
+    .search { flex: 1; max-width: 420px; position: relative; z-index: 50; }
     .search input {
       width: 100%; height: 36px; border-radius: 10px;
       border: 1px solid var(--yg-border); background: #111;
@@ -231,8 +231,56 @@
     .search input:focus { border-color: #555; }
     .search::before {
       content: "⌕"; position: absolute; left: 12px; top: 50%;
-      transform: translateY(-50%); color: #777; font-size: 16px;
+      transform: translateY(-50%); color: #777; font-size: 16px; pointer-events: none; z-index: 1;
     }
+    .search-drop {
+      position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+      background: #141414; border: 1px solid #333; border-radius: 12px;
+      max-height: min(360px, 60vh); overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,.55);
+    }
+    .search-drop[hidden] { display: none !important; }
+    .search-item {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 10px 12px; border: 0; background: transparent; color: #eee;
+      text-align: left; cursor: pointer; font: inherit; text-decoration: none;
+    }
+    .search-item:hover, .search-item:focus { background: #222; outline: none; }
+    .search-item .si-emoji { font-size: 1.25rem; width: 28px; text-align: center; flex-shrink: 0; }
+    .search-item .si-title { font-weight: 700; font-size: 14px; }
+    .search-item .si-meta { font-size: 12px; color: #888; }
+    .search-empty { padding: 14px; color: #777; font-size: 13px; }
+    .igroutka-block { margin: 28px 0 8px; }
+    .igroutka-block h2 { margin: 0 0 6px; font-size: 22px; font-weight: 800; }
+    .ig-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 14px;
+    }
+    a.ig-card {
+      display: flex; flex-direction: column; background: #151515; border: 1px solid #2a2a2a;
+      border-radius: 14px; overflow: hidden; color: inherit; text-decoration: none;
+      transition: border-color .15s, transform .12s;
+    }
+    a.ig-card:hover { border-color: var(--yg-yellow); transform: translateY(-2px); }
+    .ig-card .ig-thumb {
+      height: 96px; display: grid; place-items: center; font-size: 2.2rem;
+      background: linear-gradient(145deg, #1a1a2a, #111);
+    }
+    .ig-card .ig-body { padding: 10px 12px 12px; }
+    .ig-card .ig-title { font-weight: 800; font-size: 14px; line-height: 1.25; margin-bottom: 4px; }
+    .ig-card .ig-meta { font-size: 11px; color: #888; }
+    .ig-card .ig-play {
+      margin-top: 8px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--yg-btn-a), var(--yg-btn-b));
+      color: var(--yg-btn-text, #fff); font-weight: 800; font-size: 13px;
+    }
+    .create-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 10px 0 14px; }
+    .create-type {
+      border: 2px solid #333; background: #111; border-radius: 12px; padding: 12px; cursor: pointer;
+      color: #ddd; text-align: left; font: inherit;
+    }
+    .create-type:hover { border-color: #555; }
+    .create-type.active { border-color: var(--yg-yellow); background: #1a1a12; }
+    .create-type b { display: block; margin-bottom: 4px; color: #fff; }
+    .create-type span { font-size: 12px; color: #888; }
     .nav-cats { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; align-items: center; }
     .nav-cats a {
       padding: 8px 12px; border-radius: 10px; font-size: 13px; color: #ccc;
@@ -606,8 +654,9 @@
       .theme-btn { padding: 0 10px; }
       .theme-btn #themeLabel { display: none; }
       .theme-menu { right: 0; left: auto; min-width: 180px; }
-      .search { display: none; }
-      .header { gap: 8px; padding: 0 10px; height: 52px; }
+      .search { display: block; flex: 1; min-width: 0; max-width: none; }
+      .search input { height: 40px; font-size: 16px; }
+      .header { gap: 8px; padding: 0 10px; height: auto; min-height: 52px; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
       .logo { font-size: 14px; }
       .logo-mark { width: 30px; height: 30px; }
       .page { padding: 14px 12px 40px; }
@@ -818,14 +867,16 @@
       </span>
     </a>
     <div class="search">
-      <input type="search" id="searchInput" placeholder="Поиск игр" aria-label="Поиск" data-i18n-placeholder="searchPh" data-i18n-aria="searchAria">
+      <input type="search" id="searchInput" placeholder="Поиск игр…" aria-label="Поиск" autocomplete="off" data-i18n-placeholder="searchPh" data-i18n-aria="searchAria">
+      <div class="search-drop" id="searchDrop" hidden role="listbox" aria-label="Результаты поиска"></div>
     </div>
     <nav class="nav-cats">
       <a href="#menu" class="play-link" data-i18n="navAll">☰ Все игры</a>
+      <a href="#igroutka">Игры 2</a>
       <a href="#classics" data-i18n="navClassics">Классика</a>
       <a href="#videos" data-i18n="navVideos">Видео</a>
       <a href="#reviews" data-i18n="navReviews">Отзывы</a>
-      <a href="#menu" data-i18n="navCatalog">Каталог</a>
+      <a href="#catalog" data-i18n="navCatalog">Каталог</a>
       <a href="#add" data-i18n="navAdd">Добавить</a>
       <div class="theme-switch">
         <button type="button" class="theme-btn" id="themeBtn" aria-haspopup="listbox" aria-expanded="false" title="Цвет интерфейса" data-i18n-aria="themeAria">
@@ -879,6 +930,7 @@
         <a class="btn-play" href="#classics" data-i18n="btnClassics">🕹️ Классика</a>
         <a class="btn-secondary" href="#videos" data-i18n="btnVideos">▶ Смотреть видео</a>
         <a class="btn-secondary" href="#menu" data-i18n="btnAll">Все игры</a>
+        <a class="btn-secondary" href="#igroutka">🔥 Игры 2</a>
         <a class="btn-secondary" href="#menu" data-i18n="btnMenu">☰ Меню</a>
       </div>
     </section>
@@ -1218,6 +1270,12 @@
       <div class="menu-grid" id="menuGrid"></div>
     </section>
 
+    <section class="igroutka-block" id="igroutka">
+      <h2>🔥 Игры 2 — лучшие с Игроутки</h2>
+      <p class="menu-sub">Подборка с <a href="https://igroutka.ru/luchshie-igry/" target="_blank" rel="noopener" style="color:var(--yg-link)">igroutka.ru/luchshie-igry</a> · открываются на сайте Игроутка</p>
+      <div class="ig-grid" id="igroutkaGrid"></div>
+    </section>
+
     <div class="catalog-head" id="catalog">
       <h2 data-i18n="catalogTitle">Каталог</h2>
       <button type="button" id="goAddBtn" data-i18n="addYours">Добавить свою →</button>
@@ -1227,6 +1285,7 @@
     <div class="tabs" role="tablist">
       <button class="tab active" data-tab="about" type="button" data-i18n="tabAbout">О портале</button>
       <button class="tab" data-tab="add" type="button" data-i18n="tabAdd">Отправить игру</button>
+      <button class="tab" data-tab="create" type="button">Создать игру</button>
       <button class="tab" data-tab="review" type="button">Мой отзыв</button>
       <button class="tab" data-tab="admin" type="button">Проверка</button>
     </div>
@@ -1247,10 +1306,10 @@
 
     <div id="panel-add" class="panel">
       <div class="card" id="add">
-        <h3>📨 Отправить игру на проверку</h3>
+        <h3>📨 Способ 1: Отправить игру по ссылке</h3>
         <p style="color:#aaa;font-size:14px;margin-bottom:14px">
-          Ты выкладываешь игру → заполняешь форму → <b>я проверяю</b> → если ок, игра появляется в каталоге.
-          После «Отправить» скопируй заявку и пришли владельцу (Telegram / сообщение).
+          Есть готовая игра в интернете? Вставь ссылку → <b>я проверяю</b> → игра в каталоге.
+          Или перейди во вкладку <b>«Создать игру»</b> — сделай мини-игру прямо здесь.
         </p>
         <form class="add-form" id="addGameForm">
           <label><span>Твоё имя *</span>
@@ -1279,6 +1338,45 @@
           <textarea id="requestOut" rows="5" readonly style="width:100%;margin-top:10px;background:#111;color:#9f9;border:1px solid #333;border-radius:10px;padding:10px;font-size:12px;display:none"></textarea>
         </form>
         <div id="myRequests" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <div id="panel-create" class="panel">
+      <div class="card" id="createGame">
+        <h3>🛠️ Способ 2: Создать игру на сайте</h3>
+        <p style="color:#aaa;font-size:14px;margin-bottom:10px">
+          Выбери тип, имя и цвет — игра появится в каталоге и сразу запускается. Без ссылок и проверки.
+        </p>
+        <div class="create-types" id="createTypes">
+          <button type="button" class="create-type active" data-type="clicker"><b>🎯 Кликер</b><span>Жми по цели — набери очки</span></button>
+          <button type="button" class="create-type" data-type="dodge"><b>🌀 Уворот</b><span>Бегай от красных шаров</span></button>
+          <button type="button" class="create-type" data-type="catch"><b>⭐ Ловилка</b><span>Лови звёзды, избегай бомб</span></button>
+          <button type="button" class="create-type" data-type="memory"><b>🧠 Память</b><span>Повтори цвета по порядку</span></button>
+        </div>
+        <form class="add-form" id="createGameForm">
+          <label><span>Название *</span>
+            <input type="text" name="title" required maxlength="40" placeholder="Моя супер-игра" value="Моя игра">
+          </label>
+          <label><span>Эмодзи</span>
+            <input type="text" name="emoji" maxlength="4" value="🎮">
+          </label>
+          <label><span>Цвет героя</span>
+            <input type="color" name="color" value="#5eb0ff" style="width:100%;height:44px;border:1px solid #333;border-radius:10px;background:#111;padding:4px">
+          </label>
+          <label><span>Сложность</span>
+            <select name="difficulty" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit">
+              <option value="1">Легко</option>
+              <option value="2" selected>Норм</option>
+              <option value="3">Сложно</option>
+              <option value="4">Хардкор</option>
+            </select>
+          </label>
+          <div class="row">
+            <button type="submit" class="btn-play" style="height:44px;font-size:15px;min-width:200px">▶ Создать и играть</button>
+          </div>
+          <p class="hint-mini" id="createNote"></p>
+        </form>
+        <div id="myCreatedGames" style="margin-top:16px"></div>
       </div>
     </div>
 
@@ -1404,6 +1502,7 @@
 
   <script>
     const STORAGE_GAMES = "portal_customGames_v1";
+    const STORAGE_CREATED = "portal_created_games_v1";
     const STORAGE_LANG = "portal_lang_v1";
     const STORAGE_THEME = "portal_ui_theme_v1";
     const STORAGE_PENDING = "portal_pending_games_v1";
@@ -1411,6 +1510,7 @@
     const STORAGE_REVIEWS = "portal_user_reviews_v1";
     const STORAGE_ADMIN_OK = "portal_admin_ok_v1";
     const STORAGE_FRIENDS = "portal_friends_v1";
+    let createTypeSelected = "clicker";
     const ADMIN_PASSWORD = "bluecat";
     const REVIEWS_REPO = "zdapteka22/my-games-portal";
     const DEFAULT_SHARED_REVIEWS_URL = "https://crudcrud.com/api/69a6d57b5d794a17abf2b3ee0069358f/reviews";
@@ -1789,6 +1889,103 @@
       document.body.style.overflow = "";
     }
 
+    /* ========== Игры 2 (лучшее с igroutka.ru) ========== */
+    const IGROUTKA_GAMES = [
+      { id:"ig_firewater1", title:"Огонь и Вода 1", genre:"На двоих", emoji:"🔥", url:"https://igroutka.ru/ogon-i-voda/1309-zelenyy-kristall.html" },
+      { id:"ig_firewater2", title:"Огонь и Вода 2", genre:"На двоих", emoji:"💧", url:"https://igroutka.ru/ogon-i-voda/2143-ogon-i-voda-2.html" },
+      { id:"ig_firewater4", title:"Огонь и Вода 4", genre:"На двоих", emoji:"💎", url:"https://igroutka.ru/ogon-i-voda/2141-ogon-i-voda-4.html" },
+      { id:"ig_firewater5", title:"Огонь и Вода 5", genre:"На двоих", emoji:"🌋", url:"https://igroutka.ru/ogon-i-voda/27121-ogon-i-voda-5-elementy.html" },
+      { id:"ig_firewater_solo", title:"Огонь и Вода (1 игрок)", genre:"Платформер", emoji:"🧡", url:"https://igroutka.ru/ogon-i-voda/16197-ogon-i-voda-na-1-igroka.html" },
+      { id:"ig_pvz", title:"Растения против зомби", genre:"Стратегия", emoji:"🌻", url:"https://igroutka.ru/dlya-malchikov/zombi/1257-rasteniya-protiv-zombi.html" },
+      { id:"ig_pvz2", title:"Растения против зомби 2", genre:"Стратегия", emoji:"🧟", url:"https://igroutka.ru/dlya-malchikov/zombi/17324-rasteniya-protiv-zombi-2.html" },
+      { id:"ig_flyordie", title:"FlyOrDie.io", genre:"IO", emoji:"🦅", url:"https://igroutka.ru/igry-io/26765-flyordieio.html" },
+      { id:"ig_talkingtom", title:"Говорящий Том: бег", genre:"Раннер", emoji:"🐱", url:"https://igroutka.ru/igry-govoryaschiy-kot/19720-govoryaschiy-tom-beg-za-zolotom.html" },
+      { id:"ig_hide", title:"Прятки онлайн", genre:"Мульти", emoji:"👻", url:"https://igroutka.ru/igry-strelyalki/22742-pryatki-onlayn.html" },
+      { id:"ig_words", title:"Слова из слова", genre:"Слова", emoji:"🔤", url:"https://igroutka.ru/igry-v-slova/31180-slova-iz-slova.html" },
+      { id:"ig_tanks1990", title:"Танчики Денди 1990", genre:"Танки", emoji:"🪖", url:"https://igroutka.ru/dlya-malchikov/tanki/17951-igra-tanchiki-dendi-1990.html" },
+      { id:"ig_akinator", title:"Акинатор", genre:"Угадайка", emoji:"🧞", url:"https://igroutka.ru/interesnye-igry/20500-akinator.html" },
+      { id:"ig_driftbmw", title:"Дрифт на БМВ", genre:"Гонки", emoji:"🚗", url:"https://igroutka.ru/igry-mashiny/18443-drift-na-bmv.html" },
+      { id:"ig_elastic", title:"Эластичный человек", genre:"Аркада", emoji:"🤸", url:"https://igroutka.ru/smeshnye-igry/31551-elastichnyy-chelovek.html" },
+      { id:"ig_fighters", title:"Супер бойцы 2", genre:"Файтинг", emoji:"👊", url:"https://igroutka.ru/igry-strelyalki/22814-super-boycy-2.html" },
+      { id:"ig_mc_classic", title:"Майнкрафт классик", genre:"Песочница", emoji:"⛏️", url:"https://igroutka.ru/igry-maynkraft/28423-maynkraft-klassik.html" },
+      { id:"ig_lbs", title:"Little Big Snake.io", genre:"IO", emoji:"🐍", url:"https://igroutka.ru/igry-io/22102-little-big-snakeio.html" },
+      { id:"ig_cs16", title:"Контр-Страйк 1.6", genre:"Шутер", emoji:"🔫", url:"https://igroutka.ru/igry-kontr-strayk/28646-kontr-strayk-16.html" },
+      { id:"ig_tiles", title:"Tiles Hop EDM", genre:"Ритм", emoji:"🎵", url:"https://igroutka.ru/igry-arkady/30285-tiles-hop-edm-rush.html" },
+      { id:"ig_happy", title:"Happy Wheels", genre:"Аркада", emoji:"🚲", url:"https://igroutka.ru/dlya-malchikov/14377-happy-wheels.html" },
+      { id:"ig_moomoo", title:"Moomoo.io", genre:"IO", emoji:"🐄", url:"https://igroutka.ru/igry-io/18491-moomooio.html" },
+      { id:"ig_balls3d", title:"Два мяча 3Д", genre:"На двоих", emoji:"⚽", url:"https://igroutka.ru/igry-na-dvoih/29535-dva-myacha-3d.html" },
+      { id:"ig_among", title:"Among Us онлайн", genre:"Мульти", emoji:"🚀", url:"https://igroutka.ru/igry-among-as/34580-among-as-onlayn.html" },
+      { id:"ig_slither", title:"Slither.io", genre:"IO", emoji:"🟢", url:"https://igroutka.ru/igry-io/17587-slither-io.html" },
+      { id:"ig_catsim", title:"Симулятор кота", genre:"Симулятор", emoji:"🐈", url:"https://igroutka.ru/igry-simulyatory/20882-simulyator-kota.html" },
+      { id:"ig_mahjong_pkm", title:"Маджонг покемоны", genre:"Головоломка", emoji:"🧩", url:"https://igroutka.ru/madzhong/23774-madzhong-pokemony.html" },
+      { id:"ig_paper_mc", title:"Бумажный майнкрафт", genre:"Песочница", emoji:"📄", url:"https://igroutka.ru/igry-maynkraft/16213-bumazhnyy-maynkraft.html" },
+      { id:"ig_vaz", title:"Симулятор ВАЗ 2108", genre:"Гонки", emoji:"🚙", url:"https://igroutka.ru/dlya-malchikov/gonki/17389-simulyator-vozhdeniya-vaz-2108.html" },
+      { id:"ig_pirates", title:"Сокровища пиратов", genre:"Приключения", emoji:"🏴‍☠️", url:"https://igroutka.ru/igry-sokrovischa/22911-sokrovische-piratov.html" },
+      { id:"ig_rusdriver", title:"Русский водитель", genre:"Гонки", emoji:"🚕", url:"https://igroutka.ru/dlya-malchikov/22739-russkiy-voditel.html" },
+      { id:"ig_more_slov", title:"Море слов", genre:"Слова", emoji:"🌊", url:"https://igroutka.ru/igry-krossvord/34903-more-slov.html" },
+      { id:"ig_bubbles", title:"Стрелялка шариками", genre:"Аркада", emoji:"🫧", url:"https://igroutka.ru/shariki-strelyalki/32703-strelyalka-sharikami.html" },
+      { id:"ig_agar", title:"Agar.io", genre:"IO", emoji:"⚪", url:"https://igroutka.ru/igry-io/14361-agario.html" },
+      { id:"ig_fwe3", title:"Огонь, вода и земля", genre:"На троих", emoji:"🌍", url:"https://igroutka.ru/igry-na-troih/33950-ogon-voda-i-zemlya-na-3-igroka.html" },
+      { id:"ig_balltower", title:"Шариковая башня 3Д", genre:"Аркада", emoji:"🗼", url:"https://igroutka.ru/shariki-strelyalki/33233-sharikovaya-bashnya-3d.html" },
+      { id:"ig_mahjong_flower", title:"Маджонг цветочная страна", genre:"Головоломка", emoji:"🌸", url:"https://igroutka.ru/madzhong/23720-madzhong-cvetochnaya-strana.html" },
+      { id:"ig_moto2", title:"Мото гонки на двоих", genre:"На двоих", emoji:"🏍️", url:"https://igroutka.ru/gonki-na-dvoih/33047-gorodskie-moto-gonki-na-dvoih.html" },
+      { id:"ig_seabattle", title:"Морской бой на двоих", genre:"На двоих", emoji:"🚢", url:"https://igroutka.ru/igry-morskoy-boy/28273-morskoy-boy-na-dvoih.html" },
+      { id:"ig_hedgehogs", title:"Ёжики", genre:"Ферма", emoji:"🦔", url:"https://igroutka.ru/igry-ferma/36455-ezhiki.html" },
+      { id:"ig_crocword", title:"Крокворд", genre:"Слова", emoji:"📝", url:"https://igroutka.ru/yandeks-igry/34111-krokvord.html" },
+      { id:"ig_strike_heroes", title:"Герои ударного отряда", genre:"Стратегия", emoji:"🛡️", url:"https://igroutka.ru/geroi-udarnogo-otryada/22746-geroi-udarnogo-otryada-1.html" },
+      { id:"ig_mahjong_butter", title:"Маджонг бабочки", genre:"Головоломка", emoji:"🦋", url:"https://igroutka.ru/igry-golovolomki/20035-madzhong-babochki.html" },
+      { id:"ig_zil", title:"Русский водитель: ЗИЛ", genre:"Гонки", emoji:"🚛", url:"https://igroutka.ru/igry-gruzoviki/26083-russkiy-voditel-zil-130.html" },
+      { id:"ig_pool", title:"8 шаров классика", genre:"Бильярд", emoji:"🎱", url:"https://igroutka.ru/igry-bilyard/24708-8-sharov-klassika.html" },
+      { id:"ig_mope", title:"Mope.io", genre:"IO", emoji:"🦁", url:"https://igroutka.ru/igry-io/17580-mopeio.html" },
+      { id:"ig_lines98", title:"Линии 98", genre:"Головоломка", emoji:"🔵", url:"https://igroutka.ru/igry-linii/30681-linii-98-starye.html" },
+      { id:"ig_kitchen", title:"Кухонная лихорадка", genre:"Для девочек", emoji:"🍳", url:"https://igroutka.ru/dlya-devochek/gotovim-edu/24106-kuhonnaya-lihoradka.html" },
+      { id:"ig_mario", title:"Супер Марио Брос", genre:"Платформер", emoji:"🍄", url:"https://igroutka.ru/mario/17154-super-mario-bros.html" },
+      { id:"ig_mario_dendy", title:"Супер Марио Денди", genre:"Платформер", emoji:"🕹️", url:"https://igroutka.ru/mario/18023-super-mario-bros-dendi.html" },
+      { id:"ig_mineio", title:"Mine-Craft.io", genre:"IO", emoji:"🧱", url:"https://igroutka.ru/igry-maynkraft/29436-mine-craft-io.html" },
+      { id:"ig_redball", title:"Красный шар 4", genre:"Платформер", emoji:"🔴", url:"https://igroutka.ru/igry-krasnyy-shar/14820-krasnyy-shar-4.html" },
+      { id:"ig_blockpost", title:"Блокпост", genre:"Шутер", emoji:"🎯", url:"https://igroutka.ru/igry-strelyalki/22119-blokpost.html" },
+      { id:"ig_tiger", title:"Симулятор тигра", genre:"Симулятор", emoji:"🐯", url:"https://igroutka.ru/igry-simulyatory/24551-simulyator-tigra.html" },
+      { id:"ig_paintnum", title:"Раскраски по номерам", genre:"Рисовалки", emoji:"🎨", url:"https://igroutka.ru/igry-risovalki/30320-raskraski-po-nomeram.html" },
+      { id:"ig_durak", title:"Подкидной дурак", genre:"Карты", emoji:"🃏", url:"https://igroutka.ru/kartochnye-igry/37069-podkidnoy-durak-s-kompyuterom.html" },
+      { id:"ig_among1", title:"Among Us на одного", genre:"Логика", emoji:"🕵️", url:"https://igroutka.ru/igry-among-as/34308-among-as-na-odnogo-igroka.html" },
+      { id:"ig_fnf", title:"Friday Night Funkin'", genre:"Ритм", emoji:"🎤", url:"https://igroutka.ru/igry-fraydey-nayt-fankin/37413-friday-night-funkin-corruption-mod.html" },
+      { id:"ig_mahjong_pairs", title:"Маджонг соедини пары", genre:"Головоломка", emoji:"🀄", url:"https://igroutka.ru/madzhong/23716-madzhong-soedini-pary.html" },
+      { id:"ig_mystic_sea", title:"Сокровища мистического моря", genre:"Поиск", emoji:"🧜", url:"https://igroutka.ru/igry-sokrovischa/22615-sokrovischa-misticheskogo-morya.html" },
+      { id:"ig_pony", title:"Пони креатор v3", genre:"Для девочек", emoji:"🦄", url:"https://igroutka.ru/pony/16349-igra-poni-kreator-v3.html" },
+      { id:"ig_beam", title:"Бемиджи драйв", genre:"Гонки", emoji:"🛻", url:"https://igroutka.ru/igry-gonki-3d/28206-bemidzhi-drayv.html" },
+      { id:"ig_csgo", title:"КС ГО без скачивания", genre:"Шутер", emoji:"💥", url:"https://igroutka.ru/igry-kontr-strayk/28692-kc-go-bez-skachivaniya.html" }
+    ];
+
+    function igroutkaAsGames() {
+      return IGROUTKA_GAMES.map(g => ({
+        id: g.id,
+        title: g.title,
+        genre: (g.genre || "Игроутка") + " · Игры 2",
+        rating: "★",
+        url: g.url,
+        emoji: g.emoji || "🎮",
+        bg: "linear-gradient(145deg,#2a1a10,#1a1010)",
+        builtin: false,
+        external: true,
+        source: "igroutka"
+      }));
+    }
+
+    function renderIgroutka() {
+      const grid = document.getElementById("igroutkaGrid");
+      if (!grid) return;
+      grid.innerHTML = IGROUTKA_GAMES.map(g =>
+        `<a class="ig-card" href="${esc(g.url)}" target="_blank" rel="noopener">
+          <div class="ig-thumb">${esc(g.emoji || "🎮")}</div>
+          <div class="ig-body">
+            <div class="ig-title">${esc(g.title)}</div>
+            <div class="ig-meta">${esc(g.genre || "Лучшие")} · Игроутка</div>
+            <div class="ig-play">▶ Играть</div>
+          </div>
+        </a>`
+      ).join("");
+    }
+
     /* ========== Games ========== */
     function builtinGames() {
       return [
@@ -1875,6 +2072,45 @@
     }
     function saveCustom(list) {
       try { localStorage.setItem(STORAGE_GAMES, JSON.stringify(list)); } catch (_) {}
+    }
+    function loadCreated() {
+      try {
+        const list = JSON.parse(localStorage.getItem(STORAGE_CREATED) || "[]");
+        return Array.isArray(list) ? list : [];
+      } catch { return []; }
+    }
+    function saveCreated(list) {
+      try { localStorage.setItem(STORAGE_CREATED, JSON.stringify(list)); } catch (_) {}
+    }
+    function createdAsGames() {
+      return loadCreated().map(g => ({
+        id: g.id,
+        title: g.title,
+        genre: "Создано на сайте · " + (g.type || "mini"),
+        rating: "★",
+        url: "games/minis/maker-play.html#" + encodeURIComponent(g.id),
+        emoji: g.emoji || "🎮",
+        bg: "linear-gradient(145deg," + (g.color || "#333") + "55,#111)",
+        builtin: false,
+        created: true
+      }));
+    }
+    function renderMyCreated() {
+      const box = document.getElementById("myCreatedGames");
+      if (!box) return;
+      const list = loadCreated();
+      if (!list.length) {
+        box.innerHTML = "<p style='color:#666;font-size:13px'>Пока нет созданных игр — сделай первую выше.</p>";
+        return;
+      }
+      box.innerHTML = "<h4 style='margin:0 0 8px'>Твои созданные игры</h4>" + list.map(g =>
+        "<div style='background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap'>" +
+        "<span style='font-size:1.4rem'>" + esc(g.emoji || "🎮") + "</span>" +
+        "<div style='flex:1;min-width:120px'><b>" + esc(g.title) + "</b><br><span style='color:#888;font-size:12px'>" + esc(g.type) + " · сложн. " + esc(g.difficulty) + "</span></div>" +
+        "<a class='btn-play' href='games/minis/maker-play.html#" + encodeURIComponent(g.id) + "' style='height:36px;font-size:13px;min-width:100px;display:inline-grid;place-items:center;text-decoration:none'>▶ Играть</a>" +
+        "<button type='button' class='btn-secondary' data-del-created='" + esc(g.id) + "' style='height:36px;font-size:13px'>Удалить</button>" +
+        "</div>"
+      ).join("");
     }
     function loadJSON(key) {
       try {
@@ -2129,7 +2365,8 @@
         url: g.url,
         emoji: g.emoji || "🎮",
         bg: "linear-gradient(145deg,#333,#111)",
-        builtin: false
+        builtin: false,
+        external: /^https?:\/\//i.test(g.url || "")
       }));
       const approved = loadApproved().map(g => ({
         id: g.id,
@@ -2139,9 +2376,42 @@
         url: g.url,
         emoji: g.emoji || "🎮",
         bg: "linear-gradient(145deg,#1a3a20,#0a2010)",
-        builtin: false
+        builtin: false,
+        external: /^https?:\/\//i.test(g.url || "")
       }));
-      return [...builtinGames(), ...approved, ...custom];
+      return [...builtinGames(), ...createdAsGames(), ...approved, ...custom, ...igroutkaAsGames()];
+    }
+
+    function searchGames(query) {
+      const q = String(query || "").trim().toLowerCase();
+      const all = allGamesList();
+      if (!q) return all.slice(0, 12);
+      return all.filter(g => {
+        const hay = [g.title, g.genre, g.emoji, g.id, g.source || ""].join(" ").toLowerCase();
+        return hay.includes(q) || q.split(/\s+/).every(w => hay.includes(w));
+      }).slice(0, 40);
+    }
+
+    function renderSearchDrop(query) {
+      const drop = document.getElementById("searchDrop");
+      if (!drop) return;
+      const q = String(query || "").trim();
+      if (!q) { drop.hidden = true; drop.innerHTML = ""; return; }
+      const list = searchGames(q);
+      if (!list.length) {
+        drop.hidden = false;
+        drop.innerHTML = "<div class='search-empty'>Ничего не найдено по «" + esc(q) + "». Попробуй: змейка, марио, огонь, among…</div>";
+        return;
+      }
+      drop.hidden = false;
+      drop.innerHTML = list.map(g => {
+        const ext = g.external ? " target=\"_blank\" rel=\"noopener\"" : "";
+        const tag = g.source === "igroutka" ? "Игры 2" : (g.created ? "Создано" : (g.builtin ? "Портал" : "Каталог"));
+        return "<a class='search-item' role='option' href='" + esc(g.url) + "'" + ext + ">" +
+          "<span class='si-emoji'>" + esc(g.emoji || "🎮") + "</span>" +
+          "<span><div class='si-title'>" + esc(g.title) + "</div>" +
+          "<div class='si-meta'>" + esc(tag) + " · " + esc(g.genre || "") + "</div></span></a>";
+      }).join("");
     }
 
     function formatRequestText(game) {
@@ -2264,9 +2534,13 @@
 
     function renderAll(filter) {
       let games = allGamesList();
-      if (filter) {
-        const q = filter.toLowerCase();
-        games = games.filter(g => (g.title + " " + g.genre).toLowerCase().includes(q));
+      // В меню/каталоге не дублируем всю Игроутку (она в блоке «Игры 2»),
+      // но при поиске показываем всё.
+      const q = String(filter || "").trim().toLowerCase();
+      if (q) {
+        games = searchGames(q);
+      } else {
+        games = games.filter(g => g.source !== "igroutka");
       }
 
       const menuGrid = document.getElementById("menuGrid");
@@ -2275,12 +2549,14 @@
           const icon = g.img
             ? `<img src="${esc(g.img)}" alt="" onerror="this.parentElement.textContent='${esc(g.emoji || "🎮")}'">`
             : `<span>${esc(g.emoji || "🎮")}</span>`;
-          return `<a class="menu-item" href="${esc(g.url)}">
+          const ext = g.external ? ' target="_blank" rel="noopener"' : "";
+          const tag = g.created ? " · создано" : (g.builtin ? " · ★ " + esc(g.rating) : (g.source === "igroutka" ? " · Игры 2" : " · " + t("mine")));
+          return `<a class="menu-item" href="${esc(g.url)}"${ext}>
             <div class="mi-top">
               <div class="mi-icon" style="background:${esc(g.bg || "#222")}">${icon}</div>
               <div>
                 <div class="mi-title">${esc(g.title)}</div>
-                <div class="mi-genre">${esc(g.genre)}${g.builtin ? " · ★ " + esc(g.rating) : " · " + t("mine")}</div>
+                <div class="mi-genre">${esc(g.genre)}${tag}</div>
               </div>
             </div>
             <div class="mi-play">${esc(t("play"))}</div>
@@ -2290,17 +2566,22 @@
 
       const catalogGrid = document.getElementById("catalogGrid");
       if (catalogGrid) {
-        catalogGrid.innerHTML = games.map(g => {
+        const catGames = q ? games : games.filter(g => !g.external || g.created);
+        catalogGrid.innerHTML = catGames.map(g => {
           const thumb = g.img
             ? `<img src="${esc(g.img)}" alt="" onerror="this.outerHTML='<span>🎮</span>'">`
             : `<span>${esc(g.emoji || "🎮")}</span>`;
-          const del = g.builtin ? "" : `<button type="button" class="del" data-delete="${esc(g.id)}">${esc(t("del"))}</button>`;
+          const canDel = g.created || (!g.builtin && !g.external && !g.source);
+          const del = canDel
+            ? `<button type="button" class="del" data-delete="${esc(g.id)}" data-created="${g.created ? "1" : "0"}">${esc(t("del"))}</button>`
+            : "";
+          const ext = g.external ? ' target="_blank" rel="noopener"' : "";
           return `<div>
-            <a class="game-card" href="${esc(g.url)}">
+            <a class="game-card" href="${esc(g.url)}"${ext}>
               <div class="thumb" style="background:${esc(g.bg || "#222")}">${thumb}</div>
               <div class="body">
                 <div class="title">${esc(g.title)}</div>
-                <div class="meta"><span>${esc(g.genre)}</span><span class="r">${g.builtin ? "★ " + esc(g.rating) : t("mine")}</span></div>
+                <div class="meta"><span>${esc(g.genre)}</span><span class="r">${g.builtin ? "★ " + esc(g.rating) : (g.created ? "своё" : t("mine"))}</span></div>
               </div>
             </a>
             ${del}
@@ -2327,10 +2608,55 @@
     });
 
     on("goAddBtn", "click", () => {
-      var tab = document.querySelector('.tab[data-tab="add"]');
+      var tab = document.querySelector('.tab[data-tab="create"]') || document.querySelector('.tab[data-tab="add"]');
       if (tab) tab.click();
-      var add = document.getElementById("add");
+      var add = document.getElementById("createGame") || document.getElementById("add");
       if (add) add.scrollIntoView({ behavior: "smooth" });
+    });
+
+    // Create-game type picker
+    document.querySelectorAll("#createTypes .create-type").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#createTypes .create-type").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        createTypeSelected = btn.getAttribute("data-type") || "clicker";
+      });
+    });
+
+    on("createGameForm", "submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const title = String(fd.get("title") || "").trim();
+      if (!title) return toast("Введи название");
+      const game = {
+        id: "c_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        title: title.slice(0, 40),
+        emoji: String(fd.get("emoji") || "🎮").trim().slice(0, 4) || "🎮",
+        color: String(fd.get("color") || "#5eb0ff"),
+        difficulty: String(fd.get("difficulty") || "2"),
+        type: createTypeSelected || "clicker",
+        date: new Date().toISOString()
+      };
+      const list = loadCreated();
+      list.unshift(game);
+      saveCreated(list.slice(0, 50));
+      const note = document.getElementById("createNote");
+      if (note) note.textContent = "Игра создана! Открываем…";
+      renderMyCreated();
+      renderAll();
+      toast("Игра создана: " + game.title);
+      location.href = "games/minis/maker-play.html#" + encodeURIComponent(game.id);
+    });
+
+    document.addEventListener("click", (e) => {
+      const delC = e.target.closest("[data-del-created]");
+      if (delC) {
+        const id = delC.getAttribute("data-del-created");
+        saveCreated(loadCreated().filter(g => g.id !== id));
+        renderMyCreated();
+        renderAll();
+        toast("Игра удалена");
+      }
     });
 
     // Language switcher
@@ -2394,12 +2720,19 @@
       if (e.key === "Escape") closeVideo();
     });
 
-    // Удаление своих игр
+    // Удаление своих / созданных игр
     document.addEventListener("click", (e) => {
       const del = e.target.closest("[data-delete]");
       if (!del) return;
       e.preventDefault();
-      saveCustom(loadCustom().filter(g => g.id !== del.getAttribute("data-delete")));
+      const id = del.getAttribute("data-delete");
+      if (del.getAttribute("data-created") === "1") {
+        saveCreated(loadCreated().filter(g => g.id !== id));
+        renderMyCreated();
+      } else {
+        saveCustom(loadCustom().filter(g => g.id !== id));
+        saveApproved(loadApproved().filter(g => g.id !== id));
+      }
       var si = document.getElementById("searchInput");
       renderAll(si ? si.value : "");
       toast(t("toastDeleted"));
@@ -2564,7 +2897,33 @@
     });
 
     on("searchInput", "input", (e) => {
-      renderAll(e.target.value);
+      const v = e.target.value;
+      renderSearchDrop(v);
+      renderAll(v);
+    });
+    on("searchInput", "focus", (e) => {
+      if (e.target.value.trim()) renderSearchDrop(e.target.value);
+    });
+    on("searchInput", "keydown", (e) => {
+      if (e.key === "Escape") {
+        const drop = document.getElementById("searchDrop");
+        if (drop) drop.hidden = true;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const drop = document.getElementById("searchDrop");
+        const first = drop && drop.querySelector(".search-item");
+        if (first) first.click();
+        else {
+          const menu = document.getElementById("menu");
+          if (menu) menu.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    });
+    document.addEventListener("click", (e) => {
+      const drop = document.getElementById("searchDrop");
+      const wrap = e.target.closest && e.target.closest(".search");
+      if (!wrap && drop) drop.hidden = true;
     });
 
     /* ========== Reviews filter ========== */
@@ -2588,6 +2947,8 @@
     });
     applyReviewFilter("all");
     try { renderMyRequests(); } catch (_) {}
+    try { renderMyCreated(); } catch (_) {}
+    try { renderIgroutka(); } catch (_) {}
     try { renderUserReviews(); } catch (_) {}
     try { renderAdminQueue(); } catch (_) {}
     try { renderFriends(); } catch (_) {}
