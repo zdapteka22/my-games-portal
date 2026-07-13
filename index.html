@@ -1236,8 +1236,9 @@
     <!-- AI CHAT: YouTubers + kids talk -->
     <section class="reviews-block" id="aiChat" style="margin-top:8px">
       <h2>💬 Чат: ИИ-ютуберы и дети</h2>
-      <p class="menu-sub">Живой чат персонажей: ютуберы и дети обсуждают игры портала. Можно писать — им ответят ИИ-роли.</p>
+      <p class="menu-sub">Они <b>сами общаются</b> без остановки — ютуберы и дети. Можешь вписаться в разговор.</p>
       <div class="card" style="max-width:820px;margin:0 auto">
+        <div id="aiChatLive" style="font-size:12px;font-weight:800;color:#4ade80;margin-bottom:8px">● авто-чат включён — болтают сами</div>
         <div id="aiChatLog" style="height:min(380px,50vh);overflow:auto;background:#0d0d0d;border:1px solid #333;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px"></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center">
           <select id="aiChatAs" style="padding:10px 12px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit;min-width:160px">
@@ -1247,9 +1248,9 @@
           </select>
           <input type="text" id="aiChatInput" maxlength="200" placeholder="Напиши в чат… (про игры, битву, Симпсонов)" style="flex:1;min-width:180px;padding:10px 12px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit">
           <button type="button" class="btn-play" id="aiChatSend" style="height:42px;font-size:14px;min-width:100px">Отправить</button>
-          <button type="button" class="btn-secondary" id="aiChatAuto" style="height:42px;font-size:13px">▶ Пусть болтают</button>
+          <button type="button" class="btn-secondary" id="aiChatAuto" style="height:42px;font-size:13px">⏸ Пауза</button>
         </div>
-        <p class="hint-mini" style="margin-top:8px">Это ролевой ИИ на сайте (не настоящие ютуберы). Дети и блогеры — вымышленные персонажи для веселья.</p>
+        <p class="hint-mini" style="margin-top:8px">Авто-режим: ютуберы и дети отвечают друг другу. Кнопка — пауза/снова. Это ролевой ИИ (не настоящие люди).</p>
       </div>
     </section>
 
@@ -4609,23 +4610,38 @@
     (function initAiChat() {
       const log = document.getElementById("aiChatLog");
       if (!log) return;
+      const live = document.getElementById("aiChatLive");
+      const autoBtn = document.getElementById("aiChatAuto");
+      const MAX_BUBBLES = 80;
       const YT = [
         { name: "📺 Домера", lines: [
           "Короче, битва всех игр — это хаос, но кайф. Гомер танк, Барт быстрый.",
           "Ставьте 60 FPS, на 30 всё как в слайдшоу 😂",
           "С другом на одном телефоне: я WASD, ты стрелки. Классика.",
-          "Арты не «из сериала» — права. Зато портал свои картинки сделал."
+          "Арты не «из сериала» — права. Зато портал свои картинки сделал.",
+          "Миша, не ври — ты же на лёгком Бартём всех бил 😂",
+          "Кто ещё не зашёл в лабиринт? Няня злая, но честная.",
+          "Лера права: Смешарики — топ party. Я стримлю догонялки.",
+          "Тима, 45 FPS на телефоне — мудро. На ПК можно 90."
         ]},
         { name: "🔊 Дерзко", lines: [
           "ЭЙ, кто в лабиринте няню ещё не догнал? Я уже три раза прошёл!",
           "Отзывы пишите после ВХОДА — иначе на другом акке не увидите.",
           "Симпсоны в битве — топ. Д'оу! 🍩",
-          "Премиум за 10₽? Я бы купил ради строителя уровней."
+          "Премиум за 10₽? Я бы купил ради строителя уровней.",
+          "Миша, хватит хвастаться змейкой — давай 1 на 1 в танчиках!",
+          "Ваня, музыка огонь. Без неё битва не та.",
+          "Дети, не орёте маме — лучше зовите друга на P2 🤝",
+          "Гомер пончиком лечится, это чит… но смешно."
         ]},
         { name: "🎤 Ваня AI", lines: [
           "Музыка в битве — «Погоня», вайб как в мульте.",
           "Если Google не открылся — владелец сайта вписывает Client ID.",
-          "Детям совет: играйте вместе, не ссорьтесь из‑за счёта 😄"
+          "Детям совет: играйте вместе, не ссорьтесь из‑за счёта 😄",
+          "Лера, отзыв — это круто. Имя уже из аккаунта, писать «как зовут» не надо.",
+          "Домера, сними гайд по FPS — зрителям полезно.",
+          "Пакман вдвоём — розовый и жёлтый, кайф кооператив.",
+          "Кто зарегистрировался через Google — респект, прогресс на месте."
         ]}
       ];
       const KIDS = [
@@ -4633,20 +4649,59 @@
           "Я люблю змейку с братом! Он всегда проигрывает 😈",
           "Барт крутой, я на нём всех побил!",
           "Почему нельзя скачать игру? А, она в браузере — удобно.",
-          "Мама разрешила 20 минут… уже час 🙈"
+          "Мама разрешила 20 минут… уже час 🙈",
+          "Дерзко, я не вру! У меня рекорд 50!",
+          "Домера, а Гомер правда ест пончик и живёт? 🍩",
+          "Ваня, поставь «Погоню» погромче!",
+          "Тима, давай в пакман — ты жёлтый, я розовый."
         ]},
         { name: "👧 Лера, 9", lines: [
           "Смешарики лучшие! Нюша и Крош 💛",
           "С подругой играли в танчики, я выиграла.",
           "Отзыв написала — появился у всех. Класс!",
-          "Чат смешной, как будто ютуберы рядом."
+          "Чат смешной, как будто ютуберы рядом.",
+          "Миша, не зазнавайся 😄 В Смешариках я сильнее!",
+          "Домера, сними про Машу и Медведя в битве!",
+          "Я люблю играть с другом: P1 WASD, P2 стрелки.",
+          "Тима прав про батарею… но 60 FPS красивее."
         ]},
         { name: "🧒 Тима, 10", lines: [
           "FPS больше — плавнее, но телефон греется. Папа сказал 45.",
           "Пакман сложный, призраки злые.",
-          "Хочу ещё героев из мультов!"
+          "Хочу ещё героев из мультов!",
+          "Миша, в змейке не врезайся в себя 😂",
+          "Дерзко, няню я один раз поймал… точнее она меня.",
+          "Лера, давай в лабиринт наперегонки!",
+          "Ваня, а можно без Google? Гость тоже норм.",
+          "Симпсоны жёлтые — как Пакман, только семья 😂"
         ]}
       ];
+      // диалоги «друг другу» (вопрос → ответ)
+      const DIALOGS = [
+        { a: ["📺 Домера", "yt", "Миша, какой герой в битве самый имба?"], b: ["🧒 Миша, 8", "kid", "Барт! Скейт-рывок — всех уделал 🛹"] },
+        { a: ["🧒 Миша, 8", "kid", "Домера, а ты стримил Гомера?"], b: ["📺 Домера", "yt", "Да, пончик + броня, сижу танкую 🍩"] },
+        { a: ["🔊 Дерзко", "yt", "Лера, танчики или змейка?"], b: ["👧 Лера, 9", "kid", "Танчики! Я спряталась и бах — победа 💥"] },
+        { a: ["👧 Лера, 9", "kid", "Дерзко, ты правда прошёл лабиринт 3 раза?"], b: ["🔊 Дерзко", "yt", "Три! Няня бесится, а ⭐ мой 😎"] },
+        { a: ["🎤 Ваня AI", "yt", "Тима, какой FPS ставишь?"], b: ["🧒 Тима, 10", "kid", "45 на телефоне, 60 на компе. Папа одобрил."] },
+        { a: ["🧒 Тима, 10", "kid", "Ваня, почему арты не как в мульте?"], b: ["🎤 Ваня AI", "yt", "Права. Официальные нельзя — портал рисует свои, это честно."] },
+        { a: ["📺 Домера", "yt", "Кто с другом играл сегодня?"], b: ["👧 Лера, 9", "kid", "Я! В друзьях кнопки на все игры 💛"] },
+        { a: ["🔊 Дерзко", "yt", "Не забыли про отзывы после входа?"], b: ["🧒 Миша, 8", "kid", "Я вошёл гостем и написал! Имя само подставилось."] },
+        { a: ["🧒 Тима, 10", "kid", "Домера, сними про Симпсонов!"], b: ["📺 Домера", "yt", "Уже в планах: Гомер vs Барт, кто кого 😂"] },
+        { a: ["👧 Лера, 9", "kid", "Ваня, какая музыка лучше?"], b: ["🎤 Ваня AI", "yt", "«Погоня» Смешариков — чистый вайб погони."] },
+        { a: ["📺 Домера", "yt", "Дерзко, 1 на 1 в битве?"], b: ["🔊 Дерзко", "yt", "Давай. Я — Дерзко-крик, ты — Гомер. Не ной 🔊"] },
+        { a: ["🧒 Миша, 8", "kid", "Лера, пакман вдвоём?"], b: ["👧 Лера, 9", "kid", "Да! Ты жёлтый, я розовая — призраки наши 🟡🩷"] },
+        { a: ["🎤 Ваня AI", "yt", "Ребят, не ссорьтесь из‑за счёта."], b: ["🧒 Тима, 10", "kid", "Ок… но если проиграю — ещё раунд! 😄"] },
+        { a: ["🔊 Дерзко", "yt", "Кто купит Premium за 10₽?"], b: ["👧 Лера, 9", "kid", "Мама сказала «потом». А строитель уровней огонь 🧱"] },
+        { a: ["📺 Домера", "yt", "Лучшая классика портала?"], b: ["🧒 Тима, 10", "kid", "Марио сложный, но флаг — это праздник 🍄"] }
+      ];
+      let lastSpeaker = "";
+      let autoOn = true;
+      let autoT = null;
+      let dialogI = 0;
+
+      function trimLog() {
+        while (log.children.length > MAX_BUBBLES) log.removeChild(log.firstChild);
+      }
       function bubble(who, text, tone) {
         const row = document.createElement("div");
         row.style.cssText = "display:flex;flex-direction:column;gap:2px;max-width:95%";
@@ -4660,46 +4715,98 @@
         row.appendChild(name);
         row.appendChild(msg);
         log.appendChild(row);
+        trimLog();
         log.scrollTop = log.scrollHeight;
+        lastSpeaker = who;
       }
       function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+      function setLiveUi() {
+        if (live) {
+          live.textContent = autoOn ? "● авто-чат включён — болтают сами" : "○ пауза — нажми «Болтать»";
+          live.style.color = autoOn ? "#4ade80" : "#888";
+        }
+        if (autoBtn) autoBtn.textContent = autoOn ? "⏸ Пауза" : "▶ Болтать";
+      }
       function aiReply(seed) {
         const s = String(seed || "").toLowerCase();
-        let pool = Math.random() < 0.5 ? YT : KIDS;
         if (/симпсон|гомер|барт|homer|bart/.test(s)) {
           bubble("📺 Домера", "Симпсоны в битве: Гомер — танк с пончиком, Барт — скейт-рывок. Бери и дерись!", "yt");
+          setTimeout(function () { bubble("🧒 Миша, 8", "Я за Барта! Д'оу только Гомеру 😂", "kid"); }, 900);
           return;
         }
         if (/fps|фпс|кадр/.test(s)) {
           bubble("🧒 Тима, 10", "FPS: больше = плавнее, меньше = телефон не греется. Я ставлю 60.", "kid");
+          setTimeout(function () { bubble("🔊 Дерзко", "На стриме 60 must-have, иначе зрители пишут «лагает»", "yt"); }, 900);
           return;
         }
         if (/отзыв|регистр|google|гугл/.test(s)) {
-          bubble("🎤 Ваня AI", "Сначала «Зарегистрироваться через Google» или гость. Потом отзыв — имя из аккаунта, без «как тебя зовут».", "yt");
+          bubble("🎤 Ваня AI", "Сначала «Зарегистрироваться через Google» или гость. Потом отзыв — имя из аккаунта.", "yt");
+          setTimeout(function () { bubble("👧 Лера, 9", "Я так и сделала — без «как тебя зовут» 💛", "kid"); }, 900);
           return;
         }
         if (/друг|мульти|вместе|2 игр/.test(s)) {
           bubble("👧 Лера, 9", "Во всех классиках есть 2 игрока! В друзьях кнопки на каждую игру 💛", "kid");
+          setTimeout(function () { bubble("📺 Домера", "P1 WASD, P2 стрелки — и орёте в одном диване 😂", "yt"); }, 900);
           return;
         }
         if (/арт|картин|оригинал|право/.test(s)) {
-          bubble("🔊 Дерзко", "Официальные арты нельзя просто так — права. Поэтому портал рисует свои. Это норм для фанатского сайта.", "yt");
+          bubble("🔊 Дерзко", "Официальные арты нельзя просто так — права. Поэтому портал рисует свои.", "yt");
+          setTimeout(function () { bubble("🧒 Тима, 10", "Понял. Свои арты — нормально, лишь бы узнавать героя.", "kid"); }, 900);
           return;
         }
-        const who = pick(pool);
+        // обычный ответ: ютубер ↔ ребёнок
+        let pool = Math.random() < 0.5 ? YT : KIDS;
+        // не повторять того же говорящего подряд
+        let who = pick(pool);
+        let guard = 0;
+        while (who.name === lastSpeaker && guard++ < 8) who = pick(pool);
         bubble(who.name, pick(who.lines), pool === YT ? "yt" : "kid");
-        if (Math.random() < 0.55) {
+        setTimeout(function () {
+          const other = pool === YT ? KIDS : YT;
+          let w2 = pick(other);
+          let g2 = 0;
+          while (w2.name === lastSpeaker && g2++ < 8) w2 = pick(other);
+          bubble(w2.name, pick(w2.lines), other === YT ? "yt" : "kid");
+        }, 700 + Math.random() * 1000);
+      }
+      /** Авто-ход: чаще диалог (вопрос-ответ), реже свободная реплика */
+      function autoTick() {
+        if (!autoOn) return;
+        if (Math.random() < 0.62) {
+          const d = DIALOGS[dialogI % DIALOGS.length];
+          dialogI++;
+          // иногда перемешать порядок
+          const pair = Math.random() < 0.15 ? { a: d.b, b: d.a } : d;
+          bubble(pair.a[0], pair.a[2], pair.a[1]);
           setTimeout(function () {
-            const other = pool === YT ? KIDS : YT;
-            const w2 = pick(other);
-            bubble(w2.name, pick(w2.lines), other === YT ? "yt" : "kid");
-          }, 700 + Math.random() * 900);
+            if (!autoOn) return;
+            bubble(pair.b[0], pair.b[2], pair.b[1]);
+          }, 1100 + Math.random() * 900);
+        } else {
+          aiReply("");
         }
       }
-      // стартовые реплики
+      function startAuto() {
+        autoOn = true;
+        setLiveUi();
+        if (autoT) clearInterval(autoT);
+        autoT = setInterval(autoTick, 3200);
+      }
+      function stopAuto() {
+        autoOn = false;
+        setLiveUi();
+        if (autoT) { clearInterval(autoT); autoT = null; }
+      }
+
+      // стартовые реплики, потом авто
       bubble("📺 Домера", "Всем хай! Кто уже дрался Гомером в «Битве всех игр»?", "yt");
-      setTimeout(function () { bubble("🧒 Миша, 8", "Я! Барт быстрее, но Гомер жирный и сильный 🍩", "kid"); }, 600);
-      setTimeout(function () { bubble("🔊 Дерзко", "Не забывайте: отзывы — только после входа, иначе на другом акке пусто.", "yt"); }, 1400);
+      setTimeout(function () { bubble("🧒 Миша, 8", "Я! Барт быстрее, но Гомер жирный и сильный 🍩", "kid"); }, 700);
+      setTimeout(function () { bubble("🔊 Дерзко", "Не забывайте: отзывы — только после входа, иначе на другом акке пусто.", "yt"); }, 1500);
+      setTimeout(function () { bubble("👧 Лера, 9", "А мы с подругой в танчики! P2 стрелками 💛", "kid"); }, 2300);
+      setTimeout(function () {
+        bubble("🎤 Ваня AI", "Ок, дальше болтаем сами — пишите, если хотите встрять 😄", "yt");
+        startAuto();
+      }, 3200);
 
       function send() {
         const input = document.getElementById("aiChatInput");
@@ -4726,17 +4833,17 @@
       if (inp) inp.addEventListener("keydown", function (e) {
         if (e.key === "Enter") { e.preventDefault(); send(); }
       });
-      let autoT = null;
       on("aiChatAuto", "click", function () {
-        if (autoT) {
-          clearInterval(autoT);
-          autoT = null;
+        if (autoOn) {
+          stopAuto();
           toast("Чат на паузе");
-          return;
+        } else {
+          startAuto();
+          toast("Снова болтают 💬");
+          autoTick();
         }
-        toast("ИИ болтают… ещё раз — стоп");
-        autoT = setInterval(function () { aiReply(""); }, 2800);
       });
+      setLiveUi();
     })();
 
     // Клик по человеку в отзывах → добавить в друзья
