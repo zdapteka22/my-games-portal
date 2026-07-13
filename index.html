@@ -1236,7 +1236,7 @@
     <!-- AI CHAT: YouTubers + kids talk -->
     <section class="reviews-block" id="aiChat" style="margin-top:8px">
       <h2>💬 Чат: ИИ-ютуберы и дети</h2>
-      <p class="menu-sub">Они <b>сами матерится и спорят</b> между собой про игры портала — без тебя. Можно вписаться.</p>
+      <p class="menu-sub">Пиши — <b>тебе отвечают</b> несколько человек, потом <b>друг другу</b> спорят про твои слова и про игры.</p>
       <div class="card" style="max-width:820px;margin:0 auto">
         <div id="aiChatLive" style="font-size:12px;font-weight:800;color:#4ade80;margin-bottom:8px">● авто-чат включён — болтают сами</div>
         <div id="aiChatLog" style="height:min(380px,50vh);overflow:auto;background:#0d0d0d;border:1px solid #333;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px"></div>
@@ -4718,6 +4718,8 @@
         { a: ["📺 Домера", "yt", "Кто ещё не прошёл лабиринт — признавайтесь."], b: ["👧 Лера, 9", "kid", "Я прошла! Миша нойт, что няня читер 🌀"] }
       ];
       let lastSpeaker = "";
+      let lastUserMsg = "";
+      let lastAiLine = "";
       let autoOn = true;
       let autoT = null;
       let dialogI = 0;
@@ -4726,6 +4728,7 @@
       let recognition = null;
       let speakQueue = [];
       let speaking = false;
+      const ALL = YT.concat(KIDS);
 
       function trimLog() {
         while (log.children.length > MAX_BUBBLES) log.removeChild(log.firstChild);
@@ -4814,60 +4817,228 @@
           mb.style.background = micOn ? "#5a2020" : "";
         }
       }
-      function aiReply(seed) {
-        const s = String(seed || "").toLowerCase();
-        if (/симпсон|гомер|барт|homer|bart/.test(s)) {
-          bubble("📺 Домера", "Симпсоны в битве: Гомер — танк с пончиком, Барт — скейт-рывок. Бери и дерись!", "yt");
-          setTimeout(function () { bubble("🧒 Миша, 8", "Я за Барта! Д'оу только Гомеру 😂", "kid"); }, 900);
-          return;
-        }
-        if (/fps|фпс|кадр/.test(s)) {
-          bubble("🧒 Тима, 10", "FPS: больше = плавнее, меньше = телефон не греется. Я ставлю 60.", "kid");
-          setTimeout(function () { bubble("🔊 Дерзко", "На стриме 60 must-have, иначе зрители пишут «лагает»", "yt"); }, 900);
-          return;
-        }
-        if (/отзыв|регистр|google|гугл/.test(s)) {
-          bubble("🎤 Ваня AI", "Сначала «Зарегистрироваться через Google» или гость. Потом отзыв — имя из аккаунта.", "yt");
-          setTimeout(function () { bubble("👧 Лера, 9", "Я так и сделала — без «как тебя зовут» 💛", "kid"); }, 900);
-          return;
-        }
-        if (/друг|мульти|вместе|2 игр/.test(s)) {
-          bubble("👧 Лера, 9", "Во всех классиках есть 2 игрока! В друзьях кнопки на каждую игру 💛", "kid");
-          setTimeout(function () { bubble("📺 Домера", "P1 WASD, P2 стрелки — и орёте в одном диване 😂", "yt"); }, 900);
-          return;
-        }
-        if (/арт|картин|оригинал|право/.test(s)) {
-          bubble("🔊 Дерзко", "Официальные арты нельзя просто так — права. Поэтому портал рисует свои.", "yt");
-          setTimeout(function () { bubble("🧒 Тима, 10", "Понял. Свои арты — нормально, лишь бы узнавать героя.", "kid"); }, 900);
-          return;
-        }
-        // обычный ответ: ютубер ↔ ребёнок
-        let pool = Math.random() < 0.5 ? YT : KIDS;
-        // не повторять того же говорящего подряд
-        let who = pick(pool);
-        let guard = 0;
-        while (who.name === lastSpeaker && guard++ < 8) who = pick(pool);
-        bubble(who.name, pick(who.lines), pool === YT ? "yt" : "kid");
-        setTimeout(function () {
-          const other = pool === YT ? KIDS : YT;
-          let w2 = pick(other);
-          let g2 = 0;
-          while (w2.name === lastSpeaker && g2++ < 8) w2 = pick(other);
-          bubble(w2.name, pick(w2.lines), other === YT ? "yt" : "kid");
-        }, 700 + Math.random() * 1000);
+      function userNick() {
+        try {
+          const u = loadUser();
+          if (u && u.name) return String(u.name).slice(0, 20);
+        } catch (_) {}
+        return "бро";
       }
-      /** Авто-ход: чаще диалог (вопрос-ответ), реже свободная реплика */
+      function shortQuote(s, n) {
+        s = String(s || "").replace(/\s+/g, " ").trim();
+        if (s.length <= (n || 40)) return s;
+        return s.slice(0, n || 40) + "…";
+      }
+      function topicReply(seed, whoName, toUser) {
+        const s = String(seed || "").toLowerCase();
+        const nick = userNick();
+        const q = shortQuote(seed, 36);
+        const to = toUser ? (nick + ", ") : "";
+        if (/привет|хай|здаров|hello|салют/.test(s)) {
+          return to + pick([
+            "хай! какую игру валим — битву, змейку или пакман?",
+            "здарова! я уже в чате орём про портал 😂",
+            "йоу! пиши тему — Симпсоны, FPS, Смешарики…"
+          ]);
+        }
+        if (/симпсон|гомер|барт|marge|lisa|homer|bart/.test(s)) {
+          return to + pick([
+            "Симпсоны в битве — топ. Гомер танк с пончиком, Барт скейт.",
+            "Бери Барта, если любишь скорость. Гомер — если любишь жрать урон 🍩",
+            "«" + q + "» — да, жёлтая семья в FFA/командном, кайф."
+          ]);
+        }
+        if (/fps|фпс|кадр|лага|плавн/.test(s)) {
+          return to + pick([
+            "FPS: 60 норма, 30 — слайдшоу, 90+ если ПК тянет.",
+            "На телефоне 45, на компе 60. Не жги батарею зря.",
+            "Про «" + q + "» — крути −/+ FPS в битве, там кнопка «зачем?»."
+          ]);
+        }
+        if (/отзыв|регистр|google|гугл|войти|аккаунт/.test(s)) {
+          return to + pick([
+            "Сначала войди (Google/гость), потом отзыв — имя из аккаунта.",
+            "Без входа отзыв на другом акке не виден. Это фича, не баг.",
+            "Google кнопка: «Зарегистрироваться через Google»."
+          ]);
+        }
+        if (/друг|мульти|вместе|2 игр|команд|team/.test(s)) {
+          return to + pick([
+            "С другом: P1 WASD, P2 стрелки. В битве ещё командный 🔵🔴!",
+            "Командный бой — синие vs красные, без урона по своим.",
+            "Во вкладке Друзья — кнопки на все классики."
+          ]);
+        }
+        if (/арт|картин|оригинал|право|мульт/.test(s)) {
+          return to + pick([
+            "Студийные арты нельзя просто так — права. Качаем референсы, не нейро-рожи.",
+            "Русские и амер. мульты: фото/референсы в images/heroes, не генерация.",
+            "Понял про «" + q + "» — Ctrl+F5, если эмодзи вместо картинки."
+          ]);
+        }
+        if (/змейк|snake/.test(s)) {
+          return to + pick(["Змейка — 2 змейки, не врежься. Рекорд или лох 🐍", "В змейке с братом/другом — огонь."]);
+        }
+        if (/пакман|pacman|призрак/.test(s)) {
+          return to + pick(["Пакман: точки, энергетики, 2 игрока — жёлтый и розовый.", "Призраки злые, но после энергетика — хаваем их."]);
+        }
+        if (/марио|платформ/.test(s)) {
+          return to + pick(["Марио 9 уровней — сложно, флаг = праздник 🍄", "Луиджи/Марио, монеты, трубы — классика."]);
+        }
+        if (/смешарик|крош|битв/.test(s)) {
+          return to + pick(["Битва всех игр — хаос. Командный или FFA — выбирай.", "Смешарики + вся толпа героев, музыка «Погоня»."]);
+        }
+        if (/танк/.test(s)) {
+          return to + pick(["Танчики: прячься, стреляй, 2 игрока vs друг друга.", "Стены = жизнь. Без укрытия — труп."]);
+        }
+        if (/лабиринт|нян/.test(s)) {
+          return to + pick(["Лабиринт: добеги до ⭐, няня ловит. Вдвоём — кто первый.", "Няня читер… шучу, просто быстрая 😂"]);
+        }
+        // общий ответ «тебе» + отсылка к словам
+        const templates = [
+          to + "слышал: «" + q + "». Согласен — валим в игру и проверим.",
+          to + "про «" + q + "» спорим. Я за битву, а ты?",
+          to + "ок, «" + q + "» — тема. Дерзко сейчас начнёт орать 😂",
+          to + "понял тебя. " + pick(["Топ.", "Спорно.", "Кайф.", "Ну такое."]) + " Кто со мной?",
+          to + "не пизди, «" + q + "» — серьёзно? Ладно, услышал."
+        ];
+        if (!q || q.length < 2) return pick(whoName && whoName.indexOf("Дерзко") >= 0
+          ? ["Эй, напиши нормально, что обсуждаем!", "Ну и тишина… кто в битву?"]
+          : ["Напиши что-нибудь про игру — ответим.", "Ждём тему: герой, FPS, режим…"]);
+        return pick(templates);
+      }
+      function pickSpeaker(preferTone, avoidNames) {
+        avoidNames = avoidNames || [];
+        let pool = preferTone === "yt" ? YT : preferTone === "kid" ? KIDS : ALL;
+        let who = pick(pool);
+        let g = 0;
+        while ((avoidNames.indexOf(who.name) >= 0 || who.name === lastSpeaker) && g++ < 12) {
+          who = pick(pool);
+        }
+        const tone = YT.indexOf(who) >= 0 || (who.name && (who.name.indexOf("Домера") >= 0 || who.name.indexOf("Дерзко") >= 0 || who.name.indexOf("Ваня") >= 0))
+          ? "yt" : "kid";
+        // fix tone by membership
+        for (let i = 0; i < YT.length; i++) if (YT[i].name === who.name) return { who: who, tone: "yt" };
+        return { who: who, tone: "kid" };
+      }
+      /** Ответ пользователю: 2–3 реплики «тебе», потом они отвечают друг другу */
+      function replyToUser(seed) {
+        lastUserMsg = String(seed || "").trim();
+        const s = lastUserMsg;
+        const chain = [];
+        // 1) первый отвечает тебе
+        const a = pickSpeaker(Math.random() < 0.55 ? "yt" : "kid", []);
+        chain.push({
+          delay: 350,
+          who: a.who.name,
+          tone: a.tone,
+          text: topicReply(s, a.who.name, true)
+        });
+        // 2) второй отвечает тебе же (другой персонаж)
+        const b = pickSpeaker(a.tone === "yt" ? "kid" : "yt", [a.who.name]);
+        chain.push({
+          delay: 1100,
+          who: b.who.name,
+          tone: b.tone,
+          text: topicReply(s, b.who.name, true)
+        });
+        // 3) третий отвечает первому/второму (друг другу)
+        const c = pickSpeaker(Math.random() < 0.5 ? "yt" : "kid", [a.who.name, b.who.name]);
+        const nameA = a.who.name.replace(/^[^ ]+ /, "").split(",")[0];
+        chain.push({
+          delay: 2000,
+          who: c.who.name,
+          tone: c.tone,
+          text: pick([
+            nameA + ", ты прав/права про «" + shortQuote(s, 28) + "» — я с тобой.",
+            nameA + ", хватит пиздеть, «" + shortQuote(s, 24) + "» — давай в игру!",
+            "Эй " + nameA + ", а я не согласен. " + topicReply(s, c.who.name, false),
+            nameA + ", услышал. " + userNick() + " тему кинул — поддержим."
+          ])
+        });
+        // 4) четвёртый добивает диалог между собой
+        const d = pickSpeaker(c.tone === "yt" ? "kid" : "yt", [a.who.name, b.who.name, c.who.name]);
+        const nameC = c.who.name.replace(/^[^ ]+ /, "").split(",")[0];
+        chain.push({
+          delay: 2900,
+          who: d.who.name,
+          tone: d.tone,
+          text: pick([
+            nameC + ", заткнись 😂 " + userNick() + " уже всё понял(а).",
+            nameC + ", ок. Кто в командный бой 🔵🔴?",
+            "Спорим дальше? " + userNick() + ", пиши ещё — ответим снова.",
+            nameC + ", согласен. Тема «" + shortQuote(s, 20) + "» закрыта… или нет?"
+          ])
+        });
+        chain.forEach(function (item) {
+          setTimeout(function () {
+            bubble(item.who, item.text, item.tone);
+            lastAiLine = item.text;
+          }, item.delay);
+        });
+      }
+      /** Они отвечают друг другу (авто), иногда цепляются за последнее сообщение игрока */
+      function aiReply(seed) {
+        if (seed && String(seed).trim()) {
+          replyToUser(seed);
+          return;
+        }
+        // авто / пустой: диалог между собой
+        const s = lastUserMsg || lastAiLine || "игры портала";
+        const a = pickSpeaker("yt", []);
+        const b = pickSpeaker("kid", [a.who.name]);
+        bubble(a.who.name, topicReply(s, a.who.name, false), "yt");
+        lastAiLine = "";
+        setTimeout(function () {
+          const nameA = a.who.name.replace(/^[^ ]+ /, "").split(",")[0];
+          bubble(b.who.name, pick([
+            nameA + ", " + topicReply(s, b.who.name, false),
+            nameA + ", не согласен: " + pick(b.who.lines),
+            nameA + ", а " + userNick() + " что скажет? Пиши в чат!",
+            "Ок, " + nameA + ". " + pick(b.who.lines)
+          ]), "kid");
+        }, 900 + Math.random() * 500);
+      }
+      /** Авто-ход: диалоги + иногда «эхо» последней фразы игрока */
       function autoTick() {
         if (!autoOn) return;
-        if (Math.random() < 0.62) {
+        // 30% — вспомнить, что писал игрок, и снова ответить / поспорить
+        if (lastUserMsg && Math.random() < 0.28) {
+          const a = pickSpeaker(Math.random() < 0.5 ? "yt" : "kid", []);
+          bubble(a.who.name, pick([
+            userNick() + ", ты писал(а) «" + shortQuote(lastUserMsg, 32) + "» — я всё ещё об этом думаю.",
+            "Кстати, " + userNick() + ", про «" + shortQuote(lastUserMsg, 28) + "» — " + topicReply(lastUserMsg, a.who.name, false)
+          ]), a.tone);
+          setTimeout(function () {
+            if (!autoOn) return;
+            const b = pickSpeaker(a.tone === "yt" ? "kid" : "yt", [a.who.name]);
+            const shortName = a.who.name.replace(/^[^ ]+ /, "").split(",")[0];
+            bubble(b.who.name, pick([
+              shortName + ", хватит ныть — " + userNick() + " уже ответил(а).",
+              shortName + ", я тоже " + (Math.random() < 0.5 ? "за" : "против") + ". " + topicReply(lastUserMsg, b.who.name, false),
+              "Эй, " + shortName + ", давай спросим " + userNick() + " ещё раз!"
+            ]), b.tone);
+          }, 1200);
+          return;
+        }
+        if (Math.random() < 0.55) {
           const d = DIALOGS[dialogI % DIALOGS.length];
           dialogI++;
-          // иногда перемешать порядок
           const pair = Math.random() < 0.15 ? { a: d.b, b: d.a } : d;
           bubble(pair.a[0], pair.a[2], pair.a[1]);
           setTimeout(function () {
             if (!autoOn) return;
             bubble(pair.b[0], pair.b[2], pair.b[1]);
+            // третий влезает в их спор
+            setTimeout(function () {
+              if (!autoOn) return;
+              const e = pickSpeaker(Math.random() < 0.5 ? "yt" : "kid", [pair.a[0], pair.b[0]]);
+              bubble(e.who.name, pick([
+                "Я тоже в теме. " + pick(e.who.lines),
+                "Спорите как всегда 😂 А " + userNick() + " молчит?",
+                "Оба неправы. Берите командный бой и решите в игре."
+              ]), e.tone);
+            }, 1000);
           }, 1100 + Math.random() * 900);
         } else {
           aiReply("");
@@ -4892,7 +5063,7 @@
       setTimeout(function () { bubble("👧 Лера, 9", "Мы с подругой в танчики орём. P2 стрелками, я выиграла 💛", "kid"); }, 2300);
       setTimeout(function () { bubble("🧒 Тима, 10", "Давайте про игры: Марио vs Пакман vs Смешарики — кто топ?", "kid"); }, 3000);
       setTimeout(function () {
-        bubble("🎤 Ваня AI", "Дальше сами срёмся про игры. Влезай, если не ссышь 😄", "yt");
+        bubble("🎤 Ваня AI", "Пиши сюда — мы тебе ответим, а потом друг другу орём 😄", "yt");
         startAuto();
       }, 3800);
 
@@ -4905,15 +5076,39 @@
         if (as === "me") {
           const u = loadUser();
           bubble(u ? ("👤 " + (u.name || "Я")) : "👤 Я", text, "me");
-          setTimeout(function () { aiReply(text); }, 400 + Math.random() * 500);
+          // тебе отвечают + потом друг другу
+          setTimeout(function () { replyToUser(text); }, 280);
         } else if (as === "kid") {
           const k = pick(KIDS);
           bubble(k.name, text, "kid");
-          setTimeout(function () { aiReply(text); }, 500);
+          lastAiLine = text;
+          setTimeout(function () {
+            // другие отвечают этой реплике
+            const a = pickSpeaker("yt", [k.name]);
+            bubble(a.who.name, pick([
+              k.name.split(",")[0].replace(/^🧒 /, "") + ", " + topicReply(text, a.who.name, false),
+              "Услышал(а). " + topicReply(text, a.who.name, true)
+            ]), "yt");
+            setTimeout(function () {
+              const b = pickSpeaker("kid", [k.name, a.who.name]);
+              bubble(b.who.name, topicReply(text, b.who.name, true), "kid");
+            }, 900);
+          }, 500);
         } else {
           const y = pick(YT);
           bubble(y.name, text, "yt");
-          setTimeout(function () { aiReply(text); }, 500);
+          lastAiLine = text;
+          setTimeout(function () {
+            const a = pickSpeaker("kid", [y.name]);
+            bubble(a.who.name, topicReply(text, a.who.name, true), "kid");
+            setTimeout(function () {
+              const b = pickSpeaker("yt", [y.name, a.who.name]);
+              bubble(b.who.name, pick([
+                "Ок, спорим. " + topicReply(text, b.who.name, false),
+                userNick() + " и вы — пишите ещё, отвечаем."
+              ]), "yt");
+            }, 900);
+          }, 500);
         }
       }
       on("aiChatSend", "click", send);
