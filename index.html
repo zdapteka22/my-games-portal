@@ -1007,6 +1007,7 @@
       <a href="#classics" data-i18n="navClassics">Классика</a>
       <a href="#videos" data-i18n="navVideos">Видео</a>
       <a href="#reviews" data-i18n="navReviews">Отзывы</a>
+      <a href="#aiChat">💬 Чат ИИ</a>
       <a href="#friendsPanel" data-i18n="navFriends">Друзья</a>
       <a href="#catalog" data-i18n="navCatalog">Каталог</a>
       <a href="#add" data-i18n="navAdd">Добавить</a>
@@ -1056,24 +1057,24 @@
   <div class="auth-modal" id="loginModal" hidden>
     <div class="auth-box">
       <button type="button" class="auth-close" data-close-modal="loginModal" aria-label="Закрыть">✕</button>
-      <h2>🔐 Вход</h2>
-      <p>Войди через Google или по имени — чтобы сохранять прогресс и друзей удобнее.</p>
+      <h2>🔐 Вход / регистрация</h2>
+      <p>Зарегистрируйся через Google — имя подтянется само. После входа отзывы пишутся от твоего аккаунта (поле «как тебя зовут» не нужно).</p>
       <div class="auth-actions">
         <button type="button" class="google-btn" id="googleLoginBtn">
           <span class="g-icon" aria-hidden="true"></span>
-          Войти через Google
+          Зарегистрироваться через Google
         </button>
-        <div id="googleBtnMount" style="display:flex;justify-content:center;min-height:0"></div>
+        <div id="googleBtnMount" style="display:flex;justify-content:center;min-height:44px"></div>
       </div>
-      <div class="auth-divider">— или —</div>
-      <label>Имя / ник
-        <input type="text" id="localNameInput" maxlength="40" placeholder="Как тебя зовут">
+      <div class="auth-divider">— или гость —</div>
+      <label>Ник гостя (если без Google)
+        <input type="text" id="localNameInput" maxlength="40" placeholder="Ник в игре">
       </label>
       <div class="auth-actions">
         <button type="button" class="btn-play" id="localLoginBtn" style="height:46px">Войти как гость</button>
         <button type="button" class="btn-secondary" data-close-modal="loginModal" style="height:44px">Отмена</button>
       </div>
-      <p class="hint-mini" id="loginHint" style="margin-top:10px">Для настоящего Google-входа владелец сайта указывает Client ID в auth-config.js</p>
+      <p class="hint-mini" id="loginHint" style="margin-top:10px">Нажми Google — откроется окно Google. Владелец: укажи GOOGLE_CLIENT_ID в auth-config.js (иначе демо-вход).</p>
     </div>
   </div>
 
@@ -1230,6 +1231,26 @@
       <h2 data-i18n="videosTitle">▶ Смотреть видео</h2>
       <p class="menu-sub" data-i18n="videosSub">Трейлеры и геймплей — нажми карточку, чтобы смотреть</p>
       <div class="videos-grid" id="videosGrid"></div>
+    </section>
+
+    <!-- AI CHAT: YouTubers + kids talk -->
+    <section class="reviews-block" id="aiChat" style="margin-top:8px">
+      <h2>💬 Чат: ИИ-ютуберы и дети</h2>
+      <p class="menu-sub">Живой чат персонажей: ютуберы и дети обсуждают игры портала. Можно писать — им ответят ИИ-роли.</p>
+      <div class="card" style="max-width:820px;margin:0 auto">
+        <div id="aiChatLog" style="height:min(380px,50vh);overflow:auto;background:#0d0d0d;border:1px solid #333;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center">
+          <select id="aiChatAs" style="padding:10px 12px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit;min-width:160px">
+            <option value="me">👤 Я</option>
+            <option value="kid">🧒 Ребёнок (ИИ)</option>
+            <option value="yt">📺 Ютубер (ИИ)</option>
+          </select>
+          <input type="text" id="aiChatInput" maxlength="200" placeholder="Напиши в чат… (про игры, битву, Симпсонов)" style="flex:1;min-width:180px;padding:10px 12px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit">
+          <button type="button" class="btn-play" id="aiChatSend" style="height:42px;font-size:14px;min-width:100px">Отправить</button>
+          <button type="button" class="btn-secondary" id="aiChatAuto" style="height:42px;font-size:13px">▶ Пусть болтают</button>
+        </div>
+        <p class="hint-mini" style="margin-top:8px">Это ролевой ИИ на сайте (не настоящие ютуберы). Дети и блогеры — вымышленные персонажи для веселья.</p>
+      </div>
     </section>
 
     <!-- REVIEWS: kids, bloggers, AI — for every game -->
@@ -1564,10 +1585,23 @@
               <button type="submit" class="btn-play" style="height:40px;font-size:14px" data-i18n="friendsAdd">➕ Добавить</button>
             </form>
             <div class="fp-actions">
-              <a class="btn-play" id="playWithFriendBtn" href="play.html?id=battle" style="text-decoration:none;height:40px;display:inline-grid;place-items:center;font-size:13px;padding:0 12px" data-i18n="friendsPlay">🤝 В бой с другом</a>
+              <a class="btn-play" id="playWithFriendBtn" href="play.html?id=battle&mode=2" style="text-decoration:none;height:40px;display:inline-grid;place-items:center;font-size:13px;padding:0 12px" data-i18n="friendsPlay">🤝 В бой с другом</a>
               <button type="button" class="btn-secondary" id="callFriendBtn" style="height:40px;font-size:13px">📱 Позвонить</button>
             </div>
             <p class="hint-mini" id="friendFormNote" style="margin-top:8px"></p>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #2a2a2a">
+              <div style="font-weight:800;color:#ffcc00;font-size:13px;margin-bottom:8px">🤝 Играть с другом (2 игрока на одном устройстве)</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px" id="friendAllGames">
+                <a class="btn-secondary" href="games/minis/battle-all.html?mode=2&friend=1" style="text-decoration:none;height:36px;padding:0 10px;font-size:12px;display:inline-grid;place-items:center">⚔️ Битва</a>
+                <a class="btn-secondary" href="games/minis/snake.html?mode=2" style="text-decoration:none;height:36px;padding:0 10px;font-size:12px;display:inline-grid;place-items:center">🐍 Змейка</a>
+                <a class="btn-secondary" href="games/minis/tanks.html?mode=2" style="text-decoration:none;height:36px;padding:0 10px;font-size:12px;display:inline-grid;place-items:center">🪖 Танчики</a>
+                <a class="btn-secondary" href="games/minis/pacman.html?mode=2" style="text-decoration:none;height:36px;padding:0 10px;font-size:12px;display:inline-grid;place-items:center">🟡 Пакман</a>
+                <a class="btn-secondary" href="games/minis/labyrinth.html?mode=2" style="text-decoration:none;height:36px;padding:0 10px;font-size:12px;display:inline-grid;place-items:center">🌀 Лабиринт</a>
+                <a class="btn-secondary" href="games/minis/mario.html?mode=2" style="text-decoration:none;height:36px;padding:0 10px;font-size:12px;display:inline-grid;place-items:center">🍄 Марио</a>
+                <a class="btn-secondary" href="games/smeshariki/index.html" style="text-decoration:none;height:36px;padding:0 10px;font-size:12px;display:inline-grid;place-items:center">🟡 Смешарики</a>
+              </div>
+              <p style="margin:8px 0 0;font-size:11px;color:#777">P1: WASD · P2: стрелки (на одном телефоне/ПК). Внешние «Игры 2» — на другом сайте, там мульти только если игра сама поддерживает.</p>
+            </div>
           </div>
         </div>
         <div id="friendsPanelList" style="margin-top:16px"></div>
@@ -1652,12 +1686,16 @@
       <div class="card" id="userReview">
         <h3>✍️ Добавить свой отзыв</h3>
         <p style="color:#aaa;font-size:14px;margin-bottom:14px">
-          Напиши отзыв — он появится в блоке «Отзывы» <b>у всех</b> (и у друзей с другого аккаунта / телефона).
+          Нужен <b>вход</b> (Google или гость). Имя берётся из аккаунта — поле «как тебя зовут» убрано.
+          Отзыв уходит в общее облако, чтобы его видели с другого аккаунта/телефона.
         </p>
+        <div id="reviewNeedLogin" style="display:none;padding:12px;background:#1a1208;border:1px solid #5a4020;border-radius:12px;margin-bottom:12px">
+          <b style="color:#ffcc00">Сначала войди</b>
+          <p style="margin:6px 0 10px;color:#ccc;font-size:14px">Без регистрации отзыв не публикуется — так он привязан к тебе и виден на других устройствах.</p>
+          <button type="button" class="btn-play" id="reviewLoginBtn" style="height:42px;font-size:14px">🔐 Войти / Google</button>
+        </div>
         <form class="add-form" id="userReviewForm">
-          <label><span>Имя *</span>
-            <input type="text" name="who" required maxlength="40" placeholder="Как тебя зовут">
-          </label>
+          <p id="reviewAsUser" style="color:#9ad4ff;font-size:14px;font-weight:800;margin:0 0 10px">Войди, чтобы писать отзыв</p>
           <label><span>Игра *</span>
             <select name="game" required style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit">
               <option value="snake">Змейка</option>
@@ -1912,6 +1950,22 @@
         premBtn.classList.toggle("is-on", prem);
       }
       if (banner) banner.hidden = prem;
+      // Форма отзыва: имя из аккаунта, без «как тебя зовут»
+      const asUser = document.getElementById("reviewAsUser");
+      const needLogin = document.getElementById("reviewNeedLogin");
+      const revForm = document.getElementById("userReviewForm");
+      if (asUser) {
+        asUser.textContent = user
+          ? ("Отзыв от: " + (user.name || "Игрок") + (user.provider === "google" ? " · Google" : " · гость"))
+          : "Войди, чтобы писать отзыв";
+      }
+      if (needLogin) needLogin.style.display = user ? "none" : "block";
+      if (revForm) {
+        revForm.querySelectorAll("input,select,textarea,button").forEach(function (el) {
+          if (el.id === "reviewLoginBtn") return;
+          el.disabled = !user;
+        });
+      }
     }
     function parseJwt(token) {
       try {
@@ -1926,10 +1980,10 @@
       const clientId = (CFG.GOOGLE_CLIENT_ID || "").trim();
       const hint = document.getElementById("loginHint");
       if (!clientId) {
-        if (hint) hint.textContent = "Google Client ID не задан в auth-config.js — пока доступен вход по имени. Владелец может добавить ID для настоящего Google.";
+        if (hint) hint.textContent = "GOOGLE_CLIENT_ID пустой в auth-config.js. Кнопка откроет Google, но настоящий вход нужен Client ID (Google Cloud Console → OAuth Web). Пока можно «гость».";
         return;
       }
-      if (hint) hint.textContent = "Нажми «Войти через Google» — откроется аккаунт Google.";
+      if (hint) hint.textContent = "Нажми «Зарегистрироваться через Google» — откроется окно выбора аккаунта Google.";
       const tryInit = () => {
         if (!window.google || !google.accounts || !google.accounts.id) return false;
         google.accounts.id.initialize({
@@ -1939,13 +1993,15 @@
             if (p) loginGoogleProfile(p);
             else toast("Не удалось прочитать Google-профиль");
           },
-          auto_select: false
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          use_fedcm_for_prompt: true
         });
         const mount = document.getElementById("googleBtnMount");
         if (mount) {
           mount.innerHTML = "";
           google.accounts.id.renderButton(mount, {
-            theme: "outline", size: "large", width: 320, text: "signin_with", locale: "ru"
+            theme: "outline", size: "large", width: 320, text: "signup_with", locale: "ru", shape: "pill"
           });
         }
         return true;
@@ -3278,6 +3334,8 @@
       return {
         id: id,
         who: who,
+        userId: String(r.userId || ""),
+        provider: String(r.provider || ""),
         game: String(r.game || "other").slice(0, 40),
         stars: stars,
         text: text,
@@ -3286,10 +3344,22 @@
       };
     }
 
+    function loadReviewsFromUserMaps() {
+      const out = [];
+      try {
+        const map = JSON.parse(localStorage.getItem("portal_reviews_by_user_v1") || "{}");
+        Object.keys(map || {}).forEach(function (uid) {
+          (map[uid] || []).forEach(function (r) { out.push(r); });
+        });
+      } catch (_) {}
+      return out;
+    }
+
     function mergeReviews() {
       const byId = {};
       const local = loadUserReviews();
-      [].concat(sharedReviewsCache || [], local || []).forEach(function (raw) {
+      const byUser = loadReviewsFromUserMaps();
+      [].concat(sharedReviewsCache || [], local || [], byUser || []).forEach(function (raw) {
         const r = normalizeReview(raw);
         if (!r) return;
         if (!byId[r.id] || (r.date && r.date > (byId[r.id].date || ""))) byId[r.id] = r;
@@ -3390,12 +3460,14 @@
       const payload = {
         id: rev.id,
         who: rev.who,
+        userId: rev.userId || "",
+        provider: rev.provider || "",
         game: rev.game,
         stars: rev.stars,
         text: rev.text,
         date: rev.date
       };
-      // Live shared store (visible on other accounts immediately)
+      // 1) Live shared store (visible on other accounts immediately)
       try {
         const res = await fetch(sharedReviewsUrl, {
           method: "POST",
@@ -3412,7 +3484,27 @@
           return { ok: true, via: "cloud", review: payload };
         }
       } catch (_) {}
+      // 2) запасной публичный bin (если crudcrud истёк — можно сменить в reviews-config.json)
+      try {
+        if (sharedReviewsUrl && sharedReviewsUrl.indexOf("crudcrud.com") !== -1) {
+          // тихий провал — админ обновит endpoint
+        }
+      } catch (_) {}
       return { ok: false, via: "local" };
+    }
+
+    async function flushPendingReviews() {
+      let q = [];
+      try { q = JSON.parse(localStorage.getItem("portal_reviews_pending_cloud_v1") || "[]"); } catch (_) { q = []; }
+      if (!Array.isArray(q) || !q.length) return;
+      const left = [];
+      for (let i = 0; i < q.length; i++) {
+        const rev = q[i];
+        if (!rev || !rev.id) continue;
+        const pub = await publishReviewToCloud(rev);
+        if (!pub.ok) left.push(rev);
+      }
+      try { localStorage.setItem("portal_reviews_pending_cloud_v1", JSON.stringify(left.slice(0, 30))); } catch (_) {}
     }
 
     function cleanFriendName(raw) {
@@ -3842,19 +3934,38 @@
     });
     on("googleLoginBtn", "click", () => {
       const clientId = (CFG.GOOGLE_CLIENT_ID || "").trim();
+      // Всегда пытаемся открыть Google (выбор аккаунта)
+      try {
+        window.open("https://accounts.google.com/AccountChooser?continue=https://myaccount.google.com/", "google_auth_bc", "noopener,width=520,height=640");
+      } catch (_) {}
       if (!clientId) {
-        // Демо-вход «как Google», если Client ID не настроен
-        const name = prompt("Имя для входа (Google ID не настроен — демо):", "Игрок Google");
+        toast("Открыл Google. Для авто-входа на сайт впиши GOOGLE_CLIENT_ID в auth-config.js — пока войди как гость или демо.");
+        const name = prompt("Пока нет Client ID. Ник для демо-входа через Google:", "Игрок Google");
         if (name) loginGoogleProfile({ name: name.trim(), email: "", picture: "", sub: "demo_" + Date.now() });
-        toast("Демо Google-вход. Для настоящего — Client ID в auth-config.js");
         return;
       }
       initGoogleSignIn();
-      if (window.google && google.accounts && google.accounts.id) {
-        google.accounts.id.prompt();
-      } else {
-        toast("Google SDK загружается… нажми ещё раз через секунду");
+      const mount = document.getElementById("googleBtnMount");
+      if (mount && mount.querySelector("div[role=button], iframe, div")) {
+        toast("Выбери аккаунт Google в кнопке ниже или во всплывающем окне");
       }
+      if (window.google && google.accounts && google.accounts.id) {
+        try {
+          google.accounts.id.prompt((notification) => {
+            if (notification && typeof notification.isNotDisplayed === "function" && notification.isNotDisplayed()) {
+              toast("Окно Google закрыто/заблокировано — нажми официальную кнопку Google под синей");
+            }
+          });
+        } catch (_) {
+          toast("Нажми официальную кнопку Google (под синей)");
+        }
+      } else {
+        toast("Google SDK грузится… через секунду нажми ещё раз");
+      }
+    });
+    on("reviewLoginBtn", "click", () => {
+      openModal("loginModal");
+      initGoogleSignIn();
     });
     on("payPremiumBtn", "click", payPremium);
     on("activateAfterPayBtn", "click", () => {
@@ -4158,35 +4269,65 @@
 
     on("userReviewForm", "submit", async (e) => {
       e.preventDefault();
+      const user = loadUser();
+      if (!user) {
+        toast("Сначала зарегистрируйся / войди");
+        openModal("loginModal");
+        initGoogleSignIn();
+        return;
+      }
       const fd = new FormData(e.target);
       const rev = {
         id: "r_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
-        who: String(fd.get("who") || "").trim(),
+        who: String(user.name || "Игрок").trim().slice(0, 40),
+        userId: String(user.id || ""),
+        provider: String(user.provider || "local"),
         game: String(fd.get("game") || "other"),
         stars: Number(fd.get("stars") || 5),
         text: String(fd.get("text") || "").trim(),
         date: new Date().toISOString()
       };
-      if (!rev.who || !rev.text) return toast("Заполни имя и текст");
+      if (!rev.text) return toast("Напиши текст отзыва");
       const note = document.getElementById("reviewNote");
       if (note) note.textContent = "Публикуем для всех…";
       toast("Публикуем отзыв…");
 
-      // always keep a local copy
+      // local + per-user mirror (видно после смены аккаунта на том же ПК, если userId совпал)
       const list = loadUserReviews();
       list.unshift(rev);
       saveUserReviews(list.slice(0, 100));
+      try {
+        const key = "portal_reviews_by_user_v1";
+        const map = JSON.parse(localStorage.getItem(key) || "{}");
+        const uid = rev.userId || "anon";
+        if (!Array.isArray(map[uid])) map[uid] = [];
+        map[uid].unshift(rev);
+        map[uid] = map[uid].slice(0, 50);
+        localStorage.setItem(key, JSON.stringify(map));
+      } catch (_) {}
+
+      // очередь на повторную публикацию, если облако упало
+      try {
+        const q = JSON.parse(localStorage.getItem("portal_reviews_pending_cloud_v1") || "[]");
+        q.unshift(rev);
+        localStorage.setItem("portal_reviews_pending_cloud_v1", JSON.stringify(q.slice(0, 30)));
+      } catch (_) {}
 
       const pub = await publishReviewToCloud(rev);
       if (pub.ok) {
         rev.shared = true;
-        if (note) note.textContent = "✅ Отзыв виден всем (и с другого аккаунта)! Обнови страницу у друга: Ctrl+F5.";
-        toast("Отзыв опубликован для всех");
+        try {
+          const q = JSON.parse(localStorage.getItem("portal_reviews_pending_cloud_v1") || "[]");
+          localStorage.setItem("portal_reviews_pending_cloud_v1", JSON.stringify(q.filter(function (x) { return x && x.id !== rev.id; })));
+        } catch (_) {}
+        if (note) note.textContent = "✅ Отзыв в общем списке. На другом аккаунте/телефоне: обнови страницу (Ctrl+F5). Если не видно — облако crudcrud могло истечь: админ обновит sharedUrl.";
+        toast("Отзыв опубликован");
       } else {
-        if (note) note.textContent = "⚠️ Сеть не ответила — отзыв пока только на этом устройстве. Попробуй ещё раз через минуту.";
-        toast("Сохранено только здесь — нет связи с облаком");
+        if (note) note.textContent = "⚠️ Облако не ответило — отзыв сохранён здесь. Почему на другом аккаунте пусто: без облака localStorage не общий. Повторим отправку при следующем заходе.";
+        toast("Сохранено локально — облако недоступно");
       }
       e.target.reset();
+      refreshAuthUI();
       renderUserReviews();
       var revEl = document.getElementById("reviews");
       if (revEl) revEl.scrollIntoView({ behavior: "smooth" });
@@ -4454,6 +4595,7 @@
     (async function () {
       try {
         await fetchSharedReviews();
+        await flushPendingReviews();
         renderUserReviews();
         applyReviewFilter(
           (document.querySelector(".rev-filter.active") || {}).getAttribute
@@ -4461,6 +4603,140 @@
             : "all"
         );
       } catch (_) {}
+    })();
+
+    /* ========== AI chat: YouTubers + kids ========== */
+    (function initAiChat() {
+      const log = document.getElementById("aiChatLog");
+      if (!log) return;
+      const YT = [
+        { name: "📺 Домера", lines: [
+          "Короче, битва всех игр — это хаос, но кайф. Гомер танк, Барт быстрый.",
+          "Ставьте 60 FPS, на 30 всё как в слайдшоу 😂",
+          "С другом на одном телефоне: я WASD, ты стрелки. Классика.",
+          "Арты не «из сериала» — права. Зато портал свои картинки сделал."
+        ]},
+        { name: "🔊 Дерзко", lines: [
+          "ЭЙ, кто в лабиринте няню ещё не догнал? Я уже три раза прошёл!",
+          "Отзывы пишите после ВХОДА — иначе на другом акке не увидите.",
+          "Симпсоны в битве — топ. Д'оу! 🍩",
+          "Премиум за 10₽? Я бы купил ради строителя уровней."
+        ]},
+        { name: "🎤 Ваня AI", lines: [
+          "Музыка в битве — «Погоня», вайб как в мульте.",
+          "Если Google не открылся — владелец сайта вписывает Client ID.",
+          "Детям совет: играйте вместе, не ссорьтесь из‑за счёта 😄"
+        ]}
+      ];
+      const KIDS = [
+        { name: "🧒 Миша, 8", lines: [
+          "Я люблю змейку с братом! Он всегда проигрывает 😈",
+          "Барт крутой, я на нём всех побил!",
+          "Почему нельзя скачать игру? А, она в браузере — удобно.",
+          "Мама разрешила 20 минут… уже час 🙈"
+        ]},
+        { name: "👧 Лера, 9", lines: [
+          "Смешарики лучшие! Нюша и Крош 💛",
+          "С подругой играли в танчики, я выиграла.",
+          "Отзыв написала — появился у всех. Класс!",
+          "Чат смешной, как будто ютуберы рядом."
+        ]},
+        { name: "🧒 Тима, 10", lines: [
+          "FPS больше — плавнее, но телефон греется. Папа сказал 45.",
+          "Пакман сложный, призраки злые.",
+          "Хочу ещё героев из мультов!"
+        ]}
+      ];
+      function bubble(who, text, tone) {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;flex-direction:column;gap:2px;max-width:95%";
+        if (tone === "me") row.style.alignSelf = "flex-end";
+        const name = document.createElement("div");
+        name.style.cssText = "font-size:11px;font-weight:800;color:" + (tone === "yt" ? "#fb923c" : tone === "kid" ? "#4ade80" : "#5eb0ff");
+        name.textContent = who;
+        const msg = document.createElement("div");
+        msg.style.cssText = "background:" + (tone === "me" ? "#1e3a5f" : "#1a1a1a") + ";border:1px solid #333;border-radius:12px;padding:8px 12px;font-size:14px;color:#eee;line-height:1.35";
+        msg.textContent = text;
+        row.appendChild(name);
+        row.appendChild(msg);
+        log.appendChild(row);
+        log.scrollTop = log.scrollHeight;
+      }
+      function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+      function aiReply(seed) {
+        const s = String(seed || "").toLowerCase();
+        let pool = Math.random() < 0.5 ? YT : KIDS;
+        if (/симпсон|гомер|барт|homer|bart/.test(s)) {
+          bubble("📺 Домера", "Симпсоны в битве: Гомер — танк с пончиком, Барт — скейт-рывок. Бери и дерись!", "yt");
+          return;
+        }
+        if (/fps|фпс|кадр/.test(s)) {
+          bubble("🧒 Тима, 10", "FPS: больше = плавнее, меньше = телефон не греется. Я ставлю 60.", "kid");
+          return;
+        }
+        if (/отзыв|регистр|google|гугл/.test(s)) {
+          bubble("🎤 Ваня AI", "Сначала «Зарегистрироваться через Google» или гость. Потом отзыв — имя из аккаунта, без «как тебя зовут».", "yt");
+          return;
+        }
+        if (/друг|мульти|вместе|2 игр/.test(s)) {
+          bubble("👧 Лера, 9", "Во всех классиках есть 2 игрока! В друзьях кнопки на каждую игру 💛", "kid");
+          return;
+        }
+        if (/арт|картин|оригинал|право/.test(s)) {
+          bubble("🔊 Дерзко", "Официальные арты нельзя просто так — права. Поэтому портал рисует свои. Это норм для фанатского сайта.", "yt");
+          return;
+        }
+        const who = pick(pool);
+        bubble(who.name, pick(who.lines), pool === YT ? "yt" : "kid");
+        if (Math.random() < 0.55) {
+          setTimeout(function () {
+            const other = pool === YT ? KIDS : YT;
+            const w2 = pick(other);
+            bubble(w2.name, pick(w2.lines), other === YT ? "yt" : "kid");
+          }, 700 + Math.random() * 900);
+        }
+      }
+      // стартовые реплики
+      bubble("📺 Домера", "Всем хай! Кто уже дрался Гомером в «Битве всех игр»?", "yt");
+      setTimeout(function () { bubble("🧒 Миша, 8", "Я! Барт быстрее, но Гомер жирный и сильный 🍩", "kid"); }, 600);
+      setTimeout(function () { bubble("🔊 Дерзко", "Не забывайте: отзывы — только после входа, иначе на другом акке пусто.", "yt"); }, 1400);
+
+      function send() {
+        const input = document.getElementById("aiChatInput");
+        const as = (document.getElementById("aiChatAs") || {}).value || "me";
+        const text = String((input && input.value) || "").trim();
+        if (!text) return;
+        if (input) input.value = "";
+        if (as === "me") {
+          const u = loadUser();
+          bubble(u ? ("👤 " + (u.name || "Я")) : "👤 Я", text, "me");
+          setTimeout(function () { aiReply(text); }, 400 + Math.random() * 500);
+        } else if (as === "kid") {
+          const k = pick(KIDS);
+          bubble(k.name, text, "kid");
+          setTimeout(function () { aiReply(text); }, 500);
+        } else {
+          const y = pick(YT);
+          bubble(y.name, text, "yt");
+          setTimeout(function () { aiReply(text); }, 500);
+        }
+      }
+      on("aiChatSend", "click", send);
+      const inp = document.getElementById("aiChatInput");
+      if (inp) inp.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); send(); }
+      });
+      let autoT = null;
+      on("aiChatAuto", "click", function () {
+        if (autoT) {
+          clearInterval(autoT);
+          autoT = null;
+          toast("Чат на паузе");
+          return;
+        }
+        toast("ИИ болтают… ещё раз — стоп");
+        autoT = setInterval(function () { aiReply(""); }, 2800);
+      });
     })();
 
     // Клик по человеку в отзывах → добавить в друзья

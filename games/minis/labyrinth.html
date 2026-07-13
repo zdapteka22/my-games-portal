@@ -64,21 +64,41 @@
     <button type="button" class="active" data-hero="yozhik"><img src="../smeshariki/images/yozhik.png" alt=""> Ёжик</button>
     <button type="button" data-hero="pin"><img src="../smeshariki/images/pin.png" alt=""> Пин</button>
   </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+    <button type="button" id="lMode1" style="padding:8px 12px;border-radius:10px;border:2px solid #ffcc00;background:#14301a;color:#7dff9a;font-weight:800">👤 1 игрок</button>
+    <button type="button" id="lMode2" style="padding:8px 12px;border-radius:10px;border:2px solid #555;background:#111;color:#ddd;font-weight:800">👥 2 игрока / с другом</button>
+  </div>
   <div class="hud">
     <span>Уровень: <b id="lvl">1</b></span>
     <span>Время: <b id="time">0</b>с</span>
     <span id="status">Найди выход ⭐ · Няня ловит!</span>
   </div>
   <canvas id="c" width="480" height="480" tabindex="0"></canvas>
-  <p class="hint">WASD / стрелки · R — новый лабиринт · Пробел — пауза<br>
-    <b>Ты:</b> Ёжик или Пин · <b>Враг:</b> Няня · добеги до ⭐</p>
-  <div class="pad">
-    <span class="empty"></span>
-    <button type="button" data-d="0,-1">▲</button>
-    <span class="empty"></span>
-    <button type="button" data-d="-1,0">◀</button>
-    <button type="button" data-d="0,1">▼</button>
-    <button type="button" data-d="1,0">▶</button>
+  <p class="hint" id="lHint"><b>P1:</b> WASD · <b>P2:</b> стрелки · R новый · Пробел пауза<br>
+    Ёжик/Пин vs Няня · добеги до ⭐ · вдвоём — кто первый</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:min(520px,96vw)">
+    <div style="flex:1;min-width:120px">
+      <div style="text-align:center;font-size:11px;font-weight:800;color:#7dff9a">P1</div>
+      <div class="pad" data-pad="1" style="display:grid;grid-template-columns:56px 56px 56px;gap:6px;justify-content:center;margin:4px auto">
+        <span class="empty"></span>
+        <button type="button" data-d="0,-1">▲</button>
+        <span class="empty"></span>
+        <button type="button" data-d="-1,0">◀</button>
+        <button type="button" data-d="0,1">▼</button>
+        <button type="button" data-d="1,0">▶</button>
+      </div>
+    </div>
+    <div id="lPad2" style="flex:1;min-width:120px;display:none">
+      <div style="text-align:center;font-size:11px;font-weight:800;color:#ffb74d">P2</div>
+      <div class="pad" data-pad="2" style="display:grid;grid-template-columns:56px 56px 56px;gap:6px;justify-content:center;margin:4px auto">
+        <span class="empty"></span>
+        <button type="button" data-d="0,-1">▲</button>
+        <span class="empty"></span>
+        <button type="button" data-d="-1,0">◀</button>
+        <button type="button" data-d="0,1">▼</button>
+        <button type="button" data-d="1,0">▶</button>
+      </div>
+    </div>
   </div>
 <script>
 (() => {
@@ -104,7 +124,12 @@
     });
   });
 
-  let grid, player, nanny, exit, level, time, alive, won, paused, keys, hold;
+  let grid, player, player2, nanny, exit, level, time, alive, won, paused, keys, hold, hold2;
+  let twoPlayer = false;
+  try {
+    const m = new URLSearchParams(location.search).get("mode");
+    if (m === "2" || m === "friend") twoPlayer = true;
+  } catch (_) {}
 
   // 1 = wall, 0 = path
   function genMaze() {
@@ -146,12 +171,23 @@
     return { x: (cx + 0.5) * CELL, y: (cy + 0.5) * CELL };
   }
 
+  function syncLabUi() {
+    const b1 = document.getElementById("lMode1");
+    const b2 = document.getElementById("lMode2");
+    if (b1) b1.style.borderColor = twoPlayer ? "#555" : "#ffcc00";
+    if (b2) b2.style.borderColor = twoPlayer ? "#ffcc00" : "#555";
+    const pad2 = document.getElementById("lPad2");
+    if (pad2) pad2.style.display = twoPlayer ? "block" : "none";
+  }
+
   function reset(full) {
     if (full) level = 1;
     genMaze();
     const start = cellCenter(1, 1);
+    const start2 = cellCenter(1, 3);
     const end = cellCenter(COLS - 2, ROWS - 2);
     player = { x: start.x, y: start.y, r: CELL * 0.28, speed: 2.1 + level * 0.08 };
+    player2 = { x: start2.x, y: start2.y, r: CELL * 0.28, speed: 2.1 + level * 0.08 };
     // nanny starts opposite-ish
     const mid = cellCenter(COLS - 2, 1);
     nanny = { x: mid.x, y: mid.y, r: CELL * 0.3, speed: 1.35 + level * 0.12 };
@@ -162,9 +198,13 @@
     paused = false;
     keys = {};
     hold = { up: false, down: false, left: false, right: false };
+    hold2 = { up: false, down: false, left: false, right: false };
     document.getElementById("lvl").textContent = level;
     document.getElementById("time").textContent = "0";
-    document.getElementById("status").textContent = "Найди выход ⭐ · Няня ловит!";
+    document.getElementById("status").textContent = twoPlayer
+      ? "2 игрока: P1 WASD · P2 стрелки · кто первый к ⭐"
+      : "Найди выход ⭐ · Няня ловит!";
+    syncLabUi();
   }
 
   function blocked(x, y, r) {
@@ -191,41 +231,69 @@
     if (Math.floor(time * 10) % 10 === 0) document.getElementById("time").textContent = String(Math.floor(time));
 
     let mx = 0, my = 0;
-    if (keys["ArrowUp"] || keys["w"] || keys["W"] || hold.up) my -= 1;
-    if (keys["ArrowDown"] || keys["s"] || keys["S"] || hold.down) my += 1;
-    if (keys["ArrowLeft"] || keys["a"] || keys["A"] || hold.left) mx -= 1;
-    if (keys["ArrowRight"] || keys["d"] || keys["D"] || hold.right) mx += 1;
+    if (keys["w"] || keys["W"] || hold.up) my -= 1;
+    if (keys["s"] || keys["S"] || hold.down) my += 1;
+    if (keys["a"] || keys["A"] || hold.left) mx -= 1;
+    if (keys["d"] || keys["D"] || hold.right) mx += 1;
+    if (!twoPlayer) {
+      if (keys["ArrowUp"] || hold.up) my -= 1;
+      if (keys["ArrowDown"] || hold.down) my += 1;
+      if (keys["ArrowLeft"] || hold.left) mx -= 1;
+      if (keys["ArrowRight"] || hold.right) mx += 1;
+    }
     if (mx || my) {
       const len = Math.hypot(mx, my) || 1;
       moveEnt(player, (mx / len) * player.speed, (my / len) * player.speed);
     }
+    if (twoPlayer) {
+      let mx2 = 0, my2 = 0;
+      if (keys["ArrowUp"] || hold2.up) my2 -= 1;
+      if (keys["ArrowDown"] || hold2.down) my2 += 1;
+      if (keys["ArrowLeft"] || hold2.left) mx2 -= 1;
+      if (keys["ArrowRight"] || hold2.right) mx2 += 1;
+      if (mx2 || my2) {
+        const len2 = Math.hypot(mx2, my2) || 1;
+        moveEnt(player2, (mx2 / len2) * player2.speed, (my2 / len2) * player2.speed);
+      }
+    }
 
-    // nanny chases player with simple grid pathing
-    const dx = player.x - nanny.x, dy = player.y - nanny.y;
+    // nanny chases nearest player
+    let target = player;
+    if (twoPlayer) {
+      const d1 = Math.hypot(player.x - nanny.x, player.y - nanny.y);
+      const d2 = Math.hypot(player2.x - nanny.x, player2.y - nanny.y);
+      if (d2 < d1) target = player2;
+    }
+    const dx = target.x - nanny.x, dy = target.y - nanny.y;
     const dist = Math.hypot(dx, dy) || 1;
-    // prefer axis with larger distance, try both
     const tryX = (dx / dist) * nanny.speed;
     const tryY = (dy / dist) * nanny.speed;
     const ox = nanny.x, oy = nanny.y;
     moveEnt(nanny, tryX, 0);
     moveEnt(nanny, 0, tryY);
     if (nanny.x === ox && nanny.y === oy) {
-      // stuck — random nudge
       const opts = [[nanny.speed, 0], [-nanny.speed, 0], [0, nanny.speed], [0, -nanny.speed]];
       const o = opts[Math.floor(Math.random() * opts.length)];
       moveEnt(nanny, o[0], o[1]);
     }
 
-    // catch
-    if (Math.hypot(player.x - nanny.x, player.y - nanny.y) < player.r + nanny.r - 2) {
+    // catch either player
+    const caught1 = Math.hypot(player.x - nanny.x, player.y - nanny.y) < player.r + nanny.r - 2;
+    const caught2 = twoPlayer && Math.hypot(player2.x - nanny.x, player2.y - nanny.y) < player2.r + nanny.r - 2;
+    if (caught1 || caught2) {
       alive = false;
       document.getElementById("status").textContent = "Няня поймала! R — заново";
     }
-    // exit
+    // exit — first wins
     if (Math.hypot(player.x - exit.x, player.y - exit.y) < CELL * 0.45) {
       won = true;
       level++;
-      document.getElementById("status").textContent = "Выход! След. уровень…";
+      document.getElementById("status").textContent = twoPlayer ? "P1 нашёл выход! След. уровень…" : "Выход! След. уровень…";
+      setTimeout(() => { if (won) reset(false); }, 900);
+    } else if (twoPlayer && Math.hypot(player2.x - exit.x, player2.y - exit.y) < CELL * 0.45) {
+      won = true;
+      level++;
+      document.getElementById("status").textContent = "P2 нашёл выход! След. уровень…";
       setTimeout(() => { if (won) reset(false); }, 900);
     }
   }
@@ -268,16 +336,29 @@
       ctx.fill();
     }
 
-    // player
+    // players
     const hs = CELL * 0.8;
-    const hero = imgHero[heroId];
-    if (hero.complete && hero.naturalWidth) {
-      ctx.drawImage(hero, player.x - hs / 2, player.y - hs / 2, hs, hs);
-    } else {
-      ctx.fillStyle = heroId === "pin" ? "#90a4ae" : "#b39ddb";
-      ctx.beginPath();
-      ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-      ctx.fill();
+    function drawHero(ent, id, label) {
+      const hero = imgHero[id];
+      if (hero && hero.complete && hero.naturalWidth) {
+        ctx.drawImage(hero, ent.x - hs / 2, ent.y - hs / 2, hs, hs);
+      } else {
+        ctx.fillStyle = id === "pin" ? "#90a4ae" : "#b39ddb";
+        ctx.beginPath();
+        ctx.arc(ent.x, ent.y, ent.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (label) {
+        ctx.fillStyle = "#ffcc00";
+        ctx.font = "bold 11px Segoe UI, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(label, ent.x, ent.y - hs / 2 - 4);
+      }
+    }
+    drawHero(player, heroId, twoPlayer ? "P1" : "");
+    if (twoPlayer) {
+      const id2 = heroId === "pin" ? "yozhik" : "pin";
+      drawHero(player2, id2, "P2");
     }
 
     if (paused) overlay("ПАУЗА");
@@ -298,6 +379,9 @@
     ctx.fillText("R — новый лабиринт", canvas.width / 2, canvas.height / 2 + 28);
   }
 
+  document.getElementById("lMode1")?.addEventListener("click", () => { twoPlayer = false; reset(true); });
+  document.getElementById("lMode2")?.addEventListener("click", () => { twoPlayer = true; reset(true); });
+
   document.addEventListener("keydown", e => {
     keys[e.key] = true;
     if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
@@ -308,9 +392,20 @@
   document.querySelectorAll(".pad button").forEach(btn => {
     const map = { "0,-1": "up", "0,1": "down", "-1,0": "left", "1,0": "right" };
     const k = map[btn.dataset.d];
-    btn.addEventListener("pointerdown", e => { e.preventDefault(); hold[k] = true; });
-    btn.addEventListener("pointerup", e => { e.preventDefault(); hold[k] = false; });
-    btn.addEventListener("pointerleave", e => { hold[k] = false; });
+    btn.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      const pad = Number(btn.closest("[data-pad]")?.getAttribute("data-pad") || 1);
+      if (pad === 2) hold2[k] = true; else hold[k] = true;
+    });
+    btn.addEventListener("pointerup", e => {
+      e.preventDefault();
+      const pad = Number(btn.closest("[data-pad]")?.getAttribute("data-pad") || 1);
+      if (pad === 2) hold2[k] = false; else hold[k] = false;
+    });
+    btn.addEventListener("pointerleave", e => {
+      const pad = Number(btn.closest("[data-pad]")?.getAttribute("data-pad") || 1);
+      if (pad === 2) hold2[k] = false; else hold[k] = false;
+    });
   });
 
   reset(true);

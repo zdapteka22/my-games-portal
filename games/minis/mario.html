@@ -182,9 +182,24 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="nav ghost" id="btnMusic" title="Музыка и звуки (монеты, гумбы, блоки…)">🔊 Звук</button>
       <button type="button" class="nav ghost" id="btnEditor">✏️ Редактор</button>
+      <a class="ghost" href="battle-all.html?mode=2&friend=1" title="С другом в битве">🤝 С другом</a>
       <a class="ghost" href="../../index.html">Сайт</a>
     </div>
   </div>
+  <div id="friendMarioNote" style="display:none;width:min(900px,98vw);padding:8px 12px;background:rgba(0,0,0,.55);border:2px solid #ffcc00;border-radius:10px;font-size:13px;font-weight:700;text-align:center">
+    Режим «с другом»: платформер Марио — 1 игрок. Вместе удобнее в <a href="battle-all.html?mode=2" style="color:#ffcc00">Битве всех игр</a> (2 игрока) или в Змейке/Танчиках/Пакмане.
+  </div>
+  <script>
+    (function () {
+      try {
+        var m = new URLSearchParams(location.search).get("mode");
+        if (m === "2" || m === "friend") {
+          var n = document.getElementById("friendMarioNote");
+          if (n) n.style.display = "block";
+        }
+      } catch (e) {}
+    })();
+  </script>
   <div class="hud">
     <span>МОНЕТЫ <b id="coins">0</b></span>
     <span>УРОВЕНЬ <b id="levelNum">1</b>/12</span>

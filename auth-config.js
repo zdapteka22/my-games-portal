@@ -1,5 +1,13 @@
 /* Blue Cat — вход и премиум.
    Заполни GOOGLE_CLIENT_ID и PAYMENT_URL, чтобы работало «по-настоящему».
+
+   Google вход (обязательно для «Зарегистрироваться через Google»):
+   1) https://console.cloud.google.com/ → APIs & Services → Credentials
+   2) Create Credentials → OAuth client ID → Web application
+   3) Authorized JavaScript origins:
+      - https://zdapteka22.github.io
+      - http://localhost:8000  (и твой локальный порт)
+   4) Вставь Client ID ниже в кавычки.
 */
 window.AUTH_CONFIG = {
   // Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID (Web)

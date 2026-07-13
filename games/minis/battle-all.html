@@ -252,6 +252,12 @@
     <div class="load-bar" id="loadBar" title="Загрузка картинок"><i id="loadFill"></i></div>
     <p class="sub" id="loadText" style="margin-top:8px;margin-bottom:0;text-align:center">Загрузка оригинальных артов героев…</p>
     <p class="sub" style="margin-top:4px;margin-bottom:0;text-align:center;font-size:12px;color:#888">Если видишь эмодзи — нажми Ctrl+F5. Арты: images/heroes/</p>
+    <div style="margin:12px auto 0;max-width:720px;padding:12px 14px;background:#151515;border:1px solid #3a2a10;border-radius:12px;font-size:13px;color:#ccc;line-height:1.45">
+      <b style="color:#ffcc00">Почему не «официальные» арты мультфильмов?</b><br>
+      Это <b>фанатский</b> портал: официальные спрайты Disney/Nickelodeon/Fox и т.д. защищены авторским правом, их нельзя класть на сайт «как из сериала».
+      Поэтому у героев — <b>наши арты</b> (рисование / фото-референсы / стиль портала) в папке <code>images/heroes/</code>.
+      Гомер, Барт, Мардж и Лиза — тоже с артом портала. Не оригинал студии = не нарушаем права, но персонажи узнаваемые.
+    </div>
   </section>
 
   <div id="gameWrap" hidden>
@@ -259,6 +265,13 @@
       <span>Герой: <b id="hudHero">—</b></span>
       <span>Способность: <b id="hudAbil">готово</b></span>
       <span>На арене: <b id="hudAlive">—</b></span>
+      <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">
+        FPS:
+        <button type="button" id="fpsDown" style="min-width:32px;height:28px;border-radius:8px;border:1px solid #555;background:#222;color:#fff;font-weight:800;cursor:pointer">−</button>
+        <b id="hudFps">60</b>
+        <button type="button" id="fpsUp" style="min-width:32px;height:28px;border-radius:8px;border:1px solid #555;background:#222;color:#fff;font-weight:800;cursor:pointer">+</button>
+        <span id="fpsWhy" title="Пояснение" style="font-size:11px;color:#888;cursor:help;border-bottom:1px dashed #666">зачем?</span>
+      </span>
     </div>
     <div class="bars" id="hpBars"></div>
     <div class="canvas-wrap">
@@ -568,7 +581,11 @@
     winnie_petson: "../../images/heroes/winnie_petson.png",
     winnie_us: "../../images/heroes/winnie_us.png",
     woody: "../../images/heroes/woody.png",
-    zayac_np: "../../images/heroes/zayac_np.png"
+    zayac_np: "../../images/heroes/zayac_np.png",
+    homer: "../../images/heroes/homer.png",
+    bart: "../../images/heroes/bart.png",
+    marge: "../../images/heroes/marge.png",
+    lisa: "../../images/heroes/lisa.png"
   };
 
   /**
@@ -1092,7 +1109,21 @@
       desc:"Друг из лампы.", abilityDesc:"Магический взрыв. 8 с." },
     { id:"puss_in_boots", name:"Кот в сапогах", from:"Шрек", group:"us", emoji:"🐱", img:IMG.puss_in_boots, color:"#ff9800", accent:"#212121",
       hp:100, speed:3.4, atk:15, rate:0.8, style:"melee", attackName:"Шпага", abilityName:"Глазки",
-      desc:"Легендарный кот.", abilityDesc:"Обаяние (стан) + удар. 6.5 с." }
+      desc:"Легендарный кот.", abilityDesc:"Обаяние (стан) + удар. 6.5 с." },
+
+    // —— The Simpsons (Гомер + Барт и семья) ——
+    { id:"homer", name:"Гомер", from:"Симпсоны", group:"us", emoji:"🍩", img:IMG.homer, color:"#ffd90f", accent:"#2e86de",
+      hp:145, speed:2.3, atk:16, rate:1.05, style:"tank", attackName:"Д'оу!", abilityName:"Пончик",
+      desc:"Глава семьи Симпсонов. Оригинальный арт портала (жёлтый стиль).", abilityDesc:"Пончик: лечение + броня. 8 с." },
+    { id:"bart", name:"Барт", from:"Симпсоны", group:"us", emoji:"🛹", img:IMG.bart, color:"#ff6600", accent:"#2e86de",
+      hp:100, speed:3.5, atk:14, rate:0.8, style:"dash", attackName:"Ай, карамба!", abilityName:"Скейт-рывок",
+      desc:"Озорник Спрингфилда. Оригинальный арт портала.", abilityDesc:"Скейт-рывок с уроном. 6 с." },
+    { id:"marge", name:"Мардж", from:"Симпсоны", group:"us", emoji:"💙", img:IMG.marge, color:"#1e90ff", accent:"#ffd90f",
+      hp:120, speed:2.7, atk:13, rate:0.95, style:"heal", attackName:"Пылесос", abilityName:"Синие волосы",
+      desc:"Мама с высокой причёской.", abilityDesc:"Лечение семьи рядом. 7.5 с." },
+    { id:"lisa", name:"Лиза", from:"Симпсоны", group:"us", emoji:"🎷", img:IMG.lisa, color:"#ffd90f", accent:"#e53935",
+      hp:105, speed:3.1, atk:13, rate:0.9, style:"shoot", attackName:"Саксофон", abilityName:"Умный план",
+      desc:"Самая умная в семье.", abilityDesc:"Звуковая волна + ускорение. 7 с." }
   ];
 
   const GROUPS = [
@@ -1176,6 +1207,41 @@
   let arenaObstacles = [];
   let spawnFreeze = 0;
   let totalHeroes = 0;
+  // Целевой FPS: выше = плавнее, но больше нагрузка на слабый ПК/телефон.
+  // Ниже = легче устройству, меньше нагрев/батарея, но может быть рывками.
+  let targetFps = 60;
+  try {
+    const savedFps = Number(localStorage.getItem("battle_target_fps") || 60);
+    if ([30, 45, 60, 90, 120].includes(savedFps)) targetFps = savedFps;
+  } catch (_) {}
+  let fpsAcc = 0;
+  function setTargetFps(v) {
+    const steps = [30, 45, 60, 90, 120];
+    let i = steps.indexOf(targetFps);
+    if (i < 0) i = 2;
+    if (v === "+") i = Math.min(steps.length - 1, i + 1);
+    else if (v === "-") i = Math.max(0, i - 1);
+    else if (typeof v === "number") {
+      // snap to nearest
+      i = steps.reduce((best, s, idx) => Math.abs(s - v) < Math.abs(steps[best] - v) ? idx : best, 2);
+    }
+    targetFps = steps[i];
+    try { localStorage.setItem("battle_target_fps", String(targetFps)); } catch (_) {}
+    const el = document.getElementById("hudFps");
+    if (el) el.textContent = String(targetFps);
+  }
+  setTargetFps(targetFps);
+  document.getElementById("fpsUp")?.addEventListener("click", () => setTargetFps("+"));
+  document.getElementById("fpsDown")?.addEventListener("click", () => setTargetFps("-"));
+  document.getElementById("fpsWhy")?.addEventListener("click", () => {
+    alert(
+      "FPS — сколько кадров в секунду рисуется битва.\n\n" +
+      "• Больше FPS (90–120) — плавнее движение, но сильнее нагружает телефон/ПК и может греться/сажать батарею.\n" +
+      "• Меньше FPS (30–45) — легче слабым устройствам, меньше лагов от перегрева, но картинка «рывками».\n" +
+      "• 60 — золотая середина для большинства.\n\n" +
+      "Выбор сохраняется в этом браузере."
+    );
+  });
   const keys = {};
   const hold = { up:false, down:false, left:false, right:false, atk:false, abil:false };
   const hold2 = { up:false, down:false, left:false, right:false, atk:false, abil:false };
@@ -2126,10 +2192,16 @@
 
   function loop(now){
     if (!running) return;
-    const dt=Math.min(0.033,(now-lastT)/1000||0.016);
-    lastT=now;
-    update(dt); draw();
     requestAnimationFrame(loop);
+    const frameMs = 1000 / Math.max(15, targetFps || 60);
+    if (!lastT) lastT = now;
+    const elapsed = now - lastT;
+    // ограничиваем частоту обновления выбранным FPS
+    if (elapsed < frameMs - 0.5) return;
+    // dt не раздуваем слишком сильно (лаги вкладки)
+    const dt = Math.min(0.05, elapsed / 1000);
+    lastT = now;
+    update(dt); draw();
   }
 
   function update(dt){

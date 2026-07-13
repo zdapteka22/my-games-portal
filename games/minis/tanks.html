@@ -132,6 +132,10 @@
     document.getElementById("pad2wrap").style.display = twoPlayer ? "block" : "none";
   }
 
+  try {
+    const m = new URLSearchParams(location.search).get("mode");
+    if (m === "2" || m === "friend") twoPlayer = true;
+  } catch (_) {}
   document.getElementById("mode1").onclick = () => {
     twoPlayer = false;
     document.getElementById("mode1").style.borderColor = "#ffcc00";
@@ -144,6 +148,10 @@
     document.getElementById("mode1").style.borderColor = "#555";
     reset();
   };
+  if (twoPlayer) {
+    document.getElementById("mode2").style.borderColor = "#ffcc00";
+    document.getElementById("mode1").style.borderColor = "#555";
+  }
 
   function hitWall(x, y, r) {
     for (const w of walls) {

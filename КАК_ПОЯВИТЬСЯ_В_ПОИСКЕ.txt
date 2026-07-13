@@ -1,0 +1,30 @@
+﻿КАК ПОЯВИТЬСЯ В ПОИСКЕ: «портал любимых игр»
+============================================
+
+ВАЖНО: localhost (127.0.0.1) Google НЕ индексирует.
+Сайт должен быть в интернете.
+
+Ваш публичный адрес:
+https://zdapteka22.github.io/my-games-portal/
+
+1) Открой и проверь, что сайт открывается
+2) Google Search Console:
+   https://search.google.com/search-console
+   - Добавить ресурс (URL-префикс): https://zdapteka22.github.io/my-games-portal/
+   - Подтверди владение (через GitHub аккаунт / HTML-тег / DNS)
+   - Отправь sitemap:
+     https://zdapteka22.github.io/my-games-portal/sitemap.xml
+   - «Проверка URL» → вставь главную → «Запросить индексирование»
+
+3) Яндекс.Вебмастер:
+   https://webmaster.yandex.ru
+   - Добавь сайт
+   - Sitemap: https://zdapteka22.github.io/my-games-portal/sitemap.xml
+   - Переобход страниц → главная
+
+4) Жди от нескольких дней до нескольких недель.
+   Ищи: портал любимых игр
+   или: site:zdapteka22.github.io
+
+Почему не сразу: поисковик сам решает, когда добавить сайт.
+Новый сайт появляется не мгновенно.

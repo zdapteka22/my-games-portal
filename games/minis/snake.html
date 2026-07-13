@@ -100,6 +100,10 @@
   const COLS = 20, ROWS = 20, CELL = canvas.width / COLS;
   const BEST_KEY = "miniSnake_best_v1";
   let twoPlayer = false;
+  try {
+    const m = new URLSearchParams(location.search).get("mode");
+    if (m === "2" || m === "friend") twoPlayer = true;
+  } catch (_) {}
   let food, best, paused, tickMs, acc, last, overMsg;
   let p1, p2;
   best = Number(localStorage.getItem(BEST_KEY) || 0);
@@ -262,6 +266,10 @@
     document.getElementById("sMode1").style.borderColor = "#555";
     reset();
   };
+  if (twoPlayer) {
+    document.getElementById("sMode2").style.borderColor = "#ffcc00";
+    document.getElementById("sMode1").style.borderColor = "#555";
+  }
 
   document.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
