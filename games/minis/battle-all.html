@@ -225,12 +225,15 @@
 
   <section class="screen" id="selectScreen">
     <h2 style="font-size:1.15rem;margin-bottom:4px">Выбери героя</h2>
-    <p class="sub">Режим <b>все против всех</b> · на арене <b>все герои</b>: русские и американские мультики, Смешарики, Марио, Соник… <b>1 игрок</b> — ты + ИИ. <b>2 игрока</b> — двое на одном устройстве.</p>
+    <p class="sub">Режим <b>все против всех</b> или <b>командный бой</b> (синие vs красные). На арене все герои. <b>1 игрок</b> — ты + ИИ. <b>2 игрока</b> — двое на одном устройстве.</p>
     <div class="mode-row" id="modeRow">
-      <button type="button" class="active" data-players="1">👤 1 игрок</button>
-      <button type="button" data-players="2">👥 2 игрока (мульти)</button>
-      <button type="button" data-players="2" data-friend="1">🤝 С другом</button>
+      <button type="button" class="active" data-players="1" data-team="0">👤 1 игрок · FFA</button>
+      <button type="button" data-players="2" data-team="0">👥 2 игрока · FFA</button>
+      <button type="button" data-players="2" data-friend="1" data-team="0">🤝 С другом · FFA</button>
+      <button type="button" data-players="1" data-team="1">⚔️ Командный · 1 игрок</button>
+      <button type="button" data-players="2" data-team="1">⚔️ Командный · 2 игрока</button>
     </div>
+    <p class="sub" id="teamModeHint" hidden style="color:#7dd3fc">Командный бой: <b style="color:#5eb0ff">синие</b> vs <b style="color:#f87171">красные</b>. Без урона по своим. P1 — синие, P2 — красные (капитаны). Победа, когда вражеская команда выбита.</p>
     <div id="friendPlayBox" hidden style="margin:10px 0 12px;padding:12px;background:#151515;border:1px solid #333;border-radius:12px">
       <label style="display:block;font-size:13px;color:#ccc;margin-bottom:6px">Игрок 2 — твой друг (из списка «Друзья» на сайте)</label>
       <select id="friendSelect" style="width:100%;max-width:420px;padding:10px 12px;border-radius:10px;border:1px solid #444;background:#111;color:#fff;font:inherit">
@@ -253,10 +256,11 @@
     <p class="sub" id="loadText" style="margin-top:8px;margin-bottom:0;text-align:center">Загрузка оригинальных артов героев…</p>
     <p class="sub" style="margin-top:4px;margin-bottom:0;text-align:center;font-size:12px;color:#888">Если видишь эмодзи — нажми Ctrl+F5. Арты: images/heroes/</p>
     <div style="margin:12px auto 0;max-width:720px;padding:12px 14px;background:#151515;border:1px solid #3a2a10;border-radius:12px;font-size:13px;color:#ccc;line-height:1.45">
-      <b style="color:#ffcc00">Почему не «официальные» арты мультфильмов?</b><br>
-      Это <b>фанатский</b> портал: официальные спрайты Disney/Nickelodeon/Fox и т.д. защищены авторским правом, их нельзя класть на сайт «как из сериала».
-      Поэтому у героев — <b>наши арты</b> (рисование / фото-референсы / стиль портала) в папке <code>images/heroes/</code>.
-      Гомер, Барт, Мардж и Лиза — тоже с артом портала. Не оригинал студии = не нарушаем права, но персонажи узнаваемые.
+      <b style="color:#ffcc00">Откуда арты героев (русские + американские мульты)?</b><br>
+      Арты <b>скачаны</b> из открытых источников (фото костюмов/игрушек/публичные материалы) в <code>images/heroes/</code> —
+      <b>не нарисованы нейросетью</b> и не «сгенерены» скриптом-рожицами.<br>
+      Полные официальные спрайты студий (Disney, Fox, Nickelodeon…) на сайт класть нельзя — <b>авторское право</b>.
+      Поэтому берём то, что можно выложить как фанатский референс. Если картинка не та — Ctrl+F5 или замени файл в папке.
     </div>
   </section>
 
@@ -1153,6 +1157,7 @@
   let selectedId2 = null;
   let playerCountMode = 1; // 1 or 2
   let friendMode = false;
+  let teamMode = false; // true = blue vs red
   let friendNameP2 = "";
   let filterGroup = "all";
   const FRIENDS_KEY = "portal_friends_v1";
@@ -1439,22 +1444,25 @@
 
   function updatePickHint() {
     const el = document.getElementById("pickHint");
+    const th = document.getElementById("teamModeHint");
+    if (th) th.hidden = !teamMode;
     if (!el) return;
     const fSel = document.getElementById("friendSelect");
     friendNameP2 = (fSel && fSel.value) || friendNameP2 || "";
+    const modeTag = teamMode ? " · командный 🔵🔴" : " · FFA";
     if (playerCountMode === 1) {
       el.textContent = selectedId
-        ? ("Игрок 1: " + (heroById(selectedId) || {}).name + " · жми «В бой!»")
-        : "Нажми героя для игрока 1.";
+        ? ("Игрок 1: " + (heroById(selectedId) || {}).name + modeTag + " · жми «В бой!»")
+        : ("Нажми героя для игрока 1" + modeTag);
       startBtn.disabled = !selectedId;
     } else {
       const p2label = friendMode && friendNameP2 ? ("друг " + friendNameP2) : "Игрок 2";
       if (friendMode && !friendNameP2) {
         el.textContent = "Выбери друга в списке, затем героев P1 и P2.";
         startBtn.disabled = true;
-      } else if (!selectedId) el.textContent = "2 игрока: выбери героя для Игрока 1.";
-      else if (!selectedId2) el.textContent = "Игрок 1: " + (heroById(selectedId) || {}).name + " · герой для " + p2label + ".";
-      else el.textContent = "P1: " + (heroById(selectedId) || {}).name + " · P2 (" + p2label + "): " + (heroById(selectedId2) || {}).name + " · В бой!";
+      } else if (!selectedId) el.textContent = "2 игрока" + modeTag + ": герой для Игрока 1 (синие).";
+      else if (!selectedId2) el.textContent = "P1: " + (heroById(selectedId) || {}).name + " · герой для " + p2label + (teamMode ? " (красные)" : "") + ".";
+      else el.textContent = "P1: " + (heroById(selectedId) || {}).name + " · P2 (" + p2label + "): " + (heroById(selectedId2) || {}).name + modeTag + " · В бой!";
       startBtn.disabled = !(selectedId && selectedId2 && (!friendMode || friendNameP2));
     }
   }
@@ -1464,6 +1472,7 @@
     if (!b) return;
     playerCountMode = Number(b.getAttribute("data-players")) || 1;
     friendMode = b.getAttribute("data-friend") === "1";
+    teamMode = b.getAttribute("data-team") === "1";
     document.querySelectorAll("#modeRow button").forEach(x => {
       x.classList.toggle("active", x === b);
     });
@@ -1559,16 +1568,34 @@
     };
   }
 
-  function createFighter(def, isPlayer, index, total, humanSlot, displayName) {
-    const p = spawnPos(index, total);
+  function createFighter(def, isPlayer, index, total, humanSlot, displayName, team) {
+    let p = spawnPos(index, total);
+    // Командный: синие слева, красные справа
+    if (teamMode && team) {
+      const side = team === 1 ? 0 : 1;
+      const cols = Math.ceil(Math.sqrt(Math.max(4, total / 2)));
+      const row = Math.floor(index / Math.max(1, Math.ceil(total / 2)));
+      const col = index % cols;
+      const padX = 40, padY = 50;
+      const halfW = W * 0.42;
+      const cellW = halfW / cols;
+      const cellH = (H - padY * 2) / Math.max(3, Math.ceil((total / 2) / cols));
+      p = {
+        x: padX + side * (W - padX * 2 - halfW) + cellW * (col + 0.5),
+        y: padY + cellH * ((row % Math.max(1, Math.ceil((total / 2) / cols))) + 0.5)
+      };
+      p.x = Math.max(36, Math.min(W - 36, p.x));
+      p.y = Math.max(36, Math.min(H - 36, p.y));
+    }
     const baseR = total >= 100 ? 9 : total >= 70 ? 11 : total >= 40 ? 13 : total >= 28 ? 15 : total > 14 ? 18 : 22;
     const hpBonus = total > 80 ? 1.55 : total > 40 ? 1.45 : total > 20 ? 1.35 : total > 12 ? 1.25 : 1;
     const hp = Math.round(def.hp * hpBonus);
     return {
       def, isPlayer: !!isPlayer, humanSlot: humanSlot || 0,
       displayName: displayName || "",
+      team: team || 0, // 0=FFA, 1=blue, 2=red
       x:p.x, y:p.y, vx:0, vy:0, r:baseR,
-      hp, maxHp: hp, facing:1, dead:false,
+      hp, maxHp: hp, facing: team === 2 ? -1 : 1, dead:false,
       atkCd:0, abilCd:0, powerT:0, phaseT:0, megaT:0, growT:0,
       stunT:0, shieldT:0, poisonT:0, spinT:0, shellSlide:0,
       aiTimer: Math.random() * 0.5, aiTarget:null, flash:0, scale:1,
@@ -1603,15 +1630,38 @@
     totalHeroes = picks.length;
     const fSel = document.getElementById("friendSelect");
     friendNameP2 = (friendMode && fSel && fSel.value) ? fSel.value : (friendMode ? friendNameP2 : "");
-    fighters = picks.map((h, i) => {
+
+    // Команды: P1 = синие (1), P2 = красные (2). Остальных делим поровну.
+    const teamOf = {};
+    if (teamMode) {
+      teamOf[p1.id] = 1;
+      if (p2) teamOf[p2.id] = 2;
+      let t1 = 0, t2 = 0;
+      const needBal = Math.floor(picks.length / 2);
+      for (const h of picks) {
+        if (teamOf[h.id]) {
+          if (teamOf[h.id] === 1) t1++;
+          else t2++;
+          continue;
+        }
+        // балансируем: в синих не больше половины
+        if (t1 < needBal && t1 <= t2) { teamOf[h.id] = 1; t1++; }
+        else { teamOf[h.id] = 2; t2++; }
+      }
+    }
+
+    let blueI = 0, redI = 0, freeI = 0;
+    fighters = picks.map((h) => {
       let slot = 0;
       let dname = "";
-      if (h.id === p1.id) { slot = 1; dname = "Ты"; }
+      if (h.id === p1.id) { slot = 1; dname = teamMode ? "Ты · 🔵" : "Ты"; }
       else if (p2 && h.id === p2.id) {
         slot = 2;
-        dname = friendNameP2 ? friendNameP2 : "Игрок 2";
+        dname = (friendNameP2 ? friendNameP2 : "Игрок 2") + (teamMode ? " · 🔴" : "");
       }
-      return createFighter(h, slot > 0, i, picks.length, slot, dname);
+      const team = teamMode ? (teamOf[h.id] || 1) : 0;
+      const idx = teamMode ? (team === 1 ? blueI++ : redI++) : freeI++;
+      return createFighter(h, slot > 0, idx, picks.length, slot, dname, team);
     });
 
     spawnFreeze = 2.8;
@@ -1620,7 +1670,8 @@
       const who = f.displayName || ("P" + f.humanSlot);
       return who + " " + f.def.emoji + " " + f.def.name;
     });
-    document.getElementById("hudHero").textContent = names.join(" · ") || "—";
+    document.getElementById("hudHero").textContent =
+      (teamMode ? "⚔️ КОМАНДЫ · " : "") + (names.join(" · ") || "—");
     document.getElementById("hudAlive").textContent = totalHeroes + " / " + totalHeroes;
 
     const pad2 = document.getElementById("pad2box");
@@ -1641,18 +1692,24 @@
   function updateBars() {
     const el = document.getElementById("hpBars");
     const alive = fighters.filter(f => !f.dead).length;
+    const bA = teamMode ? fighters.filter(f => f.team === 1 && !f.dead).length : 0;
+    const rA = teamMode ? fighters.filter(f => f.team === 2 && !f.dead).length : 0;
     el.innerHTML = fighters.map(f => {
       const pct = Math.max(0, (f.hp/f.maxHp)*100);
       const thumb = f.def._imgPath
         ? `<img src="${f.def._imgPath}" alt="">`
         : `<span>${f.def.emoji}</span>`;
       const who = f.humanSlot ? ((f.displayName || ("P" + f.humanSlot)) + " ") : "";
-      return `<div class="bar-item${f.humanSlot?" me":""}${f.dead?" dead":""}">
-        <div class="bar-name">${thumb}${who}${f.def.name}</div>
+      const teamDot = f.team === 1 ? "🔵 " : f.team === 2 ? "🔴 " : "";
+      const teamBorder = f.team === 1 ? "border-color:#3b82f6" : f.team === 2 ? "border-color:#ef4444" : "";
+      return `<div class="bar-item${f.humanSlot?" me":""}${f.dead?" dead":""}" style="${teamBorder}">
+        <div class="bar-name">${thumb}${teamDot}${who}${f.def.name}</div>
         <div class="bar-hp"><i style="width:${pct}%"></i></div>
       </div>`;
     }).join("");
-    document.getElementById("hudAlive").textContent = alive + " / " + totalHeroes;
+    document.getElementById("hudAlive").textContent = teamMode
+      ? ("🔵" + bA + " vs 🔴" + rA + " · " + alive + "/" + totalHeroes)
+      : (alive + " / " + totalHeroes);
     const humans = fighters.filter(f => f.humanSlot && !f.dead);
     if (spawnFreeze > 0) {
       document.getElementById("hudAbil").textContent = "старт " + spawnFreeze.toFixed(1) + "с";
@@ -1729,11 +1786,17 @@
   }
   function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
 
-  /** Все живые, кроме себя — враги в free-for-all (нет команд) */
+  function sameTeam(a, b) {
+    return !!(teamMode && a && b && a.team && b.team && a.team === b.team);
+  }
+
+  /** Враги: FFA = все кроме себя; командный = другая команда */
   function livingEnemies(f) {
     const list = [];
     for (const o of fighters) {
-      if (o !== f && !o.dead) list.push(o);
+      if (o === f || o.dead) continue;
+      if (sameTeam(f, o)) continue;
+      list.push(o);
     }
     return list;
   }
@@ -1747,12 +1810,19 @@
     return best;
   }
 
-  /** Все против всех: случайная цель (не только игрок), иногда ближайшая */
+  /** Цель ИИ: FFA — хаос; командный — в основном враги, иногда фокус на человека врага */
   function pickFfaTarget(f) {
     const enemies = livingEnemies(f);
     if (!enemies.length) return null;
+    if (teamMode) {
+      const humans = enemies.filter(o => o.humanSlot);
+      if (humans.length && Math.random() < 0.35) {
+        return humans[Math.floor(Math.random() * humans.length)];
+      }
+      if (Math.random() < 0.5) return nearestEnemy(f);
+      return enemies[Math.floor(Math.random() * enemies.length)];
+    }
     // 55% — случайный враг (чтобы ИИ дрались друг с другом, а не все на игрока)
-    // 45% — ближайший
     if (Math.random() < 0.55) {
       return enemies[Math.floor(Math.random() * enemies.length)];
     }
@@ -1761,6 +1831,7 @@
 
   function damage(target, amount, from){
     if (target.dead || target.phaseT>0) return false;
+    if (from && sameTeam(target, from)) return false; // нет friendly fire
     let dmg=amount;
     if (from && from.powerT>0) dmg*=1.45;
     if (target.megaT>0) dmg*=0.7;
@@ -2317,6 +2388,7 @@
       let hit=false;
       for (const o of fighters){
         if (o===pr.owner||o.dead) continue;
+        if (sameTeam(pr.owner, o)) continue;
         if (Math.hypot(pr.x-o.x,pr.y-o.y)<pr.r+o.r*o.scale){ damage(o,pr.dmg,pr.owner); hit=true; break; }
       }
       if (pr.x<0||pr.x>W||pr.y<0||pr.y>H) hit=true;
@@ -2334,13 +2406,34 @@
 
     updateBars();
     const alive=fighters.filter(f=>!f.dead);
-    if (alive.length<=1){
+    const byKills = [...fighters].sort((a, b) => (b.kills || 0) - (a.kills || 0)).slice(0, 3);
+    const killLine = byKills.map((f, i) => (i + 1) + ". " + f.def.emoji + " " + f.def.name + " — " + (f.kills || 0)).join(" · ");
+
+    if (teamMode) {
+      const blue = fighters.filter(f => f.team === 1 && !f.dead);
+      const red = fighters.filter(f => f.team === 2 && !f.dead);
+      if (blue.length === 0 || red.length === 0) {
+        running = false;
+        endOverlay.hidden = false;
+        if (blue.length === 0 && red.length === 0) {
+          document.getElementById("endTitle").textContent = "Ничья";
+          document.getElementById("endText").textContent = "Обе команды выбиты! " + killLine;
+        } else if (blue.length > 0) {
+          const pWin = blue.some(f => f.humanSlot);
+          document.getElementById("endTitle").textContent = pWin ? "🏆 Победа синих!" : "🔵 Синие победили";
+          document.getElementById("endText").textContent =
+            "Команда 🔵 выбила красных (" + blue.length + " в живых). " + killLine;
+        } else {
+          const pWin = red.some(f => f.humanSlot);
+          document.getElementById("endTitle").textContent = pWin ? "🏆 Победа красных!" : "💀 Красные победили";
+          document.getElementById("endText").textContent =
+            "Команда 🔴 выбила синих (" + red.length + " в живых). " + killLine;
+        }
+      }
+    } else if (alive.length<=1){
       running=false;
       const winner=alive[0];
       const pAlive=fighters.find(f=>f.humanSlot&&!f.dead);
-      // Топ по киллам (все против всех)
-      const byKills = [...fighters].sort((a, b) => (b.kills || 0) - (a.kills || 0)).slice(0, 3);
-      const killLine = byKills.map((f, i) => (i + 1) + ". " + f.def.emoji + " " + f.def.name + " — " + (f.kills || 0)).join(" · ");
       endOverlay.hidden=false;
       if (pAlive){
         document.getElementById("endTitle").textContent="🏆 Победа! Все против всех";
@@ -2635,27 +2728,51 @@
       ctx.strokeRect(W/2 - 210, 40, 420, 70);
       ctx.fillStyle = "#ffcc00";
       ctx.font = "bold 22px Segoe UI, Arial";
-      ctx.fillText("ВСЕ ПРОТИВ ВСЕХ · " + totalHeroes + " героев", W/2, 68);
+      ctx.fillText(
+        teamMode
+          ? ("КОМАНДНЫЙ БОЙ · 🔵 vs 🔴 · " + totalHeroes + " героев")
+          : ("ВСЕ ПРОТИВ ВСЕХ · " + totalHeroes + " героев"),
+        W/2, 68
+      );
       ctx.font = "bold 15px Segoe UI, Arial";
       ctx.fillStyle = "#fff";
-      ctx.fillText("Бой через " + Math.ceil(spawnFreeze) + "… нет команд, каждый сам!", W/2, 94);
+      ctx.fillText(
+        teamMode
+          ? ("Бой через " + Math.ceil(spawnFreeze) + "… бей только вражескую команду!")
+          : ("Бой через " + Math.ceil(spawnFreeze) + "… нет команд, каждый сам!"),
+        W/2, 94
+      );
     }
     ctx.fillStyle = "rgba(0,0,0,.5)";
-    ctx.fillRect(W/2 - 170, 6, 340, 28);
+    ctx.fillRect(W/2 - 190, 6, 380, 28);
     ctx.fillStyle = "#ffcc00";
     ctx.font = "bold 13px Segoe UI, Arial";
     const me = fighters.find(f => f.humanSlot === 1) || fighters.find(f => f.humanSlot);
     const myK = me ? (me.kills || 0) : 0;
-    ctx.fillText("⚔️ FFA " + aliveN + "/" + totalHeroes + " · твои киллы: " + myK, W/2, 20);
+    if (teamMode) {
+      const bA = fighters.filter(f => f.team === 1 && !f.dead).length;
+      const rA = fighters.filter(f => f.team === 2 && !f.dead).length;
+      ctx.fillText("⚔️ 🔵" + bA + " vs 🔴" + rA + " · киллы: " + myK, W/2, 20);
+    } else {
+      ctx.fillText("⚔️ FFA " + aliveN + "/" + totalHeroes + " · твои киллы: " + myK, W/2, 20);
+    }
   }
 
   // init
   const hc = document.getElementById("heroCountLabel");
   if (hc) hc.textContent = String(HEROES.length);
-  // ?mode=2&friend=Name — с другом
+  // ?mode=2&friend=Name · ?team=1 — командный
   try {
     const qs = new URLSearchParams(location.search);
-    if (qs.get("mode") === "2" || qs.get("friend")) {
+    if (qs.get("team") === "1" || qs.get("mode") === "team") {
+      teamMode = true;
+      playerCountMode = qs.get("mode") === "2" ? 2 : 1;
+      document.querySelectorAll("#modeRow button").forEach(x => {
+        const isTeam = x.getAttribute("data-team") === "1";
+        const pl = Number(x.getAttribute("data-players") || 1);
+        x.classList.toggle("active", isTeam && pl === playerCountMode && x.getAttribute("data-friend") !== "1");
+      });
+    } else if (qs.get("mode") === "2" || qs.get("friend")) {
       playerCountMode = 2;
       friendMode = true;
       document.querySelectorAll("#modeRow button").forEach(x => {
