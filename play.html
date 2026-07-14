@@ -163,6 +163,7 @@
     }
   </style>
   <script src="games/game-meta.js"></script>
+  <script src="chat-shared.js"></script>
 </head>
 <body>
   <div class="top">
@@ -177,7 +178,8 @@
   <div class="tabs" role="tablist">
     <button type="button" class="tab active" data-tab="play">🎮 Играть</button>
     <button type="button" class="tab" data-tab="desc">📖 Описание</button>
-    <button type="button" class="tab" data-tab="reviews">💬 Отзывы</button>
+    <button type="button" class="tab" data-tab="chat">💬 Чат игры</button>
+    <button type="button" class="tab" data-tab="reviews">⭐ Отзывы</button>
     <button type="button" class="tab" data-tab="controls">🎛 Управление</button>
   </div>
 
@@ -202,18 +204,31 @@
     </div>
   </div>
 
+  <div id="panel-chat" class="panel">
+    <div class="content">
+      <div class="card">
+        <h2>💬 Чат этой игры</h2>
+        <p class="hint" id="chatRoomHint">Только про эту игру. Сообщения общие, если облако работает.</p>
+        <div id="gameChatLog" style="height:min(42vh,360px);overflow:auto;background:#0d0d0d;border:1px solid #333;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;margin:10px 0"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <input type="text" id="gameChatInput" maxlength="200" placeholder="Напиши в чат игры…" style="flex:1;min-width:160px;padding:10px 12px;border-radius:10px;border:1px solid #3a3a3a;background:#111;color:#fff;font:inherit">
+          <button type="button" class="btn btn-go" id="gameChatSend">Отправить</button>
+        </div>
+        <p class="hint" id="gameChatNote" style="margin-top:8px">Другие не видят сообщение, если облако недоступно — тогда только на этом телефоне/ПК.</p>
+      </div>
+    </div>
+  </div>
+
   <div id="panel-reviews" class="panel">
     <div class="content">
       <div class="card">
-        <h2>💬 Отзывы</h2>
+        <h2>⭐ Отзывы об этой игре</h2>
         <div id="reviewsList"></div>
       </div>
       <div class="card">
         <h2>✍️ Написать отзыв</h2>
+        <p class="hint" id="reviewAsWho">Имя возьмётся из входа на главной (или «Игрок»).</p>
         <form class="form" id="reviewForm">
-          <label>Имя *
-            <input type="text" name="who" required maxlength="40" placeholder="Как тебя зовут">
-          </label>
           <label>Оценка *
             <select name="stars" required>
               <option value="5">★★★★★ 5</option>
@@ -229,7 +244,7 @@
           <div class="row">
             <button type="submit" class="btn btn-go">💬 Опубликовать</button>
           </div>
-          <p class="hint" id="reviewNote">Отзыв сохранится на этом устройстве и появится во вкладке.</p>
+          <p class="hint" id="reviewNote">Отзыв привязан к этой игре. Для «у всех» нужно облако (как на главной).</p>
         </form>
       </div>
     </div>
@@ -425,24 +440,105 @@
     }
   });
 
-  document.getElementById("reviewForm").addEventListener("submit", (e) => {
+  function userNick() {
+    try {
+      const u = JSON.parse(localStorage.getItem("portal_user_v1") || "null");
+      if (u && u.name) return String(u.name).slice(0, 40);
+    } catch (_) {}
+    return "Игрок";
+  }
+  const whoEl = document.getElementById("reviewAsWho");
+  if (whoEl) whoEl.textContent = "Отзыв от: " + userNick() + " (ник с главной страницы)";
+
+  document.getElementById("reviewForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const rev = {
-      id: "r_" + Date.now(),
-      who: String(fd.get("who") || "").trim(),
+      id: "r_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+      who: userNick(),
       game: meta.id || gameId,
       stars: Number(fd.get("stars") || 5),
       text: String(fd.get("text") || "").trim(),
       date: new Date().toISOString()
     };
-    if (!rev.who || !rev.text) return;
+    if (!rev.text) return;
     const list = loadUserReviews();
     list.unshift(rev);
     saveUserReviews(list.slice(0, 150));
+    // try same cloud as main reviews
+    let shared = false;
+    try {
+      let url = "https://crudcrud.com/api/69a6d57b5d794a17abf2b3ee0069358f/reviews";
+      try {
+        const cfg = await fetch("data/reviews-config.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null);
+        if (cfg && cfg.sharedUrl) url = cfg.sharedUrl;
+      } catch (_) {}
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(rev)
+      });
+      shared = res.ok;
+    } catch (_) {}
     e.target.reset();
-    document.getElementById("reviewNote").textContent = "✅ Отзыв добавлен!";
+    document.getElementById("reviewNote").textContent = shared
+      ? "✅ Отзыв в облаке — другие могут увидеть (обнови у друга: Ctrl+F5)"
+      : "⚠️ Сохранено только на этом устройстве — облако не ответило";
     renderReviews();
+  });
+
+  /* —— per-game chat —— */
+  const room = "game:" + gameId;
+  const chatLog = document.getElementById("gameChatLog");
+  const chatHint = document.getElementById("chatRoomHint");
+
+  function chatBubble(who, text, mine, onlyHere) {
+    if (!chatLog) return;
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;flex-direction:column;gap:2px;max-width:92%;" + (mine ? "align-self:flex-end" : "");
+    row.innerHTML =
+      "<div style='font-size:11px;font-weight:800;color:" + (mine ? "#93c5fd" : "#fbbf24") + "'>" +
+      esc(who) + (onlyHere ? " · только здесь" : "") + "</div>" +
+      "<div style='background:" + (mine ? "#1e3a5f" : "#1a1a1a") + ";border:1px solid #333;border-radius:12px;padding:8px 12px;font-size:14px;color:#eee'>" +
+      esc(text) + "</div>";
+    chatLog.appendChild(row);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  async function loadGameChat() {
+    if (!chatLog) return;
+    chatLog.innerHTML = "";
+    if (!window.PortalChat) {
+      chatBubble("Система", "chat-shared.js не загрузился", false, true);
+      return;
+    }
+    const list = await PortalChat.list(room);
+    list.slice().reverse().forEach(function (m) {
+      chatBubble(m.who || "Игрок", m.text, false, !m.shared);
+    });
+    if (!list.length) chatBubble("Система", "Пока пусто — напиши первым про эту игру!", false, true);
+  }
+
+  document.getElementById("gameChatSend")?.addEventListener("click", async () => {
+    const inp = document.getElementById("gameChatInput");
+    const text = String((inp && inp.value) || "").trim();
+    if (!text || !window.PortalChat) return;
+    if (inp) inp.value = "";
+    const who = userNick();
+    chatBubble("👤 " + who, text, true, false);
+    const r = await PortalChat.send(room, who, text, { role: "user" });
+    const note = document.getElementById("gameChatNote");
+    if (note) {
+      note.textContent = r.shared
+        ? "✅ Ушло в общий чат игры — другие увидят после обновления"
+        : "⚠️ Только на этом устройстве. Почему: облако (crudcrud) не ответило — другие не видят.";
+    }
+  });
+  document.getElementById("gameChatInput")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("gameChatSend")?.click();
+    }
   });
 
   // Try load igroutka title from session if only id given
@@ -459,10 +555,21 @@
   mountPlay();
   renderControls();
   renderReviews();
+  if (chatHint) chatHint.textContent = "Чат только для «" + (meta.title || gameId) + "». Общий для всех, если облако работает.";
+  try { loadGameChat(); } catch (_) {}
 
-  // open tab from hash #reviews
+  // reload chat when opening tab
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (btn.getAttribute("data-tab") === "chat") {
+        try { loadGameChat(); } catch (_) {}
+      }
+    });
+  });
+
+  // open tab from hash #reviews / #chat
   const hash = (location.hash || "").replace("#", "");
-  if (hash && ["play", "desc", "reviews", "controls"].indexOf(hash) >= 0) {
+  if (hash && ["play", "desc", "chat", "reviews", "controls"].indexOf(hash) >= 0) {
     const btn = document.querySelector('.tab[data-tab="' + hash + '"]');
     if (btn) btn.click();
   }
