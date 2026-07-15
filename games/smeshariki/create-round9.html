@@ -37,7 +37,7 @@
     }
     .step-pill.on { background: var(--yellow); color: #1a1000; border-color: #e0b000; }
     .step-pill.done { background: #2a4a30; color: #9fdfb0; border-color: #3a6a40; }
-    main { flex: 1; padding: 16px; max-width: 960px; margin: 0 auto; width: 100%; }
+    main { flex: 1; padding: 16px; max-width: 980px; margin: 0 auto; width: 100%; }
     .panel { display: none; }
     .panel.on { display: block; }
     .card {
@@ -47,7 +47,7 @@
     .card h2 { color: var(--yellow); font-size: 1.15rem; margin-bottom: 8px; }
     .card p, .hint { color: var(--muted); font-size: 14px; line-height: 1.45; margin-bottom: 10px; }
     label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; font-weight: 700; }
-    input[type="text"], select {
+    input[type="text"] {
       width: 100%; max-width: 360px; padding: 10px 12px; border-radius: 10px;
       border: 1px solid #4a3a65; background: #12081c; color: #fff; font: inherit;
     }
@@ -77,22 +77,20 @@
     .preview-box {
       width: 180px; height: 180px; border-radius: 20px;
       background: linear-gradient(160deg, #2a1848, #0e0818);
-      border: 2px solid var(--line); display: grid; place-items: center; position: relative;
+      border: 2px solid var(--line); display: grid; place-items: center;
     }
     .round-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px;
     }
-    @media (max-width: 560px) {
-      .round-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+    @media (max-width: 560px) { .round-grid { grid-template-columns: repeat(2, 1fr); } }
     .char-card {
       border: 2px solid var(--line); border-radius: 16px; padding: 12px 8px 10px;
       background: #1a0f2c; cursor: pointer; text-align: center; transition: .15s;
-      min-height: 150px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      min-height: 160px; display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
     .char-card:hover { border-color: var(--sky); transform: translateY(-2px); }
-    .char-card.yours {
-      border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(255,204,0,.25);
+    .char-card.replaced {
+      border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(255,204,0,.3);
       background: linear-gradient(160deg, #3a2808, #1a0f2c);
     }
     .char-card .art {
@@ -107,94 +105,106 @@
     }
     .splash {
       position: fixed; inset: 0; z-index: 100; display: none;
-      background: radial-gradient(circle at 50% 40%, #4a2080, #0a0414 70%);
-      flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-      text-align: center; padding: 24px;
+      background: #0a0414; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; text-align: center; padding: 24px;
     }
     .splash.on { display: flex; }
-    .splash h2 {
-      font-size: clamp(1.6rem, 5vw, 2.4rem); color: var(--yellow);
-      text-shadow: 0 4px 20px rgba(255,200,0,.4); animation: pulse 1s ease-in-out infinite;
+    .splash .splash-art {
+      width: min(420px, 88vw); max-height: 48vh; object-fit: contain;
+      border-radius: 16px; border: 3px solid #ffcc00;
+      box-shadow: 0 12px 40px rgba(255,180,0,.25); background: #1a1028;
+      animation: popIn .6s ease;
     }
-    .splash p { color: #ddd; font-size: 1.05rem; max-width: 420px; }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.06); }
+    .splash h2 {
+      font-size: clamp(1.4rem, 4.5vw, 2.2rem); color: var(--yellow);
+      text-shadow: 0 4px 20px rgba(255,200,0,.4);
+    }
+    .splash p { color: #ddd; font-size: 1.05rem; max-width: 440px; }
+    @keyframes popIn {
+      from { transform: scale(.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
     #stageCanvas {
       width: 100%; max-width: 720px; height: auto; display: block; margin: 0 auto;
       border-radius: 16px; border: 2px solid var(--line); background: #0a0614;
-      touch-action: none;
     }
-    .stage-bar {
-      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px;
+    .stage-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+    #ruffleBox {
+      width: 100%; min-height: 360px; height: min(55vh, 520px); border-radius: 12px;
+      overflow: hidden; background: #000; border: 1px solid #4a3a65; margin-top: 8px;
     }
-    .ext-box {
-      border: 1px dashed #5a4a70; border-radius: 12px; padding: 12px; margin-top: 10px;
-      background: #140a22;
+    #ruffleBox ruffle-player, #ruffleBox object, #ruffleBox embed {
+      width: 100% !important; height: 100% !important;
     }
-    .ext-box iframe {
-      width: 100%; min-height: 420px; height: 55vh; border: 0; border-radius: 10px; background: #000;
+    .orig-note {
+      font-size: 12px; color: #8a7a9a; margin-top: 6px;
     }
   </style>
+  <!-- Ruffle: проигрыватель Flash-оригинала -->
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 </head>
 <body>
   <div class="top">
     <a class="back" href="../../index.html">⬅ На сайт</a>
     <h1>🟡 Создай Смешарика · Круглая девятка</h1>
   </div>
-  <div class="steps" id="steps">
-    <span class="step-pill on" data-s="1">1. Создай</span>
-    <span class="step-pill" data-s="2">2. Круглая 9</span>
-    <span class="step-pill" data-s="3">3. Анимация</span>
+  <div class="steps">
+    <span class="step-pill on" data-s="1">1. Создай / оригинал</span>
+    <span class="step-pill" data-s="2">2. Замени в девятке</span>
+    <span class="step-pill" data-s="3">3. Мотор!</span>
   </div>
 
   <main>
-    <!-- STEP 1: CREATE -->
+    <!-- STEP 1 -->
     <section class="panel on" id="panel-create">
       <div class="card">
         <h2>1. Создай своего Смешарика</h2>
-        <p>Это <b>твой персонаж</b>. Потом в «Круглой девятке» он встанет вместо одного из героев. Выбери, кого хочешь «скопировать» по анимации — и твой перс будет двигаться как он.</p>
+        <p>
+          Собери <b>своего персонажа</b> (цвет, лицо, имя). Потом в «Круглой девятке» выберешь,
+          <b>кого заменить</b> — и твой перс будет делать <b>движения именно того героя</b>.
+        </p>
 
-        <label>Имя персонажа</label>
-        <input type="text" id="heroName" maxlength="24" placeholder="Например: Шустрик" value="Мой Смешарик">
+        <label>Имя</label>
+        <input type="text" id="heroName" maxlength="24" value="Мой Смешарик">
 
         <label>Цвет</label>
         <div class="colors" id="colorRow"></div>
 
-        <label>Лицо / стиль</label>
+        <label>Лицо</label>
         <div class="face-row" id="faceRow"></div>
 
-        <label>Короткий слоган (как в «Создай Смешарика»)</label>
-        <input type="text" id="heroPhrase" maxlength="60" placeholder="Ура, я из Круглой компании!" value="Я из Круглой девятки!">
+        <label>Фраза</label>
+        <input type="text" id="heroPhrase" maxlength="60" value="Я из Круглой девятки!">
 
         <div class="preview-wrap">
           <div class="preview-box"><canvas id="prevCanvas" width="160" height="160"></canvas></div>
           <div>
-            <p class="hint" id="createHint">Настрой внешность и жми «В круглую девятку».</p>
-            <button type="button" class="btn btn-y" id="btnToRound">▶ В круглую девятку</button>
+            <button type="button" class="btn btn-y" id="btnToRound">▶ В круглую девятку — кого заменить?</button>
             <button type="button" class="btn btn-sec" id="btnResetCreate">Сбросить</button>
           </div>
         </div>
+      </div>
 
-        <div class="ext-box">
-          <p class="hint" style="margin-bottom:8px">
-            Оригинал «Создай Смешарика» (igru.net) — можно открыть для вдохновения. Наш герой для девятки — тот, кого ты собрал выше.
-          </p>
-          <button type="button" class="btn btn-sec" id="btnShowExt">Показать оригинал в окне</button>
-          <a class="btn btn-sec" href="https://igru.net/igry-smeshariki/14809-igra-sozdaj-smesharika.html" target="_blank" rel="noopener">↗ На igru.net</a>
-          <div id="extMount" hidden style="margin-top:10px"></div>
-        </div>
+      <div class="card">
+        <h2>Оригинал «Создай Смешарика» (Flash / Ruffle)</h2>
+        <p class="hint">
+          Скрипт с igru.net / 8games: <code>igra-sozdaj-smesharika.swf</code>.
+          Здесь можно пособирать детали как в оригинале. Для девятки используем героя сверху.
+        </p>
+        <button type="button" class="btn btn-go" id="btnLoadSwf">▶ Запустить оригинал</button>
+        <a class="btn btn-sec" href="https://igru.net/igry-smeshariki/14809-igra-sozdaj-smesharika.html" target="_blank" rel="noopener">↗ igru.net</a>
+        <div id="ruffleBox" hidden></div>
+        <p class="orig-note" id="ruffleNote">Нажми «Запустить оригинал» — загрузится SWF через Ruffle.</p>
       </div>
     </section>
 
-    <!-- STEP 2: ROUND 9 -->
+    <!-- STEP 2: REPLACE -->
     <section class="panel" id="panel-round">
       <div class="card">
-        <h2>2. Круглая девятка</h2>
+        <h2>2. Кого заменить в Круглой девятке?</h2>
         <p>
-          Классические 9 героев. На месте одного — <b>твой персонаж</b>.
-          Выбери <b>кого угодно</b> (себя или героя): запустится заставка, и <b>твой перс</b> сделает анимацию в стиле выбранного.
+          Нажми на героя — <b>вместо него</b> встанет <span id="yourNameLabel">твой персонаж</span>.
+          Запустится <b>заставка</b>, и твой перс будет делать <b>движения выбранного (заменённого)</b>.
         </p>
         <div class="round-grid" id="roundGrid"></div>
         <div style="margin-top:14px">
@@ -203,15 +213,15 @@
       </div>
     </section>
 
-    <!-- STEP 3: STAGE -->
+    <!-- STEP 3 -->
     <section class="panel" id="panel-stage">
       <div class="card">
         <h2>3. Мотор! · <span id="stageTitle">Анимация</span></h2>
-        <p id="stageDesc" class="hint">Твой персонаж повторяет стиль выбранного героя.</p>
+        <p id="stageDesc" class="hint">Твой персонаж двигается как заменённый герой.</p>
         <canvas id="stageCanvas" width="720" height="420"></canvas>
         <div class="stage-bar">
-          <button type="button" class="btn btn-y" id="btnReplay">↻ Ещё раз заставка</button>
-          <button type="button" class="btn btn-go" id="btnAgainRound">Круглая 9 снова</button>
+          <button type="button" class="btn btn-y" id="btnReplay">↻ Заставка снова</button>
+          <button type="button" class="btn btn-go" id="btnAgainRound">Выбрать другого</button>
           <button type="button" class="btn btn-sec" id="btnEditHero">Изменить героя</button>
           <a class="btn btn-sec" href="index.html">Смешарики: битва</a>
         </div>
@@ -220,17 +230,19 @@
   </main>
 
   <div class="splash" id="splash" aria-live="polite">
-    <div style="font-size:3rem" id="splashEmoji">🟡</div>
-    <h2 id="splashTitle">Круглая девятка!</h2>
-    <p id="splashText">Загружаем анимацию…</p>
-    <div style="width:min(280px,80vw);height:8px;background:#2a1a40;border-radius:99px;overflow:hidden;margin-top:8px">
-      <div id="splashBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffcc00,#ff6bb5);transition:width .2s"></div>
+    <img class="splash-art" id="splashImg" src="create-original/splash.jpg" alt="Заставка Создай Смешарика"
+         onerror="this.style.display='none'">
+    <div style="font-size:2.4rem" id="splashEmoji">🟡</div>
+    <h2 id="splashTitle">Заставка…</h2>
+    <p id="splashText">Готовим анимацию</p>
+    <div style="width:min(280px,80vw);height:8px;background:#2a1a40;border-radius:99px;overflow:hidden">
+      <div id="splashBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffcc00,#ff6bb5);transition:width .15s"></div>
     </div>
   </div>
 
   <script>
 (function () {
-  const STORAGE = "portal_smesh_create_v1";
+  const STORAGE = "portal_smesh_create_v2";
   const COLORS = [
     "#4fc3f7", "#ff6bb5", "#ffb74d", "#b39ddb", "#81c784",
     "#ef5350", "#90a4ae", "#f48fb1", "#ffeb3b", "#ab47bc", "#8d6e63", "#26c6da"
@@ -243,31 +255,37 @@
     { id: "think", label: "🤔 Думает" }
   ];
 
-  /** Круглая девятка — классика + слот «твой» */
+  /**
+   * Круглая девятка + уникальные движения (как «характер» героя).
+   * Когда заменяем героя — наш перс играет anim этого героя.
+   */
   const ROUND9 = [
-    { id: "krosh", name: "Крош", emoji: "🐰", color: "#4fc3f7", img: "images/krosh.png", anim: "bounce", phrase: "Погнали!" },
-    { id: "yozhik", name: "Ёжик", emoji: "🦔", color: "#b39ddb", img: "images/yozhik.png", anim: "spin", phrase: "Тише… красиво." },
-    { id: "nyusha", name: "Нюша", emoji: "🐷", color: "#ff80ab", img: null, anim: "sway", phrase: "Как мило!" },
-    { id: "barash", name: "Бараш", emoji: "🐑", color: "#f48fb1", img: "images/barash.png", anim: "poet", phrase: "Ода о дружбе…" },
-    { id: "kopatych", name: "Копатыч", emoji: "🐻", color: "#8d6e63", img: "images/kopatych.png", anim: "stomp", phrase: "Мёд и сила!" },
-    { id: "losyash", name: "Лосяш", emoji: "🦌", color: "#ffb74d", img: "images/losyash.png", anim: "think", phrase: "По науке!" },
-    { id: "pin", name: "Пин", emoji: "🐧", color: "#90a4ae", img: "images/pin.png", anim: "waddle", phrase: "Технология!" },
-    { id: "sovunya", name: "Совунья", emoji: "🦉", color: "#ce93d8", img: null, anim: "nod", phrase: "Здоровье прежде всего!" },
-    { id: "karych", name: "Кар-Карыч", emoji: "🐦", color: "#5c6bc0", img: null, anim: "bow", phrase: "Браво, публика!" }
+    { id: "krosh", name: "Крош", emoji: "🐰", color: "#4fc3f7", img: "images/krosh.png", anim: "bounce",
+      moveName: "прыжки", phrase: "Погнали!" },
+    { id: "yozhik", name: "Ёжик", emoji: "🦔", color: "#b39ddb", img: "images/yozhik.png", anim: "spin",
+      moveName: "кружение", phrase: "Тише… красиво." },
+    { id: "nyusha", name: "Нюша", emoji: "🐷", color: "#ff80ab", img: null, anim: "sway",
+      moveName: "покачивание", phrase: "Как мило!" },
+    { id: "barash", name: "Бараш", emoji: "🐑", color: "#f48fb1", img: "images/barash.png", anim: "poet",
+      moveName: "поэтичный ритм", phrase: "Ода о дружбе…" },
+    { id: "kopatych", name: "Копатыч", emoji: "🐻", color: "#8d6e63", img: "images/kopatych.png", anim: "stomp",
+      moveName: "топот силача", phrase: "Мёд и сила!" },
+    { id: "losyash", name: "Лосяш", emoji: "🦌", color: "#ffb74d", img: "images/losyash.png", anim: "think",
+      moveName: "учёные кивки", phrase: "По науке!" },
+    { id: "pin", name: "Пин", emoji: "🐧", color: "#90a4ae", img: "images/pin.png", anim: "waddle",
+      moveName: "перевалка", phrase: "Технология!" },
+    { id: "sovunya", name: "Совунья", emoji: "🦉", color: "#ce93d8", img: null, anim: "nod",
+      moveName: "мудрые кивки", phrase: "Здоровье прежде всего!" },
+    { id: "karych", name: "Кар-Карыч", emoji: "🐦", color: "#5c6bc0", img: null, anim: "bow",
+      moveName: "театральный поклон", phrase: "Браво, публика!" }
   ];
 
-  /** Кто из 9 заменяется «твоим» (по умолчанию Кар-Карыч — 9-й) */
-  let replaceId = "karych";
-
   let hero = loadHero() || {
-    name: "Мой Смешарик",
-    color: COLORS[0],
-    face: "happy",
-    phrase: "Я из Круглой девятки!"
+    name: "Мой Смешарик", color: COLORS[0], face: "happy", phrase: "Я из Круглой девятки!"
   };
-  let selectedStyle = null; // character from ROUND9 whose anim we copy
+  /** кого заменили — от него берём anim */
+  let replaced = null;
   let animRaf = 0;
-  let stageT = 0;
 
   const prevC = document.getElementById("prevCanvas");
   const prevX = prevC.getContext("2d");
@@ -294,93 +312,32 @@
     document.getElementById("panel-create").classList.toggle("on", n === 1);
     document.getElementById("panel-round").classList.toggle("on", n === 2);
     document.getElementById("panel-stage").classList.toggle("on", n === 3);
-    if (n === 2) renderRound();
+    if (n === 2) {
+      document.getElementById("yourNameLabel").textContent = hero.name || "твой персонаж";
+      renderRound();
+    }
     if (n === 3) startStage();
   }
 
-  /* —— draw ball hero —— */
-  function drawHero(ctx, x, y, r, h, t, animStyle) {
-    t = t || 0;
-    animStyle = animStyle || "idle";
-    ctx.save();
-    ctx.translate(x, y);
-
-    var bounce = 0, rot = 0, scaleX = 1, scaleY = 1, lean = 0;
-    if (animStyle === "bounce") bounce = Math.abs(Math.sin(t * 8)) * r * 0.18;
-    if (animStyle === "spin") rot = t * 4;
-    if (animStyle === "sway") lean = Math.sin(t * 5) * 0.25;
-    if (animStyle === "poet") { bounce = Math.sin(t * 3) * r * 0.06; lean = Math.sin(t * 2) * 0.12; }
-    if (animStyle === "stomp") bounce = Math.max(0, Math.sin(t * 10)) * r * 0.22;
-    if (animStyle === "think") { bounce = Math.sin(t * 2) * r * 0.04; rot = Math.sin(t * 1.5) * 0.08; }
-    if (animStyle === "waddle") { lean = Math.sin(t * 7) * 0.35; bounce = Math.abs(Math.sin(t * 7)) * r * 0.08; }
-    if (animStyle === "nod") { rot = Math.sin(t * 6) * 0.2; bounce = Math.abs(Math.sin(t * 6)) * r * 0.05; }
-    if (animStyle === "bow") { rot = Math.min(0.55, Math.max(0, Math.sin(t * 2.2))) * 0.9; bounce = rot * r * 0.15; }
-    if (animStyle === "idle") bounce = Math.sin(t * 3) * r * 0.04;
-
-    // squash
-    if (animStyle === "bounce" || animStyle === "stomp") {
-      scaleY = 1 - bounce / (r * 2.2);
-      scaleX = 1 + (1 - scaleY) * 0.35;
-    }
-
-    ctx.translate(0, -bounce);
-    ctx.rotate(rot + lean);
-    ctx.scale(scaleX, scaleY);
-
-    // shadow
-    ctx.save();
-    ctx.scale(1, 0.28);
-    ctx.beginPath();
-    ctx.arc(0, r * 3.2 + bounce * 2, r * 0.85, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(0,0,0,0.28)";
-    ctx.fill();
-    ctx.restore();
-
-    // body
-    var g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r);
-    g.addColorStop(0, lighten(h.color, 0.35));
-    g.addColorStop(1, h.color);
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = "rgba(0,0,0,0.2)";
-    ctx.stroke();
-
-    // ears for krosh-like
-    if (animStyle === "bounce" || h.face === "cool") {
-      ctx.fillStyle = h.color;
-      ctx.beginPath();
-      ctx.ellipse(-r * 0.45, -r * 0.95, r * 0.18, r * 0.42, -0.2, 0, Math.PI * 2);
-      ctx.ellipse(r * 0.45, -r * 0.95, r * 0.18, r * 0.42, 0.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // face
-    drawFace(ctx, r, h.face, t);
-
-    // name tag
-    ctx.restore();
-    ctx.save();
-    ctx.font = "bold 14px Segoe UI,sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ffcc00";
-    ctx.fillText(h.name || "Герой", x, y + r + 22);
-    ctx.restore();
+  function lighten(hex, a) {
+    var c = hex.replace("#", "");
+    if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+    var r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
+    r = Math.min(255, Math.round(r + (255 - r) * a));
+    g = Math.min(255, Math.round(g + (255 - g) * a));
+    b = Math.min(255, Math.round(b + (255 - b) * a));
+    return "rgb(" + r + "," + g + "," + b + ")";
   }
 
   function drawFace(ctx, r, face, t) {
     var eyeY = -r * 0.12;
     var eyeDx = r * 0.28;
     var blink = (Math.sin(t * 2.5) > 0.96) ? 0.15 : 1;
-
     ctx.fillStyle = "#fff";
     ctx.beginPath();
     ctx.ellipse(-eyeDx, eyeY, r * 0.16, r * 0.18 * blink, 0, 0, Math.PI * 2);
     ctx.ellipse(eyeDx, eyeY, r * 0.16, r * 0.18 * blink, 0, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.fillStyle = "#222";
     var look = Math.sin(t * 2) * r * 0.03;
     if (face === "wink" && Math.floor(t * 2) % 4 === 0) {
@@ -396,46 +353,130 @@
       ctx.arc(eyeDx + look, eyeY, r * 0.07, 0, Math.PI * 2);
       ctx.fill();
     }
-
     ctx.strokeStyle = "#333";
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.beginPath();
-    if (face === "happy" || face === "cool") {
-      ctx.arc(0, r * 0.22, r * 0.28, 0.15, Math.PI - 0.15);
-    } else if (face === "wow") {
+    if (face === "wow") {
       ctx.ellipse(0, r * 0.28, r * 0.12, r * 0.16, 0, 0, Math.PI * 2);
       ctx.stroke();
-      return;
     } else if (face === "think") {
       ctx.moveTo(-r * 0.15, r * 0.28);
       ctx.quadraticCurveTo(0, r * 0.18, r * 0.2, r * 0.3);
+      ctx.stroke();
     } else {
       ctx.arc(0, r * 0.2, r * 0.25, 0.2, Math.PI - 0.2);
+      ctx.stroke();
     }
-    ctx.stroke();
-
     if (face === "cool") {
       ctx.fillStyle = "rgba(20,20,40,0.85)";
       ctx.fillRect(-r * 0.48, eyeY - r * 0.12, r * 0.96, r * 0.18);
     }
   }
 
-  function lighten(hex, a) {
-    var c = hex.replace("#", "");
-    if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
-    var r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
-    r = Math.min(255, Math.round(r + (255 - r) * a));
-    g = Math.min(255, Math.round(g + (255 - g) * a));
-    b = Math.min(255, Math.round(b + (255 - b) * a));
-    return "rgb(" + r + "," + g + "," + b + ")";
+  /** anim = стиль движений заменённого персонажа */
+  function drawHero(ctx, x, y, r, h, t, animStyle) {
+    t = t || 0;
+    animStyle = animStyle || "idle";
+    ctx.save();
+    ctx.translate(x, y);
+
+    var bounce = 0, rot = 0, scaleX = 1, scaleY = 1, lean = 0, hopX = 0;
+    if (animStyle === "bounce") {
+      bounce = Math.abs(Math.sin(t * 9)) * r * 0.28;
+      hopX = Math.sin(t * 4.5) * r * 0.12;
+    }
+    if (animStyle === "spin") rot = t * 5.5;
+    if (animStyle === "sway") {
+      lean = Math.sin(t * 5.5) * 0.38;
+      bounce = Math.abs(Math.sin(t * 5.5)) * r * 0.06;
+    }
+    if (animStyle === "poet") {
+      bounce = Math.sin(t * 2.8) * r * 0.08;
+      lean = Math.sin(t * 1.8) * 0.18;
+      rot = Math.sin(t * 1.2) * 0.1;
+    }
+    if (animStyle === "stomp") {
+      bounce = Math.max(0, Math.sin(t * 11)) * r * 0.32;
+      scaleY = 1 - bounce / (r * 2.5);
+      scaleX = 1 + (1 - scaleY) * 0.45;
+    }
+    if (animStyle === "think") {
+      bounce = Math.sin(t * 2) * r * 0.05;
+      rot = Math.sin(t * 1.4) * 0.12;
+      lean = Math.sin(t * 0.9) * 0.08;
+    }
+    if (animStyle === "waddle") {
+      lean = Math.sin(t * 8) * 0.45;
+      hopX = Math.sin(t * 8) * r * 0.15;
+      bounce = Math.abs(Math.sin(t * 8)) * r * 0.1;
+    }
+    if (animStyle === "nod") {
+      rot = Math.sin(t * 7) * 0.28;
+      bounce = Math.abs(Math.sin(t * 7)) * r * 0.07;
+    }
+    if (animStyle === "bow") {
+      var b = Math.min(1, Math.max(0, Math.sin(t * 2.0)));
+      rot = b * 0.85;
+      bounce = b * r * 0.2;
+    }
+    if (animStyle === "idle") bounce = Math.sin(t * 3) * r * 0.04;
+
+    if (animStyle === "bounce") {
+      scaleY = 1 - bounce / (r * 2.8);
+      scaleX = 1 + (1 - scaleY) * 0.4;
+    }
+
+    ctx.translate(hopX, -bounce);
+    ctx.rotate(rot + lean);
+    ctx.scale(scaleX, scaleY);
+
+    // shadow
+    ctx.save();
+    ctx.scale(1, 0.28);
+    ctx.beginPath();
+    ctx.arc(0, r * 3.2 + bounce * 2, r * 0.85, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.fill();
+    ctx.restore();
+
+    // ears (крош-стиль)
+    if (animStyle === "bounce" || h.face === "cool") {
+      ctx.fillStyle = h.color;
+      ctx.beginPath();
+      ctx.ellipse(-r * 0.45, -r * 0.95, r * 0.18, r * 0.42, -0.2, 0, Math.PI * 2);
+      ctx.ellipse(r * 0.45, -r * 0.95, r * 0.18, r * 0.42, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    var g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r);
+    g.addColorStop(0, lighten(h.color, 0.35));
+    g.addColorStop(1, h.color);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,0.2)";
+    ctx.stroke();
+
+    drawFace(ctx, r, h.face, t);
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = "bold 14px Segoe UI,sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffcc00";
+    ctx.fillText(h.name || "Герой", x, y + r + 22);
+    ctx.restore();
   }
 
   function paintPreview() {
     prevX.clearRect(0, 0, 160, 160);
     prevX.fillStyle = "#0e0818";
     prevX.fillRect(0, 0, 160, 160);
-    drawHero(prevX, 80, 78, 52, hero, performance.now() / 1000, "idle");
+    var a = replaced ? replaced.anim : "idle";
+    drawHero(prevX, 80, 78, 52, hero, performance.now() / 1000, a);
   }
 
   function initCreateUI() {
@@ -446,7 +487,6 @@
       b.type = "button";
       b.className = "swatch" + (c === hero.color ? " on" : "");
       b.style.background = c;
-      b.title = c;
       b.onclick = function () {
         hero.color = c;
         row.querySelectorAll(".swatch").forEach(function (x) { x.classList.remove("on"); });
@@ -473,7 +513,6 @@
     document.getElementById("heroName").value = hero.name || "";
     document.getElementById("heroPhrase").value = hero.phrase || "";
     paintPreview();
-    // soft preview loop
     setInterval(paintPreview, 50);
   }
 
@@ -494,40 +533,60 @@
   };
   document.getElementById("btnResetCreate").onclick = function () {
     hero = { name: "Мой Смешарик", color: COLORS[0], face: "happy", phrase: "Я из Круглой девятки!" };
+    replaced = null;
     saveHero(); initCreateUI();
   };
   document.getElementById("btnBackCreate").onclick = function () { setStep(1); };
   document.getElementById("btnEditHero").onclick = function () { cancelAnim(); setStep(1); };
   document.getElementById("btnAgainRound").onclick = function () { cancelAnim(); setStep(2); };
 
-  document.getElementById("btnShowExt").onclick = function () {
-    var m = document.getElementById("extMount");
-    if (!m.hidden && m.innerHTML) { m.hidden = true; m.innerHTML = ""; return; }
-    m.hidden = false;
-    // sandbox: block popups/ads from third-party
-    m.innerHTML =
-      '<iframe title="Создай Смешарика" src="https://st.8games.net/12/igra-sozdaj-smesharika/" ' +
-      'sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-presentation" ' +
-      'referrerpolicy="no-referrer" allow="fullscreen; autoplay"></iframe>' +
-      '<p class="hint" style="margin-top:8px">Если окно пустое (блокировка сайта) — открой оригинал кнопкой «На igru.net».</p>';
+  /* —— Ruffle / original SWF —— */
+  var ruffleLoaded = false;
+  document.getElementById("btnLoadSwf").onclick = function () {
+    var box = document.getElementById("ruffleBox");
+    var note = document.getElementById("ruffleNote");
+    box.hidden = false;
+    if (ruffleLoaded) return;
+    note.textContent = "Загрузка Flash через Ruffle…";
+    try {
+      if (!window.RufflePlayer) {
+        note.textContent = "Ruffle не загрузился (сеть). Открой оригинал на igru.net.";
+        return;
+      }
+      window.RufflePlayer = window.RufflePlayer || {};
+      var ruffle = window.RufflePlayer.newest();
+      var player = ruffle.createPlayer();
+      player.style.width = "100%";
+      player.style.height = "100%";
+      box.innerHTML = "";
+      box.appendChild(player);
+      player.load("create-original/igra-sozdaj-smesharika.swf").then(function () {
+        note.textContent = "Оригинал запущен (SWF). Собери детали, затем настрой героя сверху для девятки.";
+        ruffleLoaded = true;
+      }).catch(function (err) {
+        note.textContent = "Не удалось загрузить SWF. Открой igru.net. " + (err && err.message ? err.message : "");
+      });
+    } catch (e) {
+      note.textContent = "Ошибка Ruffle: " + e;
+    }
   };
 
   function renderRound() {
     var grid = document.getElementById("roundGrid");
     grid.innerHTML = "";
     ROUND9.forEach(function (ch) {
-      var isYours = ch.id === replaceId;
+      var isRep = replaced && replaced.id === ch.id;
       var card = document.createElement("button");
       card.type = "button";
-      card.className = "char-card" + (isYours ? " yours" : "");
+      card.className = "char-card" + (isRep ? " replaced" : "");
       var art = document.createElement("div");
       art.className = "art";
-      art.style.background = "radial-gradient(circle at 30% 30%," + lighten(isYours ? hero.color : ch.color, 0.25) + "," + (isYours ? hero.color : ch.color) + ")";
-      if (isYours) {
+      art.style.background = "radial-gradient(circle at 30% 30%," + lighten(isRep ? hero.color : ch.color, 0.25) + "," + (isRep ? hero.color : ch.color) + ")";
+      if (isRep) {
         var c = document.createElement("canvas");
         c.width = 88; c.height = 88;
         art.appendChild(c);
-        drawHero(c.getContext("2d"), 44, 46, 32, hero, 0, "idle");
+        drawHero(c.getContext("2d"), 44, 46, 32, hero, 0, ch.anim);
       } else if (ch.img) {
         var img = document.createElement("img");
         img.src = ch.img;
@@ -540,46 +599,47 @@
       }
       card.appendChild(art);
       var title = document.createElement("b");
-      title.textContent = isYours ? (hero.name || "Твой персонаж") : ch.name;
+      title.textContent = isRep ? (hero.name || "Твой") + " ← " + ch.name : ch.name;
       card.appendChild(title);
-      if (isYours) {
+      var sub = document.createElement("span");
+      sub.style.cssText = "font-size:11px;color:#a090b8";
+      sub.textContent = isRep ? "ТВОЙ · движения: " + ch.moveName : "заменить · " + ch.moveName;
+      card.appendChild(sub);
+      if (isRep) {
         var tag = document.createElement("span");
         tag.className = "tag";
-        tag.textContent = "ТВОЙ ПЕРСОНАЖ";
+        tag.textContent = "ЗАМЕНЁН";
         card.appendChild(tag);
-      } else {
-        var sub = document.createElement("span");
-        sub.style.cssText = "font-size:11px;color:#a090b8";
-        sub.textContent = "стиль: " + ch.anim;
-        card.appendChild(sub);
       }
-      card.onclick = function () { pickCharacter(ch); };
+      card.onclick = function () { replaceCharacter(ch); };
       grid.appendChild(card);
     });
   }
 
-  function pickCharacter(ch) {
-    selectedStyle = ch;
+  function replaceCharacter(ch) {
+    replaced = ch;
     runSplash(ch, function () { setStep(3); });
   }
 
   function runSplash(ch, done) {
     var sp = document.getElementById("splash");
     var bar = document.getElementById("splashBar");
+    var img = document.getElementById("splashImg");
+    if (img) {
+      img.style.display = "";
+      img.src = "create-original/splash.jpg";
+    }
     sp.classList.add("on");
-    document.getElementById("splashEmoji").textContent = ch.id === replaceId ? "⭐" : (ch.emoji || "🟡");
+    document.getElementById("splashEmoji").textContent = ch.emoji || "🟡";
     document.getElementById("splashTitle").textContent =
-      ch.id === replaceId
-        ? (hero.name || "Твой герой") + " выходит на сцену!"
-        : "Заставка: " + ch.name;
+      (hero.name || "Твой герой") + " вместо " + ch.name + "!";
     document.getElementById("splashText").textContent =
-      "«" + (hero.phrase || "Ура!") + "» · " +
-      (hero.name || "Твой персонаж") + " сделает анимацию «" + ch.anim + "» как у " +
-      (ch.id === replaceId ? "себя" : ch.name) + "!";
+      "Заставка · «" + (hero.phrase || "Ура!") + "» · движения: " + ch.moveName +
+      " (как у " + ch.name + ")";
     bar.style.width = "0%";
     var p = 0;
     var iv = setInterval(function () {
-      p += 4 + Math.random() * 8;
+      p += 5 + Math.random() * 7;
       if (p >= 100) {
         p = 100;
         clearInterval(iv);
@@ -587,17 +647,15 @@
         setTimeout(function () {
           sp.classList.remove("on");
           if (done) done();
-        }, 350);
-      } else {
-        bar.style.width = p + "%";
-      }
-    }, 60);
+        }, 400);
+      } else bar.style.width = p + "%";
+    }, 55);
   }
 
   document.getElementById("btnReplay").onclick = function () {
-    if (!selectedStyle) return;
+    if (!replaced) return;
     cancelAnim();
-    runSplash(selectedStyle, function () { startStage(); });
+    runSplash(replaced, function () { startStage(); });
   };
 
   function cancelAnim() {
@@ -607,29 +665,26 @@
 
   function startStage() {
     cancelAnim();
-    if (!selectedStyle) selectedStyle = ROUND9[0];
-    var styleName = selectedStyle.name;
-    var anim = selectedStyle.anim;
+    if (!replaced) replaced = ROUND9[0];
+    var ch = replaced;
     document.getElementById("stageTitle").textContent =
-      (hero.name || "Герой") + " · как " + styleName;
+      (hero.name || "Герой") + " · как " + ch.name;
     document.getElementById("stageDesc").textContent =
-      "Анимация «" + anim + "» в стиле " + styleName + ". Фраза: «" + (hero.phrase || "…") + "»";
+      "Заменили " + ch.name + " → движения «" + ch.moveName + "» (" + ch.anim + "). " +
+      "Фраза: «" + (hero.phrase || "…") + "»";
 
-    stageT = 0;
     var t0 = performance.now();
-    // preload style image if any
     var refImg = null;
-    if (selectedStyle.img) {
+    if (ch.img) {
       refImg = new Image();
-      refImg.src = selectedStyle.img;
+      refImg.src = ch.img;
     }
 
     function frame(now) {
-      stageT = (now - t0) / 1000;
+      var t = (now - t0) / 1000;
       var w = stageC.width, h = stageC.height;
       stageX.clearRect(0, 0, w, h);
 
-      // backdrop
       var grd = stageX.createLinearGradient(0, 0, 0, h);
       grd.addColorStop(0, "#1a0a35");
       grd.addColorStop(0.55, "#120820");
@@ -637,55 +692,50 @@
       stageX.fillStyle = grd;
       stageX.fillRect(0, 0, w, h);
 
-      // stage floor
       stageX.fillStyle = "rgba(255,204,0,0.08)";
       stageX.beginPath();
       stageX.ellipse(w / 2, h * 0.78, w * 0.38, 28, 0, 0, Math.PI * 2);
       stageX.fill();
 
-      // spotlight
       var spot = stageX.createRadialGradient(w / 2, h * 0.42, 20, w / 2, h * 0.45, 180);
       spot.addColorStop(0, "rgba(255,240,180,0.2)");
       spot.addColorStop(1, "rgba(0,0,0,0)");
       stageX.fillStyle = spot;
       stageX.fillRect(0, 0, w, h);
 
-      // reference mini (who we copy)
-      if (selectedStyle.id !== replaceId) {
-        stageX.save();
-        stageX.globalAlpha = 0.35;
-        if (refImg && refImg.complete && refImg.naturalWidth) {
-          stageX.drawImage(refImg, w - 120, 24, 80, 80);
-        } else {
-          stageX.font = "48px serif";
-          stageX.fillText(selectedStyle.emoji || "⭐", w - 100, 80);
-        }
-        stageX.restore();
-        stageX.fillStyle = "#b0a0c8";
-        stageX.font = "12px Segoe UI,sans-serif";
-        stageX.textAlign = "right";
-        stageX.fillText("стиль: " + styleName, w - 28, 118);
+      // reference: who we replaced
+      stageX.save();
+      stageX.globalAlpha = 0.4;
+      if (refImg && refImg.complete && refImg.naturalWidth) {
+        stageX.drawImage(refImg, w - 120, 24, 80, 80);
+      } else {
+        stageX.font = "48px serif";
+        stageX.fillText(ch.emoji || "⭐", w - 100, 80);
       }
+      stageX.restore();
+      stageX.fillStyle = "#b0a0c8";
+      stageX.font = "12px Segoe UI,sans-serif";
+      stageX.textAlign = "right";
+      stageX.fillText("был: " + ch.name, w - 28, 118);
+      stageX.fillText("движения: " + ch.moveName, w - 28, 136);
 
-      // title
       stageX.textAlign = "left";
       stageX.fillStyle = "#ffcc00";
       stageX.font = "bold 20px Segoe UI,sans-serif";
       stageX.fillText("МОТОР!", 28, 40);
       stageX.fillStyle = "#ddd";
       stageX.font = "14px Segoe UI,sans-serif";
-      stageX.fillText((hero.name || "Герой") + " играет как " + styleName, 28, 62);
+      stageX.fillText((hero.name || "Герой") + " двигается как " + ch.name, 28, 62);
 
-      // main hero
-      drawHero(stageX, w / 2, h * 0.52, 78, hero, stageT, anim);
+      // OUR hero with REPLACED character's animation
+      drawHero(stageX, w / 2, h * 0.52, 78, hero, t, ch.anim);
 
-      // phrase bubble
-      var phrase = hero.phrase || selectedStyle.phrase || "";
+      var phrase = hero.phrase || ch.phrase || "";
       if (phrase) {
         stageX.font = "bold 16px Segoe UI,sans-serif";
         var tw = stageX.measureText(phrase).width;
         var bx = w / 2 - tw / 2 - 16;
-        var by = h * 0.22;
+        var by = h * 0.2;
         stageX.fillStyle = "rgba(255,255,255,0.92)";
         roundRect(stageX, bx, by, tw + 32, 36, 12);
         stageX.fill();
