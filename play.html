@@ -162,7 +162,7 @@
       .tab { padding: 10px 12px; font-size: 13px; }
     }
   </style>
-  <script src="games/game-meta.js"></script>
+  <script src="games/game-meta.js?v=3"></script>
   <script src="chat-shared.js"></script>
 </head>
 <body>
@@ -285,14 +285,47 @@
 
   function resolveMeta() {
     const META = window.GAME_META || {};
+    // алиасы id (на случай старых ссылок / опечаток)
+    const aliases = {
+      smeshcreate: "smesh_create",
+      "smesh-create": "smesh_create",
+      create_smesharik: "smesh_create",
+      createsmesharik: "smesh_create",
+      "sozdaj-smesharika": "smesh_create",
+      smesh_round9: "smesh_create"
+    };
+    if (aliases[gameId]) gameId = aliases[gameId];
+
     if (META[gameId]) return META[gameId];
+
+    // запасной каталог, если game-meta.js не подгрузился / старый кэш
+    const FALLBACK = {
+      snake: { id: "snake", title: "Змейка", emoji: "🐍", genre: "Аркада", src: "minis/snake.html" },
+      pacman: { id: "pacman", title: "Пакман", emoji: "🟡", genre: "Аркада", src: "minis/pacman.html" },
+      mario: { id: "mario", title: "Марио", emoji: "🍄", genre: "Платформер", src: "minis/mario.html" },
+      smeshariki: { id: "smeshariki", title: "Смешарики", emoji: "🟡", genre: "Аркада", src: "smeshariki/index.html" },
+      smesh_create: {
+        id: "smesh_create",
+        title: "Создай Смешарика · Круглая девятка",
+        emoji: "🎨",
+        genre: "Смешарики",
+        rating: "4.8",
+        src: "smeshariki/create-round9.html",
+        desc: "Собери своего Смешарика — он в Круглой девятке. Выбери героя: заставка и анимация в его стиле."
+      },
+      tanks: { id: "tanks", title: "Танчики", emoji: "🪖", genre: "Аркада", src: "minis/tanks.html" },
+      labyrinth: { id: "labyrinth", title: "Лабиринт", emoji: "🌀", genre: "Аркада", src: "minis/labyrinth.html" },
+      battle: { id: "battle", title: "Битва всех игр", emoji: "⚔️", genre: "Файтинг", src: "minis/battle-all.html" }
+    };
+    if (FALLBACK[gameId]) return Object.assign({ rating: "★", controls: {}, reviews: [] }, FALLBACK[gameId]);
+
     // created mini-game
     if (gameId.indexOf("c_") === 0 || params.get("created") === "1") {
-      const base = META.maker || {};
+      const base = META.maker || FALLBACK.snake;
       return Object.assign({}, base, {
         id: gameId,
-        title: extTitle || base.title,
-        emoji: extEmoji || base.emoji,
+        title: extTitle || (META.maker && META.maker.title) || "Своя игра",
+        emoji: extEmoji || "🛠️",
         src: "minis/maker-play.html#" + encodeURIComponent(gameId)
       });
     }
@@ -306,15 +339,17 @@
           .replace(/\b\w/g, function (c) { return c.toUpperCase(); })
           .trim() || "Игра";
       }
-      return window.metaForExternal({
-        id: gameId,
-        title: niceTitle,
-        emoji: extEmoji,
-        genre: extGenre,
-        url: extUrl || ("https://igroutka.ru/")
-      });
+      if (window.metaForExternal) {
+        return window.metaForExternal({
+          id: gameId,
+          title: niceTitle,
+          emoji: extEmoji,
+          genre: extGenre,
+          url: extUrl || ("https://igroutka.ru/")
+        });
+      }
     }
-    return META.snake;
+    return META.snake || FALLBACK.snake;
   }
 
   let meta = resolveMeta();
