@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>🧪 Лосяш: Химик</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:"Segoe UI",system-ui,sans-serif;background:linear-gradient(160deg,#1a1028,#0a1830);color:#eee;min-height:100vh;padding:12px}
+    .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+    .top a{text-decoration:none;font-weight:800;padding:8px 14px;border-radius:999px;background:linear-gradient(135deg,#ffcc00,#ff9f1c);color:#2a1200}
+    h1{font-size:1.15rem;color:#ffb74d;flex:1}
+    .card{background:#181428;border:1px solid #3a2a55;border-radius:16px;padding:14px;max-width:720px;margin:0 auto}
+    p{color:#aab;font-size:14px;margin:0 0 12px;line-height:1.4}
+    canvas{display:block;width:100%;max-width:680px;margin:0 auto;border-radius:12px;border:3px solid #a67;background:#120a20;touch-action:none;cursor:pointer}
+    .score{text-align:center;font-weight:800;color:#ffcc00;margin:8px 0;font-size:18px}
+    .bar{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+    button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;font:inherit;cursor:pointer;background:linear-gradient(135deg,#ffb74d,#ef6c00);color:#1a1000}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a href="../smeshariki/index.html">⬅ Смешарики</a>
+    <h1>🧪 Лосяш: Химик</h1>
+    <a href="../../index.html" style="background:#243038;color:#ffc;border:1px solid #456;text-decoration:none;font-weight:800;padding:8px 14px;border-radius:999px">Портал</a>
+  </div>
+  <div class="card">
+    <p>Смешай <b>нужный цвет</b>: жми колбы. Цель — попасть в формулу. 5 успешных опытов — победа!</p>
+    <div class="score" id="score">Опыты: 0/5 · Цель: ?</div>
+    <canvas id="c" width="680" height="420"></canvas>
+    <div class="bar"><button type="button" id="mix">🧪 Смешать</button><button type="button" id="clear" style="background:#444;color:#fff">Очистить</button><button type="button" id="again">↻ Заново</button></div>
+  </div>
+  <script>
+(function(){
+  const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+  const hero=new Image();hero.src='../smeshariki/images/losyash.png';
+  const COLORS=[{id:'R',name:'Красный',c:'#e53935'},{id:'Y',name:'Жёлтый',c:'#fdd835'},{id:'B',name:'Синий',c:'#1e88e5'}];
+  const RECIPES=[{t:['R','Y'],out:'Оранжевый',c:'#fb8c00'},{t:['Y','B'],out:'Зелёный',c:'#43a047'},{t:['R','B'],out:'Фиолет',c:'#8e24aa'},{t:['R','Y','B'],out:'Коричневый',c:'#6d4c41'}];
+  let mix=[],recipe=null,ok=0,msg='',flash=0;
+  function newRecipe(){recipe=RECIPES[Math.floor(Math.random()*RECIPES.length)];mix=[];msg='Цель: '+recipe.out;upd()}
+  function reset(){ok=0;newRecipe();draw()}
+  function upd(){document.getElementById('score').textContent=ok>=5?'✅ Лосяш доволен!':'Опыты: '+ok+'/5 · '+msg}
+  function draw(){
+    ctx.clearRect(0,0,680,420);
+    const g=ctx.createLinearGradient(0,0,0,420);g.addColorStop(0,'#2a1840');g.addColorStop(1,'#100818');
+    ctx.fillStyle=g;ctx.fillRect(0,0,680,420);
+    ctx.fillStyle='#ffcc00';ctx.font='bold 20px Segoe UI';ctx.textAlign='center';
+    ctx.fillText(ok>=5?'УРА, ПРОФЕССОР!':'Лаборатория Лосяша',340,36);
+    if(hero.complete&&hero.naturalWidth) ctx.drawImage(hero,20,300,90,90);
+    // target flask
+    ctx.fillStyle='#222';round(260,60,160,120,16);ctx.fill();
+    ctx.strokeStyle='#ffcc00';ctx.lineWidth=3;ctx.stroke();
+    ctx.fillStyle=recipe?recipe.c:'#555';round(290,90,100,60,10);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='14px Segoe UI';ctx.fillText(recipe?recipe.out:'?',340,175);
+    // mix flask
+    ctx.fillStyle='#1a1a1a';round(260,200,160,80,12);ctx.fill();
+    ctx.fillStyle=mixColor();round(280,215,120,50,8);ctx.fill();
+    ctx.fillStyle='#ddd';ctx.font='13px Segoe UI';ctx.fillText(mix.map(id=>COLORS.find(c=>c.id===id).name[0]).join('+')||'пусто',340,270);
+    // buttons
+    COLORS.forEach((c,i)=>{
+      const x=80+i*180,y=300;
+      ctx.fillStyle=c.c;round(x,y,140,70,12);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#111';ctx.font='bold 16px Segoe UI';ctx.fillText(c.name,x+70,y+42);
+    });
+    if(flash>0){ctx.fillStyle=flash>0&&msg.indexOf('Верно')>=0?'rgba(0,200,80,0.25)':'rgba(200,0,0,0.25)';ctx.fillRect(0,0,680,420);flash--}
+  }
+  function mixColor(){if(!mix.length)return'#333';if(mix.length===1)return COLORS.find(c=>c.id===mix[0]).c;if(mix.includes('R')&&mix.includes('Y')&&mix.includes('B'))return'#6d4c41';if(mix.includes('R')&&mix.includes('Y'))return'#fb8c00';if(mix.includes('Y')&&mix.includes('B'))return'#43a047';if(mix.includes('R')&&mix.includes('B'))return'#8e24aa';return'#888'}
+  function round(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+  function pos(e){const r=canvas.getBoundingClientRect();const t=e.changedTouches?e.changedTouches[0]:e;return{x:(t.clientX-r.left)*(canvas.width/r.width),y:(t.clientY-r.top)*(canvas.height/r.height)}}
+  function tap(e){if(ok>=5)return;e.preventDefault();const p=pos(e);COLORS.forEach((c,i)=>{const x=80+i*180,y=300;if(p.x>=x&&p.x<=x+140&&p.y>=y&&p.y<=y+70){if(mix.length<3&&!mix.includes(c.id))mix.push(c.id);draw()}})}
+  function doMix(){if(!recipe||ok>=5)return;const need=recipe.t.slice().sort().join('');const got=mix.slice().sort().join('');if(need===got){ok++;msg='Верно! '+recipe.out;flash=12;if(ok>=5)msg='Все опыты!';else newRecipe()}else{msg='Не то… Цель: '+recipe.out;flash=12;mix=[]}upd();draw()}
+  canvas.addEventListener('click',tap);canvas.addEventListener('touchend',tap,{passive:false});
+  document.getElementById('mix').onclick=doMix;
+  document.getElementById('clear').onclick=function(){mix=[];draw()};
+  document.getElementById('again').onclick=reset;
+  hero.onload=draw;reset();
+  setInterval(function(){if(flash>0)draw()},50);
+})();
+  </script>
+</body>
+</html>
