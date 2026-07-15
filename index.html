@@ -1192,6 +1192,17 @@
             <div class="cc-play" data-i18n="play">▶ Играть</div>
           </div>
         </a>
+        <a class="classic-card" href="play.html?id=smesh_create">
+          <div class="cc-art" style="background:linear-gradient(145deg,#4a1a60,#1a0a30 40%,#3a2040)">
+            <span class="cc-badge" data-i18n="hit">NEW</span>
+            <span style="font-size:2.8rem">🎨🟡</span>
+          </div>
+          <div class="cc-body">
+            <h3 data-i18n="smeshCreateTitle">Создай Смешарика · Круглая 9</h3>
+            <p data-i18n="smeshCreateDesc">Свой персонаж в Круглой девятке: выбери героя — заставка, и твой перс анимируется как он!</p>
+            <div class="cc-play" data-i18n="play">▶ Играть</div>
+          </div>
+        </a>
         <a class="classic-card" href="play.html?id=tanks">
           <div class="cc-art" style="background:linear-gradient(145deg,#3a4a20,#1a2010)">
             <span class="cc-badge" data-i18n="hit">ХИТ</span>
@@ -2074,6 +2085,7 @@
         themeOrange: "Оранж", themePink: "Розовый", themeGold: "Золото", themeCyan: "Бирюза",
         themeToast: "Цвет: {n}",
         smeshTitle: "Смешарики — Битва и Догонялки", smeshDesc: "Битва, догонялки, голя и гонки! Отзывы детей и блогеров.",
+        smeshCreateTitle: "Создай Смешарика · Круглая 9", smeshCreateDesc: "Свой персонаж в Круглой девятке: выбери героя — заставка, твой перс анимируется как он!",
         tanksTitle: "Танчики", tanksDesc: "Классические танчики: езжай, стреляй, прячься за укрытиями!",
         reviewsTitle: "💬 Отзывы — дети, блогеры и ИИ", reviewsSub: "Отзывы по каждой игре портала",
         gTanks: "Танчики",
@@ -2131,6 +2143,7 @@
         searchPh: "Search games", searchAria: "Search",
         navAll: "☰ All games", navClassics: "Classics", navVideos: "Videos", navReviews: "Reviews",
         smeshTitle: "Smeshariki — Battle & Tag", smeshDesc: "Battle, tag, races! Reviews from kids and bloggers.",
+        smeshCreateTitle: "Create Smesharik · Round 9", smeshCreateDesc: "Your character joins the Round Nine — pick a style, splash, and animate!",
         tanksTitle: "Tanks", tanksDesc: "Classic tanks: drive, shoot, hide behind cover!",
         reviewsTitle: "💬 Reviews — kids, bloggers & AI", reviewsSub: "Reviews for every game",
         gTanks: "Tanks",
@@ -3230,6 +3243,16 @@
           url: "play.html?id=smeshariki",
           img: "games/smeshariki/images/smeshariki_kruglaya_kompaniya-square.jpg",
           bg: "linear-gradient(145deg,#2d1b4e,#0f3460)",
+          builtin: true
+        },
+        {
+          id: "smesh_create",
+          title: t("smeshCreateTitle") || "Создай Смешарика · Круглая 9",
+          genre: t("genreArcade"),
+          rating: "4.8",
+          url: "play.html?id=smesh_create",
+          emoji: "🎨",
+          bg: "linear-gradient(145deg,#4a1a60,#1a0a30)",
           builtin: true
         },
         {
