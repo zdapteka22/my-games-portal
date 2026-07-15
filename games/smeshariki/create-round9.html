@@ -104,11 +104,16 @@
       background: rgba(255,204,0,.12); padding: 2px 8px; border-radius: 999px;
     }
     .splash {
-      position: fixed; inset: 0; z-index: 100; display: none;
-      background: #0a0414; flex-direction: column; align-items: center; justify-content: center;
+      position: fixed; inset: 0; z-index: 99999; display: none;
+      background: rgba(5,0,15,0.97); flex-direction: column; align-items: center; justify-content: center;
       gap: 12px; text-align: center; padding: 16px;
     }
-    .splash.on { display: flex; }
+    .splash.on { display: flex !important; }
+    .splash-label {
+      font-size: clamp(1.4rem, 5vw, 2.2rem); font-weight: 900; color: #ffcc00;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      text-shadow: 0 0 24px rgba(255,200,0,0.5);
+    }
     .splash-video-wrap {
       width: min(720px, 94vw); aspect-ratio: 16/9; border-radius: 14px; overflow: hidden;
       border: 3px solid #ffcc00; box-shadow: 0 12px 40px rgba(255,180,0,.28);
@@ -188,10 +193,17 @@
         <div class="preview-wrap">
           <div class="preview-box"><canvas id="prevCanvas" width="160" height="160"></canvas></div>
           <div>
-            <button type="button" class="btn btn-y" id="btnToRound">✅ Готово — меню «кого заменить»</button>
+            <button type="button" class="btn btn-y" id="btnToRound">✅ Готово → заставка и меню замены</button>
             <button type="button" class="btn btn-sec" id="btnResetCreate">Сбросить</button>
+            <button type="button" class="btn btn-sec" id="btnPreviewSplash">▶ Смотреть заставку сейчас</button>
           </div>
         </div>
+        <div style="margin-top:14px;border:2px solid #ffcc00;border-radius:14px;overflow:hidden;max-width:420px">
+          <div style="background:#ffcc00;color:#1a1000;font-weight:900;padding:6px 10px;font-size:13px">ЗАСТАВКА (превью)</div>
+          <img src="create-original/splash_video.webp" alt="Заставка" style="width:100%;display:block;background:#000"
+               onerror="this.src='create-original/splash.jpg'">
+        </div>
+        <p class="hint" style="margin-top:8px"><b>Где заставка:</b> 1) превью выше · 2) после «Готово» · 3) когда выберешь, кого заменить в девятке (полный экран + твой перс).</p>
       </div>
 
       <div class="card">
@@ -210,7 +222,7 @@
     <!-- STEP 2: REPLACE -->
     <section class="panel" id="panel-round">
       <div class="card">
-        <h2>2. Меню: кого заменить?</h2>
+        <h2>2. Меню: кого заменить? → потом ЗАСТАВКА</h2>
         <p>
           Создан: <b id="yourNameLabel">твой персонаж</b>. Нажми героя — <b>вместо него</b> твой перс → <b>заставка YouTube</b> → твой перс делает <b>такие же движения, как у заменённого</b>.
         </p>
@@ -238,6 +250,7 @@
   </main>
 
     <div class="splash" id="splash" aria-live="polite">
+    <div class="splash-label">★ ЗАСТАВКА ★</div>
     <div class="splash-video-wrap" id="splashVideoWrap">
       <video id="splashVideo" muted playsinline loop preload="auto"
         poster="create-original/splash_poster.jpg" style="display:none">
@@ -545,7 +558,14 @@
     hero.name = String(document.getElementById("heroName").value || "Мой Смешарик").slice(0, 24);
     hero.phrase = String(document.getElementById("heroPhrase").value || "").slice(0, 60);
     saveHero();
-    setStep(2);
+    // сначала заставка (как у Кроша по умолчанию — потом выберешь кого заменить)
+    var demo = ROUND9[0];
+    runSplash(demo, function () { setStep(2); });
+  };
+  document.getElementById("btnPreviewSplash").onclick = function () {
+    hero.name = String(document.getElementById("heroName").value || "Мой Смешарик").slice(0, 24);
+    saveHero();
+    runSplash(ROUND9[0], function () {});
   };
   document.getElementById("btnResetCreate").onclick = function () {
     hero = { name: "Мой Смешарик", color: COLORS[0], face: "happy", phrase: "Я из Круглой девятки!" };
@@ -726,7 +746,7 @@
     sp.classList.add("on");
     document.getElementById("splashEmoji").textContent = ch.emoji || "🟡";
     document.getElementById("splashTitle").textContent =
-      (hero.name || "Твой герой") + " вместо " + ch.name + "!";
+      "ЗАСТАВКА: " + (hero.name || "Твой герой") + " вместо " + ch.name + "!";
     document.getElementById("splashText").textContent =
       "Заставка: твой перс делает «" + ch.moveName + "» как " + ch.name;
     bar.style.width = "0%";
@@ -736,7 +756,7 @@
     if (splashTimer) clearInterval(splashTimer);
     // ~8 сек заставки с анимацией, потом сцена «Мотор!»
     splashTimer = setInterval(function () {
-      p += 1.8;
+      p += 1.0;
       if (p >= 100) {
         p = 100;
         bar.style.width = "100%";
