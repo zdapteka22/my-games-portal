@@ -4618,10 +4618,16 @@ function drawMusicToast() {
 }
 
 function canvasMouse(e) {
+    const pt = (e && e.clientX != null) ? e
+        : (e && e.changedTouches && e.changedTouches[0])
+        || (e && e.touches && e.touches[0])
+        || e;
     const rect = canvas.getBoundingClientRect();
+    const x = pt.clientX != null ? pt.clientX : 0;
+    const y = pt.clientY != null ? pt.clientY : 0;
     return {
-        mx: (e.clientX - rect.left) * (canvas.width / rect.width),
-        my: (e.clientY - rect.top) * (canvas.height / rect.height)
+        mx: (x - rect.left) * (canvas.width / Math.max(1, rect.width)),
+        my: (y - rect.top) * (canvas.height / Math.max(1, rect.height))
     };
 }
 
@@ -6396,8 +6402,11 @@ canvas.addEventListener('mouseleave', () => {
     if (wallDrag) handleEditorMouseUp(wallDrag.x1, wallDrag.y1);
 });
 
-canvas.addEventListener('click', e => {
-    const { mx, my } = canvasMouse(e);
+function handleCanvasTap(e) {
+    // унифицированный клик/тач (мобилки + ПК)
+    if (e && e.cancelable) e.preventDefault();
+    canvas.focus();
+    const { mx, my } = canvasMouse(e.changedTouches ? e.changedTouches[0] : e);
 
     if (showExitDialog) {
         if (hitBtn(EXIT_YES, mx, my)) { doExit(); return; }
@@ -6438,7 +6447,6 @@ canvas.addEventListener('click', e => {
     }
 
     if (screen === 'editor') {
-        // если тянули стену — mouseup уже обработал; клик для остальных инструментов
         if (editorTool === 'wall' && wallDrag) return;
         handleEditorClick(mx, my);
         return;
@@ -6479,7 +6487,10 @@ canvas.addEventListener('click', e => {
         if (hitBtn(RES_RESTART, mx, my)) { restartSameChar(); return; }
         if (hitBtn(RES_SELECT, mx, my)) { goSelect(); return; }
     }
-});
+}
+
+canvas.addEventListener('click', handleCanvasTap);
+canvas.addEventListener('touchend', handleCanvasTap, { passive: false });
 
 function loop() {
     if (screen === 'mode') drawModeScreen();
@@ -6489,6 +6500,18 @@ function loop() {
     requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+// ?mode=battle|chase|tag|race|pac — сразу режим (с портала / мини-ссылок)
+(function applyUrlMode() {
+    try {
+        const m = new URLSearchParams(location.search).get('mode');
+        if (!m) return;
+        if (m === 'editor' || m === 'custom') { openEditor(); return; }
+        if (m === 'battle' || m === 'chase' || m === 'tag' || m === 'race' || m === 'pac') {
+            chooseMode(m);
+        }
+    } catch (e) {}
+})();
 </script>
 </body>
 </html>
