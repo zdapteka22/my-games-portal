@@ -296,11 +296,19 @@
         src: "minis/maker-play.html#" + encodeURIComponent(gameId)
       });
     }
-    // external / igroutka
+    // external / igroutka — не показываем id вроде ig_34344_... во вкладке браузера
     if (extUrl || gameId.indexOf("ig_") === 0) {
+      let niceTitle = extTitle;
+      if (!niceTitle || /^ig_\d+/i.test(niceTitle) || /^\d{3,}/.test(niceTitle)) {
+        niceTitle = String(gameId || "")
+          .replace(/^ig_\d+_/i, "")
+          .replace(/[_-]+/g, " ")
+          .replace(/\b\w/g, function (c) { return c.toUpperCase(); })
+          .trim() || "Игра";
+      }
       return window.metaForExternal({
         id: gameId,
-        title: extTitle || gameId,
+        title: niceTitle,
         emoji: extEmoji,
         genre: extGenre,
         url: extUrl || ("https://igroutka.ru/")
@@ -385,15 +393,30 @@
                 '<div>Загрузка игры…</div>' +
               '</div>' +
             '</div>' +
+            // sandbox БЕЗ allow-popups — иначе после загрузки Игроутка открывает вкладки-рекламу (3434, и т.п.)
             '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(url) + '" ' +
+            'sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-presentation allow-downloads allow-modals" ' +
             'allow="fullscreen; gamepad; autoplay; clipboard-write" allowfullscreen ' +
-            'referrerpolicy="no-referrer-when-downgrade"></iframe>' +
+            'referrerpolicy="no-referrer"></iframe>' +
           '</div>' +
           '<div class="bc-brand-foot">' +
             '<img src="images/blue-cat.svg" alt=""> Blue Cat · ' + esc(meta.title) +
           '</div>' +
         '</div>';
-      if (raw) { raw.href = url; raw.hidden = false; raw.textContent = "↗ Открыть отдельно"; }
+      // Не ведём на «сырой» URL Игроутки по умолчанию — там снова рекламные вкладки
+      if (raw) {
+        raw.href = "#";
+        raw.hidden = false;
+        raw.textContent = "↗ На весь экран";
+        raw.onclick = function (e) {
+          e.preventDefault();
+          const fr = document.getElementById("gameFrame");
+          try {
+            if (fr && fr.requestFullscreen) fr.requestFullscreen();
+            else if (fr && fr.webkitRequestFullscreen) fr.webkitRequestFullscreen();
+          } catch (_) {}
+        };
+      }
       const frame = document.getElementById("gameFrame");
       if (frame) {
         const hideLoad = function () {
