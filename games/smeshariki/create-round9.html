@@ -401,19 +401,28 @@
   }
 
   function setStep(n) {
-    document.querySelectorAll(".step-pill").forEach(function (el) {
-      const s = Number(el.getAttribute("data-s"));
-      el.classList.toggle("on", s === n);
-      el.classList.toggle("done", s < n);
-    });
-    document.getElementById("panel-create").classList.toggle("on", n === 1);
-    document.getElementById("panel-round").classList.toggle("on", n === 2);
-    document.getElementById("panel-stage").classList.toggle("on", n === 3);
-    if (n === 2) {
-      document.getElementById("yourNameLabel").textContent = hero.name || "твой персонаж";
-      renderRound();
+    try {
+      document.querySelectorAll(".step-pill").forEach(function (el) {
+        var s = Number(el.getAttribute("data-s"));
+        el.classList.toggle("on", s === n);
+        el.classList.toggle("done", s < n);
+      });
+      var pc = document.getElementById("panel-create");
+      var pr = document.getElementById("panel-round");
+      var ps = document.getElementById("panel-stage");
+      if (pc) pc.classList.toggle("on", n === 1);
+      if (pr) pr.classList.toggle("on", n === 2);
+      if (ps) ps.classList.toggle("on", n === 3);
+      if (n === 2) {
+        var yl = document.getElementById("yourNameLabel");
+        if (yl) yl.textContent = hero.name || "твой персонаж";
+        renderRound();
+      }
+      if (n === 3) startStage();
+    } catch (err) {
+      console.error("setStep", err);
+      alert("Ошибка шага: " + err.message);
     }
-    if (n === 3) startStage();
   }
 
   function lighten(hex, a) {
@@ -633,9 +642,9 @@
     replaced = null;
     saveHero(); initCreateUI();
   };
-  document.getElementById("btnBackCreate").onclick = function () { setStep(1); };
-  document.getElementById("btnEditHero").onclick = function () { cancelAnim(); setStep(1); };
-  document.getElementById("btnAgainRound").onclick = function () { cancelAnim(); stopCardAnims(); setStep(2); };
+  var btnBC = document.getElementById("btnBackCreate"); if (btnBC) btnBC.onclick = function () { setStep(1); };
+  var btnEH = document.getElementById("btnEditHero"); if (btnEH) btnEH.onclick = function () { try { cancelAnim(); } catch(e){} setStep(1); };
+  var btnAR = document.getElementById("btnAgainRound"); if (btnAR) btnAR.onclick = function () { try { cancelAnim(); } catch(e){} setStep(2); };
 
   /* —— Ruffle / original SWF —— */
   var ruffleLoaded = false;
@@ -670,7 +679,11 @@
 
   var cardAnimRafs = [];
   function stopCardAnims() {
-    cardAnimRafs.forEach(function (id) { cancelAnimationFrame(id); });
+    cardAnimRafs.forEach(function (x) {
+      if (x && typeof x.stop === "function") x.stop();
+      if (x && x.id) cancelAnimationFrame(x.id);
+      else if (typeof x === "number") cancelAnimationFrame(x);
+    });
     cardAnimRafs = [];
   }
 
@@ -696,23 +709,17 @@
         (function (canvas, anim) {
           var ctx = canvas.getContext("2d");
           var t0 = performance.now();
-          function loop(now) {
-            var tt = (now - t0) / 1000;
-            ctx.clearRect(0, 0, 120, 120);
-            drawHero(ctx, 60, 62, 42, hero, tt, anim);
-            var id = requestAnimationFrame(loop);
-            cardAnimRafs.push(id);
-          }
-          // keep only last raf id in array cleanly
+          var alive = true;
+          var slot = { id: 0, stop: function () { alive = false; } };
+          cardAnimRafs.push(slot);
           function loop2(now) {
+            if (!alive) return;
             var tt = (now - t0) / 1000;
             ctx.clearRect(0, 0, 120, 120);
-            drawHero(ctx, 60, 62, 42, hero, tt, anim);
-            var id = requestAnimationFrame(loop2);
-            cardAnimRafs[cardAnimRafs.length - 1] = id;
+            try { drawHero(ctx, 60, 62, 42, hero, tt, anim); } catch (e) {}
+            slot.id = requestAnimationFrame(loop2);
           }
-          cardAnimRafs.push(0);
-          loop2(t0);
+          slot.id = requestAnimationFrame(loop2);
         })(c, ch.anim);
       } else if (ch.img) {
         var img = document.createElement("img");
