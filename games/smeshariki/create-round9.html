@@ -339,6 +339,21 @@
 
   <script>
 (function () {
+
+  // polyfill canvas ellipse (иначе падает drawHero и «шаг 2» не открывается)
+  (function () {
+    if (CanvasRenderingContext2D && !CanvasRenderingContext2D.prototype.ellipse) {
+      CanvasRenderingContext2D.prototype.ellipse = function (x, y, rx, ry, rot, a0, a1, anticlockwise) {
+        this.save();
+        this.translate(x, y);
+        this.rotate(rot || 0);
+        this.scale(rx, ry);
+        this.arc(0, 0, 1, a0, a1, !!anticlockwise);
+        this.restore();
+      };
+    }
+  })();
+
   const STORAGE = "portal_smesh_create_v2";
   const COLORS = [
     "#4fc3f7", "#ff6bb5", "#ffb74d", "#b39ddb", "#81c784",
@@ -410,18 +425,19 @@
       var pc = document.getElementById("panel-create");
       var pr = document.getElementById("panel-round");
       var ps = document.getElementById("panel-stage");
-      if (pc) pc.classList.toggle("on", n === 1);
-      if (pr) pr.classList.toggle("on", n === 2);
-      if (ps) ps.classList.toggle("on", n === 3);
+      if (pc) { pc.classList.toggle("on", n === 1); pc.style.display = n === 1 ? "block" : "none"; }
+      if (pr) { pr.classList.toggle("on", n === 2); pr.style.display = n === 2 ? "block" : "none"; }
+      if (ps) { ps.classList.toggle("on", n === 3); ps.style.display = n === 3 ? "block" : "none"; }
       if (n === 2) {
         var yl = document.getElementById("yourNameLabel");
         if (yl) yl.textContent = hero.name || "твой персонаж";
         renderRound();
+        try { pr && pr.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {}
       }
       if (n === 3) startStage();
     } catch (err) {
       console.error("setStep", err);
-      alert("Ошибка шага: " + err.message);
+      alert("Ошибка шага: " + (err && err.message ? err.message : err));
     }
   }
 
@@ -632,10 +648,16 @@
   });
 
   document.getElementById("btnToRound").onclick = function () {
-    hero.name = String(document.getElementById("heroName").value || "Мой Смешарик").slice(0, 24);
-    hero.phrase = String(document.getElementById("heroPhrase").value || "").slice(0, 60);
-    saveHero();
-    setStep(2);
+    try {
+      var hn = document.getElementById("heroName");
+      var hp = document.getElementById("heroPhrase");
+      hero.name = String((hn && hn.value) || "Мой Смешарик").slice(0, 24);
+      hero.phrase = String((hp && hp.value) || "").slice(0, 60);
+      saveHero();
+      setStep(2);
+    } catch (e) {
+      alert("Кнопка Готово: " + e.message);
+    }
   };
   document.getElementById("btnResetCreate").onclick = function () {
     hero = { name: "Мой Смешарик", color: COLORS[0], face: "happy", phrase: "Я из Круглой девятки!" };
@@ -744,11 +766,14 @@
   }
 
   function replaceCharacter(ch) {
-    replaced = ch;
-    // сразу в меню: на месте этого героя — наш перс (сохраняем id замены)
-    try { localStorage.setItem("portal_smesh_replaced_id", ch.id); } catch (e) {}
-    renderRound();
-    runSplash(ch, function () { setStep(3); });
+    try {
+      replaced = ch;
+      try { localStorage.setItem("portal_smesh_replaced_id", ch.id); } catch (e) {}
+      renderRound();
+      runSplash(ch, function () { setStep(3); });
+    } catch (e) {
+      alert("Замена: " + e.message);
+    }
   }
 
   // Заставка = только видео (VK). Без картинок и без нашего перса на экране заставки.
