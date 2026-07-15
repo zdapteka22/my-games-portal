@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>🐧 Мастерская Пина</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:"Segoe UI",system-ui,sans-serif;background:linear-gradient(160deg,#0a1a28,#123,#0a2030);color:#eee;min-height:100vh;padding:12px}
+    a{color:#5eb0ff}
+    .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+    .top a{text-decoration:none;font-weight:800;padding:8px 14px;border-radius:999px;background:linear-gradient(135deg,#ffcc00,#ff9f1c);color:#2a1200}
+    h1{font-size:1.25rem;color:#7ec8ff;flex:1}
+    .card{background:#142028;border:1px solid #2a4a5a;border-radius:16px;padding:14px;max-width:720px;margin:0 auto}
+    p{color:#aab;font-size:14px;margin:0 0 12px;line-height:1.4}
+    canvas{display:block;width:100%;max-width:680px;height:auto;margin:0 auto;border-radius:12px;border:3px solid #4a9;background:#0d1820;touch-action:none;cursor:pointer}
+    .bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+    button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;font:inherit;cursor:pointer;background:linear-gradient(135deg,#5eb0ff,#2a7);color:#fff}
+    button.sec{background:#243038;border:1px solid #456}
+    .score{text-align:center;font-weight:800;color:#ffcc00;margin:8px 0;font-size:18px}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a href="../smeshariki/index.html">⬅ Смешарики</a>
+    <h1>🐧 Мастерская Пина</h1>
+    <a href="../../index.html" class="sec" style="background:#243038;color:#ffc;border:1px solid #456">Портал</a>
+  </div>
+  <div class="card">
+    <p>Собери <b>3 детали</b> робота в правильном порядке (1→2→3). Кликай/тапай по деталям. Неправильный клик — −1 жизнь.</p>
+    <div class="score" id="score">Собрано: 0 · Жизни: 3</div>
+    <canvas id="c" width="680" height="420"></canvas>
+    <div class="bar">
+      <button type="button" id="again">↻ Заново</button>
+    </div>
+  </div>
+  <script>
+(function(){
+  const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+  const pin=new Image(); pin.src='../smeshariki/images/pin.png';
+  let need=1,score=0,lives=3,won=false,lost=false;
+  const parts=[
+    {id:1,label:'⚙️ Шестерня',x:80,y:160,w:140,h:90,color:'#789'},
+    {id:2,label:'🔋 Батарея',x:270,y:160,w:140,h:90,color:'#4caf50'},
+    {id:3,label:'📡 Антенна',x:460,y:160,w:140,h:90,color:'#42a5f5'}
+  ];
+  function reset(){need=1;score=0;lives=3;won=false;lost=false;upd();draw()}
+  function upd(){document.getElementById('score').textContent=won?'✅ Робот собран! · Очки: '+score:(lost?'💔 Сломал мастерскую…':'Собрано: '+(need-1)+'/3 · Жизни: '+lives+' · Очки: '+score)}
+  function draw(){
+    ctx.clearRect(0,0,680,420);
+    const g=ctx.createLinearGradient(0,0,0,420);g.addColorStop(0,'#1a3040');g.addColorStop(1,'#0a1520');
+    ctx.fillStyle=g;ctx.fillRect(0,0,680,420);
+    ctx.fillStyle='#ffcc00';ctx.font='bold 22px Segoe UI';ctx.textAlign='center';
+    ctx.fillText(won?'ГОТОВО! 🐧':(lost?'ОЙ…':('Нужна деталь № '+need)),340,40);
+    if(pin.complete&&pin.naturalWidth) ctx.drawImage(pin,290,280,100,100);
+    else{ctx.fillStyle='#90a4ae';ctx.beginPath();ctx.arc(340,330,40,0,Math.PI*2);ctx.fill()}
+    parts.forEach(p=>{
+      const done=p.id<need;
+      ctx.fillStyle=done?'#2e4a30':p.color;
+      ctx.strokeStyle=p.id===need?'#ffcc00':'#fff';
+      ctx.lineWidth=p.id===need?4:2;
+      round(p.x,p.y,p.w,p.h,12);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='bold 16px Segoe UI';ctx.fillText(p.label,p.x+p.w/2,p.y+p.h/2+6);
+      if(done){ctx.fillStyle='#8f8';ctx.font='14px Segoe UI';ctx.fillText('✓',p.x+p.w/2,p.y+p.h-12)}
+    });
+  }
+  function round(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+  function pos(e){const r=canvas.getBoundingClientRect();const t=e.changedTouches?e.changedTouches[0]:e;return{x:(t.clientX-r.left)*(canvas.width/r.width),y:(t.clientY-r.top)*(canvas.height/r.height)}}
+  function tap(e){if(won||lost)return;e.preventDefault();const p=pos(e);for(const part of parts){if(p.x>=part.x&&p.x<=part.x+part.w&&p.y>=part.y&&p.y<=part.y+part.h){if(part.id===need){need++;score+=10;if(need>3){won=true;score+=30}}else{lives--;if(lives<=0)lost=true}upd();draw();return}}}
+  canvas.addEventListener('click',tap);canvas.addEventListener('touchend',tap,{passive:false});
+  document.getElementById('again').onclick=reset;
+  pin.onload=draw;reset();
+})();
+  </script>
+</body>
+</html>
