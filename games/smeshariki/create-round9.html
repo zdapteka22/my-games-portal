@@ -276,7 +276,7 @@
         <input type="text" id="heroPhrase" maxlength="60" value="Я из Круглой девятки!">
 
         <div class="preview-wrap">
-          <div class="preview-box"><canvas id="prevCanvas" width="160" height="160"></canvas></div>
+          <div class="preview-box" title="Это твой персонаж"><canvas id="prevCanvas" width="160" height="160"></canvas></div>
           <div>
             <button type="button" class="btn btn-y" id="btnToRound">✅ Готово — кого заменить</button>
             <button type="button" class="btn btn-sec" id="btnResetCreate">Сбросить</button>
@@ -304,7 +304,7 @@
       <div class="card">
         <h2>2. Меню: кого заменить? → потом ЗАСТАВКА</h2>
         <p>
-          Нажми героя — видео, на его месте будет твой (картинка героя <b>двигается</b>).
+          Нажми героя — видео. <b>На его месте — ТВОЙ персонаж</b> (тот, кого создал) и он <b>двигается</b>.
         </p>
         <div class="round-grid" id="roundGrid"></div>
         <div style="margin-top:14px">
@@ -317,7 +317,7 @@
     <section class="panel" id="panel-stage">
       <div class="card">
         <div class="stage-wrap" id="stageWrap">
-          <img class="stage-hero-img" id="stageHeroImg" alt="" src="">
+          <canvas id="stageHeroCanvas" width="400" height="400" style="width:min(320px,70vw);height:auto;display:block"></canvas>
         </div>
         <div class="stage-bar">
           <button type="button" class="btn btn-y" id="btnReplay">↻ Видео</button>
@@ -635,7 +635,7 @@
   };
   document.getElementById("btnBackCreate").onclick = function () { setStep(1); };
   document.getElementById("btnEditHero").onclick = function () { cancelAnim(); setStep(1); };
-  document.getElementById("btnAgainRound").onclick = function () { cancelAnim(); setStep(2); };
+  document.getElementById("btnAgainRound").onclick = function () { cancelAnim(); stopCardAnims(); setStep(2); };
 
   /* —— Ruffle / original SWF —— */
   var ruffleLoaded = false;
@@ -668,7 +668,14 @@
     }
   };
 
+  var cardAnimRafs = [];
+  function stopCardAnims() {
+    cardAnimRafs.forEach(function (id) { cancelAnimationFrame(id); });
+    cardAnimRafs = [];
+  }
+
   function renderRound() {
+    stopCardAnims();
     var grid = document.getElementById("roundGrid");
     grid.innerHTML = "";
     ROUND9.forEach(function (ch) {
@@ -677,20 +684,39 @@
       card.type = "button";
       card.className = "char-card" + (isRep ? " replaced" : "");
       var art = document.createElement("div");
-      // картинка героя + CSS-анимация движений (не шар)
-      art.className = "art" + (isRep ? " anim-" + ch.anim : "");
-      art.style.background = "transparent";
-      var img = document.createElement("img");
-      if (ch.img) {
+      art.className = "art";
+      art.style.background = isRep ? "#1a1028" : "transparent";
+
+      if (isRep) {
+        // НАШ персонаж (цвет/лицо) + движения заменённого
+        var c = document.createElement("canvas");
+        c.width = 120; c.height = 120;
+        c.style.width = "88px"; c.style.height = "88px";
+        art.appendChild(c);
+        (function (canvas, anim) {
+          var ctx = canvas.getContext("2d");
+          var t0 = performance.now();
+          function loop(now) {
+            var tt = (now - t0) / 1000;
+            ctx.clearRect(0, 0, 120, 120);
+            drawHero(ctx, 60, 62, 42, hero, tt, anim);
+            var id = requestAnimationFrame(loop);
+            cardAnimRafs.push(id);
+          }
+          // keep only last raf id in array cleanly
+          function loop2(now) {
+            var tt = (now - t0) / 1000;
+            ctx.clearRect(0, 0, 120, 120);
+            drawHero(ctx, 60, 62, 42, hero, tt, anim);
+            var id = requestAnimationFrame(loop2);
+            cardAnimRafs[cardAnimRafs.length - 1] = id;
+          }
+          cardAnimRafs.push(0);
+          loop2(t0);
+        })(c, ch.anim);
+      } else if (ch.img) {
+        var img = document.createElement("img");
         img.src = ch.img;
-      } else {
-        // нет файла — цветной круг с эмодзи как fallback, но крупный emoji
-        img = null;
-        art.style.fontSize = "3rem";
-        art.textContent = ch.emoji || "🟡";
-        if (isRep) art.className = "art anim-" + ch.anim;
-      }
-      if (img) {
         img.alt = "";
         img.draggable = false;
         img.onerror = function () {
@@ -699,10 +725,12 @@
           art.textContent = ch.emoji || "🟡";
         };
         art.appendChild(img);
+      } else {
+        art.style.fontSize = "3rem";
+        art.textContent = ch.emoji || "🟡";
       }
       card.appendChild(art);
-      // без лишних надписей — только имя при наведении title
-      card.title = isRep ? (hero.name || "ты") + " / " + ch.name : ch.name;
+      card.title = isRep ? (hero.name || "наш") : ch.name;
       card.onclick = function () { replaceCharacter(ch); };
       grid.appendChild(card);
     });
@@ -785,39 +813,40 @@
   function cancelAnim() {
     if (animRaf) cancelAnimationFrame(animRaf);
     animRaf = 0;
+    if (typeof stopCardAnims === "function") stopCardAnims();
   }
 
   function startStage() {
     cancelAnim();
+    stopCardAnims();
     if (!replaced) replaced = ROUND9[0];
     var ch = replaced;
     var wrap = document.getElementById("stageWrap");
-    var img = document.getElementById("stageHeroImg");
-    if (!wrap || !img) return;
-    // сброс классов анимации
-    wrap.className = "stage-wrap anim-" + (ch.anim || "bounce");
-    // картинка ЗАМЕНЁННОГО героя (настоящий спрайт, не шар) — это «наш» на его месте
-    // сброс
+    var canvas = document.getElementById("stageHeroCanvas");
+    if (!wrap || !canvas) return;
+    wrap.className = "stage-wrap";
+    // убрать старые emoji
     wrap.querySelectorAll(".emoji-fallback").forEach(function (n) { n.remove(); });
-    if (ch.img) {
-      img.style.display = "block";
-      img.src = ch.img + "?v=1";
-      img.onerror = function () {
-        img.style.display = "none";
-        var e = document.createElement("div");
-        e.className = "emoji-fallback";
-        e.style.cssText = "font-size:8rem;line-height:1";
-        e.textContent = ch.emoji || "🟡";
-        wrap.appendChild(e);
-      };
-    } else {
-      img.style.display = "none";
-      var e = document.createElement("div");
-      e.className = "emoji-fallback";
-      e.style.cssText = "font-size:8rem;line-height:1";
-      e.textContent = ch.emoji || "🟡";
-      wrap.appendChild(e);
+    var imgEl = document.getElementById("stageHeroImg");
+    if (imgEl) imgEl.style.display = "none";
+    canvas.style.display = "block";
+    var ctx = canvas.getContext("2d");
+    var t0 = performance.now();
+    function frame(now) {
+      var tt = (now - t0) / 1000;
+      var w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      // фон сцены
+      var g = ctx.createRadialGradient(w/2, h*0.45, 20, w/2, h*0.5, w*0.55);
+      g.addColorStop(0, "rgba(60,30,100,0.35)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+      // НАШ перс (созданный) + движения заменённого
+      drawHero(ctx, w/2, h*0.52, 110, hero, tt, ch.anim || "bounce");
+      animRaf = requestAnimationFrame(frame);
     }
+    animRaf = requestAnimationFrame(frame);
   }
 
   function roundRect(ctx, x, y, w, h, r) {
