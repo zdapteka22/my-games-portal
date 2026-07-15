@@ -123,10 +123,7 @@
       position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
       background: #000; z-index: 1; opacity: 0.75;
     }
-    .splash-video-wrap #splashHeroCanvas {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      z-index: 5; pointer-events: none;
-    }
+    /* hero canvas moved to .splash-hero-band */
     .splash h2 {
       font-size: clamp(1.2rem, 4vw, 1.9rem); color: var(--yellow);
       text-shadow: 0 4px 20px rgba(255,200,0,.4);
@@ -231,16 +228,60 @@
       width: min(280px, 55vw); height: min(280px, 55vw);
       filter: drop-shadow(0 12px 20px rgba(0,0,0,.45));
     }
-    .splash { gap: 0; padding: 0; background: #000; }
+    /* Заставка: видео + герой РЯДОМ, герой всегда виден */
+    .splash.on {
+      display: flex !important;
+      flex-direction: column;
+      gap: 0;
+      padding: 0;
+      background: #000;
+    }
     .splash-label, .splash h2, .splash p, #splashBar, #splashTitle, #splashText { display: none !important; }
     .splash-video-wrap {
-      width: 100vw; height: 100vh; max-width: none; aspect-ratio: auto;
-      border: 0; border-radius: 0; box-shadow: none;
+      width: 100vw !important;
+      height: 58vh !important;
+      max-width: none !important;
+      aspect-ratio: auto !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      position: relative;
+      flex-shrink: 0;
     }
-    .splash-video-wrap video { object-fit: contain; }
+    .splash-video-wrap video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: contain !important;
+      opacity: 1 !important;
+      z-index: 1;
+      background: #000;
+    }
+    /* герой — ОТДЕЛЬНАЯ полоса под видео, не «в конце» */
+    .splash-hero-band {
+      width: 100vw;
+      height: 42vh;
+      flex-shrink: 0;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 50% 40%, #2a1450 0%, #0a0414 70%);
+      border-top: 3px solid #ffcc00;
+      position: relative;
+      z-index: 10;
+    }
+    .splash-hero-band #splashHeroCanvas {
+      width: min(42vh, 90vw) !important;
+      height: min(42vh, 90vw) !important;
+      max-width: 320px;
+      max-height: 320px;
+      display: block !important;
+      position: relative !important;
+      z-index: 11;
+      background: transparent;
+    }
     .splash #btnSkipSplash {
       position: fixed; right: 12px; bottom: 12px; z-index: 100001;
-      opacity: 0.85; font-size: 13px; padding: 8px 14px; min-height: 36px;
+      opacity: 0.9; font-size: 13px; padding: 8px 14px; min-height: 36px;
     }
   </style>
   <!-- Ruffle: проигрыватель Flash-оригинала -->
@@ -334,10 +375,12 @@
 
     <div class="splash" id="splash" aria-live="polite">
     <div class="splash-video-wrap" id="splashVideoWrap">
-      <video id="splashVideo" playsinline preload="auto" muted>
+      <video id="splashVideo" playsinline preload="auto" muted loop>
         <source src="create-original/splash_video.mp4" type="video/mp4">
       </video>
-      <canvas id="splashHeroCanvas" width="900" height="506"></canvas>
+    </div>
+    <div class="splash-hero-band" id="splashHeroBand">
+      <canvas id="splashHeroCanvas" width="400" height="400"></canvas>
     </div>
     <button type="button" class="btn btn-y" id="btnSkipSplash">✕</button>
   </div>
@@ -781,11 +824,12 @@
     }
   }
 
-  // Заставка: видео + НАШ герой поверх (движения заменённого)
+  // Заставка: видео СВЕРХУ + НАШ герой СНИЗУ (всегда на заставке, не только в конце)
   var splashTimer = null;
   var splashDone = null;
   var splashRaf = 0;
   var splashCh = null;
+  var splashStartedAt = 0;
 
   function stopSplashMedia() {
     if (splashRaf) { cancelAnimationFrame(splashRaf); splashRaf = 0; }
@@ -795,6 +839,12 @@
   }
 
   function finishSplash() {
+    // минимум 6 сек на заставке, чтобы точно увидеть героя
+    var waited = Date.now() - splashStartedAt;
+    if (waited < 6000 && splashDone) {
+      setTimeout(finishSplash, 6000 - waited);
+      return;
+    }
     stopSplashMedia();
     var sp = document.getElementById("splash");
     if (sp) sp.classList.remove("on");
@@ -805,32 +855,51 @@
 
   function paintSplashHero(now) {
     var c = document.getElementById("splashHeroCanvas");
-    if (!c || !splashCh) return;
+    if (!c) {
+      splashRaf = requestAnimationFrame(paintSplashHero);
+      return;
+    }
+    if (!splashCh) splashCh = { anim: "bounce" };
     var ctx = c.getContext("2d");
     var w = c.width, h = c.height;
     ctx.clearRect(0, 0, w, h);
-    // лёгкая тень снизу, чтобы герой читался на видео
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.beginPath();
-    ctx.ellipse(w * 0.5, h * 0.78, w * 0.18, h * 0.04, 0, 0, Math.PI * 2);
-    ctx.fill();
-    var tt = now / 1000;
-    // ГЛАВНОЕ: наш созданный герой + anim заменённого
+    // фон полосы
+    ctx.fillStyle = "#12081f";
+    ctx.fillRect(0, 0, w, h);
+    var g = ctx.createRadialGradient(w/2, h*0.45, 10, w/2, h*0.5, w*0.5);
+    g.addColorStop(0, "rgba(80,40,140,0.5)");
+    g.addColorStop(1, "rgba(10,4,20,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    var tt = (typeof now === "number" ? now : performance.now()) / 1000;
     try {
-      drawHero(ctx, w * 0.5, h * 0.55, Math.min(w, h) * 0.22, hero, tt, splashCh.anim || "bounce");
-    } catch (e) {}
+      drawHero(ctx, w * 0.5, h * 0.52, Math.min(w, h) * 0.32, hero, tt, (splashCh && splashCh.anim) || "bounce");
+    } catch (e) {
+      // fallback ball
+      ctx.beginPath();
+      ctx.arc(w/2, h/2, 80, 0, Math.PI*2);
+      ctx.fillStyle = (hero && hero.color) || "#4fc3f7";
+      ctx.fill();
+    }
     splashRaf = requestAnimationFrame(paintSplashHero);
   }
 
   function runSplash(ch, done) {
     splashDone = done;
-    splashCh = ch;
+    splashCh = ch || { anim: "bounce", name: "?" };
+    splashStartedAt = Date.now();
     var sp = document.getElementById("splash");
     var v = document.getElementById("splashVideo");
-    sp.classList.add("on");
+    var band = document.getElementById("splashHeroBand");
+    if (sp) sp.classList.add("on");
+    if (band) band.style.display = "flex";
+    // старт героя СРАЗУ
+    if (splashRaf) cancelAnimationFrame(splashRaf);
+    splashRaf = requestAnimationFrame(paintSplashHero);
     if (v) {
       try {
-        v.muted = true; // autoplay
+        v.loop = true;
+        v.muted = true;
         v.controls = false;
         v.currentTime = 0;
         var pr = v.play();
@@ -839,23 +908,15 @@
           v.play().catch(function () {});
         });
       } catch (e) {}
-      v.onended = function () { finishSplash(); };
+      // НЕ закрываем заставку мгновенно по onended — видео зациклено
+      v.onended = null;
     }
-    if (splashRaf) cancelAnimationFrame(splashRaf);
-    splashRaf = requestAnimationFrame(paintSplashHero);
     if (splashTimer) clearInterval(splashTimer);
-    splashTimer = setInterval(function () {
-      if (v && v.duration && isFinite(v.duration) && v.duration > 0) {
-        if (v.currentTime >= v.duration - 0.15) {
-          clearInterval(splashTimer);
-          splashTimer = null;
-          finishSplash();
-        }
-      }
-    }, 250);
-    setTimeout(function () {
-      if (splashDone) finishSplash();
-    }, 45000);
+    // заставка ~12 сек (видео + герой), потом шаг 3
+    splashTimer = setTimeout(function () {
+      splashTimer = null;
+      finishSplash();
+    }, 12000);
   }
 
   var skipBtn = document.getElementById("btnSkipSplash");
