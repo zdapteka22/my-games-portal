@@ -106,20 +106,28 @@
     .splash {
       position: fixed; inset: 0; z-index: 100; display: none;
       background: #0a0414; flex-direction: column; align-items: center; justify-content: center;
-      gap: 14px; text-align: center; padding: 24px;
+      gap: 12px; text-align: center; padding: 16px;
     }
     .splash.on { display: flex; }
+    .splash-video-wrap {
+      width: min(720px, 94vw); aspect-ratio: 16/9; border-radius: 14px; overflow: hidden;
+      border: 3px solid #ffcc00; box-shadow: 0 12px 40px rgba(255,180,0,.28);
+      background: #000; position: relative; animation: popIn .5s ease;
+    }
+    .splash-video-wrap iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+    }
     .splash .splash-art {
-      width: min(420px, 88vw); max-height: 48vh; object-fit: contain;
+      width: min(420px, 88vw); max-height: 40vh; object-fit: contain;
       border-radius: 16px; border: 3px solid #ffcc00;
       box-shadow: 0 12px 40px rgba(255,180,0,.25); background: #1a1028;
-      animation: popIn .6s ease;
+      display: none;
     }
     .splash h2 {
-      font-size: clamp(1.4rem, 4.5vw, 2.2rem); color: var(--yellow);
+      font-size: clamp(1.2rem, 4vw, 1.9rem); color: var(--yellow);
       text-shadow: 0 4px 20px rgba(255,200,0,.4);
     }
-    .splash p { color: #ddd; font-size: 1.05rem; max-width: 440px; }
+    .splash p { color: #ddd; font-size: 1rem; max-width: 480px; }
     @keyframes popIn {
       from { transform: scale(.85); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
@@ -179,7 +187,7 @@
         <div class="preview-wrap">
           <div class="preview-box"><canvas id="prevCanvas" width="160" height="160"></canvas></div>
           <div>
-            <button type="button" class="btn btn-y" id="btnToRound">▶ В круглую девятку — кого заменить?</button>
+            <button type="button" class="btn btn-y" id="btnToRound">✅ Готово — меню «кого заменить»</button>
             <button type="button" class="btn btn-sec" id="btnResetCreate">Сбросить</button>
           </div>
         </div>
@@ -201,10 +209,9 @@
     <!-- STEP 2: REPLACE -->
     <section class="panel" id="panel-round">
       <div class="card">
-        <h2>2. Кого заменить в Круглой девятке?</h2>
+        <h2>2. Меню: кого заменить?</h2>
         <p>
-          Нажми на героя — <b>вместо него</b> встанет <span id="yourNameLabel">твой персонаж</span>.
-          Запустится <b>заставка</b>, и твой перс будет делать <b>движения выбранного (заменённого)</b>.
+          Создан: <b id="yourNameLabel">твой персонаж</b>. Нажми героя — <b>вместо него</b> твой перс → <b>заставка YouTube</b> → твой перс делает <b>такие же движения, как у заменённого</b>.
         </p>
         <div class="round-grid" id="roundGrid"></div>
         <div style="margin-top:14px">
@@ -230,14 +237,21 @@
   </main>
 
   <div class="splash" id="splash" aria-live="polite">
-    <img class="splash-art" id="splashImg" src="create-original/splash.jpg" alt="Заставка Создай Смешарика"
-         onerror="this.style.display='none'">
-    <div style="font-size:2.4rem" id="splashEmoji">🟡</div>
+    <!-- Заставка: видео «Создай смешарика» с YouTube -->
+    <div class="splash-video-wrap" id="splashVideoWrap">
+      <iframe id="splashYt" title="Заставка Создай Смешарика"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+    <img class="splash-art" id="splashImg" src="create-original/splash_yt.jpg" alt="Заставка"
+         onerror="this.src='create-original/splash.jpg'">
+    <div style="font-size:2rem" id="splashEmoji">🟡</div>
     <h2 id="splashTitle">Заставка…</h2>
     <p id="splashText">Готовим анимацию</p>
     <div style="width:min(280px,80vw);height:8px;background:#2a1a40;border-radius:99px;overflow:hidden">
       <div id="splashBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffcc00,#ff6bb5);transition:width .15s"></div>
     </div>
+    <button type="button" class="btn btn-y" id="btnSkipSplash" style="margin-top:4px">Пропустить → Мотор!</button>
   </div>
 
   <script>
@@ -621,36 +635,66 @@
     runSplash(ch, function () { setStep(3); });
   }
 
+  // YouTube: геймплей «Создай смешарика» (заставка)
+  var YT_SPLASH_ID = "73SwUgIpiNE";
+  var splashTimer = null;
+  var splashDone = null;
+
+  function stopSplashMedia() {
+    var yt = document.getElementById("splashYt");
+    if (yt) yt.removeAttribute("src");
+    if (splashTimer) { clearInterval(splashTimer); splashTimer = null; }
+  }
+
+  function finishSplash() {
+    stopSplashMedia();
+    var sp = document.getElementById("splash");
+    if (sp) sp.classList.remove("on");
+    var fn = splashDone;
+    splashDone = null;
+    if (fn) fn();
+  }
+
   function runSplash(ch, done) {
+    splashDone = done;
     var sp = document.getElementById("splash");
     var bar = document.getElementById("splashBar");
+    var yt = document.getElementById("splashYt");
     var img = document.getElementById("splashImg");
+    // видео-заставка с YouTube (autoplay muted — браузеры разрешают)
+    if (yt) {
+      yt.src = "https://www.youtube.com/embed/" + YT_SPLASH_ID +
+        "?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&start=0";
+    }
     if (img) {
-      img.style.display = "";
-      img.src = "create-original/splash.jpg";
+      img.style.display = "none";
+      img.src = "create-original/splash_yt.jpg";
     }
     sp.classList.add("on");
     document.getElementById("splashEmoji").textContent = ch.emoji || "🟡";
     document.getElementById("splashTitle").textContent =
       (hero.name || "Твой герой") + " вместо " + ch.name + "!";
     document.getElementById("splashText").textContent =
-      "Заставка · «" + (hero.phrase || "Ура!") + "» · движения: " + ch.moveName +
-      " (как у " + ch.name + ")";
+      "Заставка YouTube · потом «Мотор!» — движения «" + ch.moveName + "» как у " + ch.name;
     bar.style.width = "0%";
     var p = 0;
-    var iv = setInterval(function () {
-      p += 5 + Math.random() * 7;
+    if (splashTimer) clearInterval(splashTimer);
+    // ~12 сек заставки (видео играет), потом анимация
+    splashTimer = setInterval(function () {
+      p += 1.2;
       if (p >= 100) {
         p = 100;
-        clearInterval(iv);
         bar.style.width = "100%";
-        setTimeout(function () {
-          sp.classList.remove("on");
-          if (done) done();
-        }, 400);
+        clearInterval(splashTimer);
+        splashTimer = null;
+        setTimeout(finishSplash, 300);
       } else bar.style.width = p + "%";
-    }, 55);
+    }, 140);
   }
+
+  document.getElementById("btnSkipSplash").onclick = function () {
+    finishSplash();
+  };
 
   document.getElementById("btnReplay").onclick = function () {
     if (!replaced) return;
