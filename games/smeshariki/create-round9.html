@@ -269,53 +269,72 @@
       position: relative;
       z-index: 10;
     }
+    /* Наклейка: большой = заменённый, маленький круг = наш ПОВЕРХ */
     .sticker-stack {
-      position: relative;
-      width: 120px;
-      height: 120px;
-      display: grid;
-      place-items: center;
+      position: relative !important;
+      width: 140px;
+      height: 140px;
+      display: block !important;
+      flex-shrink: 0;
     }
     .sticker-stack .base-char {
-      width: 100%; height: 100%; object-fit: contain;
-      filter: drop-shadow(0 6px 10px rgba(0,0,0,.4));
+      position: absolute !important;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 14px rgba(0,0,0,.5));
       transform-origin: 50% 80%;
+      z-index: 1;
     }
     .sticker-stack .our-sticker {
-      position: absolute;
-      width: 42%; height: 42%;
-      left: 50%; top: 38%;
-      transform: translate(-50%, -50%);
+      position: absolute !important;
+      width: 48% !important;
+      height: 48% !important;
+      left: 50% !important;
+      top: 42% !important;
+      transform: translate(-50%, -50%) !important;
       border-radius: 50%;
-      border: 2px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,.45);
-      z-index: 3;
+      border: 3px solid #ffcc00 !important;
+      box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(0,0,0,.55);
+      z-index: 20 !important;
       pointer-events: none;
+      overflow: hidden;
+      background: #1a1028;
     }
     .sticker-stack .our-sticker canvas {
-      width: 100% !important; height: 100% !important;
-      display: block; border-radius: 50%;
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      border-radius: 50%;
+      position: static !important;
+      max-width: none !important;
+      max-height: none !important;
     }
     .splash-hero-band .sticker-stack {
-      width: min(28vh, 140px);
-      height: min(28vh, 140px);
+      width: min(200px, 46vw) !important;
+      height: min(200px, 46vw) !important;
     }
     .stage-wrap .sticker-stack {
-      width: min(180px, 40vw);
-      height: min(180px, 40vw);
+      width: min(200px, 48vw) !important;
+      height: min(200px, 48vw) !important;
     }
     .art .sticker-stack {
-      width: 88px; height: 88px;
+      width: 88px !important;
+      height: 88px !important;
     }
-    .splash-hero-band #splashHeroCanvas {
-      width: min(42vh, 90vw) !important;
-      height: min(42vh, 90vw) !important;
-      max-width: 320px;
-      max-height: 320px;
-      display: block !important;
-      position: relative !important;
-      z-index: 11;
-      background: transparent;
+    /* наклейка ПОВЕРХ видео по центру */
+    .splash-sticker-overlay {
+      position: absolute !important;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 50 !important;
+      pointer-events: none;
+    }
+    .splash-video-wrap .splash-sticker-overlay .sticker-stack {
+      width: min(180px, 40vw) !important;
+      height: min(180px, 40vw) !important;
     }
     .splash #btnSkipSplash {
       position: fixed; right: 12px; bottom: 12px; z-index: 100001;
@@ -421,12 +440,13 @@
       <video id="splashVideo" playsinline preload="auto" muted loop>
         <source src="create-original/splash_video.mp4" type="video/mp4">
       </video>
-    </div>
-    <div class="splash-hero-band" id="splashHeroBand">
-      <div class="sticker-stack" id="splashSticker">
-        <img class="base-char" id="splashBaseImg" alt="" src="">
-        <div class="our-sticker" id="splashOurSticker">
-          <canvas id="splashHeroCanvas" width="96" height="96"></canvas>
+      <!-- ЗАКЛЕЙКА: заменённый + наш сверху, по центру видео -->
+      <div class="splash-sticker-overlay" id="splashStickerOverlay">
+        <div class="sticker-stack" id="splashSticker">
+          <img class="base-char" id="splashBaseImg" alt="" src="images/krosh.png">
+          <div class="our-sticker" id="splashOurSticker">
+            <canvas id="splashHeroCanvas" width="128" height="128"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -840,8 +860,10 @@
     stack.appendChild(base);
     var stick = document.createElement("div");
     stick.className = "our-sticker";
+    stick.style.cssText = "position:absolute;width:48%;height:48%;left:50%;top:42%;transform:translate(-50%,-50%);border-radius:50%;border:3px solid #ffcc00;z-index:20;overflow:hidden;background:#1a1028;box-shadow:0 0 0 2px #fff,0 4px 12px rgba(0,0,0,.55)";
     var c = document.createElement("canvas");
-    c.width = 96; c.height = 96;
+    c.width = 128; c.height = 128;
+    c.style.cssText = "width:100%;height:100%;display:block;border-radius:50%";
     stick.appendChild(c);
     stack.appendChild(stick);
     // рисуем нашего перса (маленький) + лёгкая анимация на canvas
@@ -853,8 +875,8 @@
     function loop(now) {
       if (!alive) return;
       var tt = (now - t0) / 1000;
-      ctx.clearRect(0, 0, 96, 96);
-      try { drawHero(ctx, 48, 50, 28, hero, tt, "idle"); } catch (err) {}
+      ctx.clearRect(0, 0, c.width, c.height);
+      try { drawHero(ctx, c.width/2, c.height/2+2, c.width*0.42, hero, tt, "idle"); } catch (err) {}
       slot.id = requestAnimationFrame(loop);
     }
     slot.id = requestAnimationFrame(loop);
@@ -929,7 +951,7 @@
       if (!alive) return;
       var tt = ((typeof now === "number" ? now : performance.now()) - t0) / 1000;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      try { drawHero(ctx, canvas.width/2, canvas.height/2 + 2, canvas.width * 0.30, hero, tt, anim || "idle"); } catch (e) {}
+      try { drawHero(ctx, canvas.width/2, canvas.height/2 + 2, canvas.width * 0.42, hero, tt, anim || "idle"); } catch (e) {}
       slot.id = requestAnimationFrame(loop);
     }
     slot.id = requestAnimationFrame(loop);
@@ -940,24 +962,28 @@
     var stack = document.getElementById(stackId);
     var base = document.getElementById(baseImgId);
     var canvas = document.getElementById(canvasId);
+    ch = ch || { anim: "bounce", img: "images/krosh.png" };
     if (stack) {
-      stack.className = "sticker-stack anim-" + ((ch && ch.anim) || "bounce");
+      stack.className = "sticker-stack anim-" + (ch.anim || "bounce");
+      stack.style.display = "block";
     }
     if (base) {
-      if (ch && ch.img) {
-        base.style.display = "block";
-        base.src = ch.img;
-      } else {
+      base.style.display = "block";
+      base.style.visibility = "visible";
+      base.src = ch.img || "images/krosh.png";
+      base.onerror = function () {
+        // fallback emoji
         base.style.display = "none";
-      }
+      };
     }
-    // маленький наш перс «наклейка»
-    if (splashRaf) { cancelAnimationFrame(splashRaf); splashRaf = 0; }
-    var slot = paintOurMini(canvas, "idle", performance.now());
-    if (slot) {
-      // store on splashRaf for stop
-      splashMiniSlot = slot;
+    var stick = document.getElementById("splashOurSticker");
+    if (stick) {
+      stick.style.display = "block";
+      stick.style.visibility = "visible";
+      stick.style.zIndex = "30";
     }
+    if (splashMiniSlot && splashMiniSlot.stop) splashMiniSlot.stop();
+    splashMiniSlot = paintOurMini(canvas, "idle", performance.now());
   }
 
   var splashMiniSlot = null;
@@ -1046,7 +1072,7 @@
       function frame(now) {
         var tt = (now - t0) / 1000;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        try { drawHero(ctx, 48, 50, 28, hero, tt, "idle"); } catch (e) {}
+        try { drawHero(ctx, 48, 50, 40, hero, tt, "idle"); } catch (e) {}
         animRaf = requestAnimationFrame(frame);
       }
       animRaf = requestAnimationFrame(frame);
