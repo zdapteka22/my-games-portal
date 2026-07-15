@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>🌻 Огород Копатыча</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:"Segoe UI",system-ui,sans-serif;background:linear-gradient(160deg,#1a2a10,#0a1808);color:#eee;min-height:100vh;padding:12px}
+    .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+    .top a{text-decoration:none;font-weight:800;padding:8px 14px;border-radius:999px;background:linear-gradient(135deg,#ffcc00,#ff9f1c);color:#2a1200}
+    h1{font-size:1.2rem;color:#a5d6a7;flex:1}
+    .card{background:#142018;border:1px solid #2a4a30;border-radius:16px;padding:14px;max-width:720px;margin:0 auto}
+    p{color:#aab;font-size:14px;margin:0 0 12px;line-height:1.4}
+    canvas{display:block;width:100%;max-width:680px;margin:0 auto;border-radius:12px;border:3px solid #5a8;background:#1a3018;touch-action:none;cursor:pointer}
+    .score{text-align:center;font-weight:800;color:#ffcc00;margin:8px 0;font-size:18px}
+    .bar{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+    button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;font:inherit;cursor:pointer;background:linear-gradient(135deg,#8bc34a,#558b2f);color:#fff}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a href="../smeshariki/index.html">⬅ Смешарики</a>
+    <h1>🌻 Огород Копатыча</h1>
+    <a href="../../index.html" style="background:#243028;color:#ffc;border:1px solid #456;text-decoration:none;font-weight:800;padding:8px 14px;border-radius:999px">Портал</a>
+  </div>
+  <div class="card">
+    <p>Кликай по <b>грядкам</b>: 1 — посадить, 2 — полить, 3 — собрать. Собери <b>8 морковок</b> за время. Сорняк кликай сразу!</p>
+    <div class="score" id="score">Морковки: 0/8 · Время: 45</div>
+    <canvas id="c" width="680" height="420"></canvas>
+    <div class="bar"><button type="button" id="again">↻ Заново</button></div>
+  </div>
+  <script>
+(function(){
+  const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+  const hero=new Image();hero.src='../smeshariki/images/kopatych.png';
+  let plots=[],carrots=0,time=45,over=false,win=false,last=performance.now();
+  function mk(){const a=[];for(let i=0;i<8;i++){const col=i%4,row=Math.floor(i/4);a.push({x:60+col*150,y:100+row*130,w:120,h:100,stage:0,weed:false,t:0})}return a}
+  function reset(){plots=mk();carrots=0;time=45;over=false;win=false;last=performance.now();upd();draw()}
+  function upd(){document.getElementById('score').textContent=win?'✅ Урожай собран! 🥕'+carrots:(over?'⏰ Время! Морковок: '+carrots:'Морковки: '+carrots+'/8 · Время: '+Math.ceil(time))}
+  function draw(){
+    ctx.clearRect(0,0,680,420);
+    ctx.fillStyle='#1a3018';ctx.fillRect(0,0,680,420);
+    ctx.fillStyle='#ffcc00';ctx.font='bold 20px Segoe UI';ctx.textAlign='center';
+    ctx.fillText(win?'УРА, УРОЖАЙ!':(over?'ОЙ, ПОЗДНО…':'Огород Копатыча'),340,36);
+    if(hero.complete&&hero.naturalWidth) ctx.drawImage(hero,560,280,90,90);
+    plots.forEach(p=>{
+      ctx.fillStyle=p.weed?'#5d4037':'#4e342e';
+      round(p.x,p.y,p.w,p.h,10);ctx.fill();
+      ctx.strokeStyle='#8d6e63';ctx.lineWidth=2;ctx.stroke();
+      ctx.font='32px serif';ctx.textAlign='center';
+      const emoji=p.weed?'🌿':(p.stage===0?'🟫':p.stage===1?'🌱':p.stage===2?'💧':'🥕');
+      ctx.fillText(emoji,p.x+p.w/2,p.y+p.h/2+12);
+    });
+  }
+  function round(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+  function pos(e){const r=canvas.getBoundingClientRect();const t=e.changedTouches?e.changedTouches[0]:e;return{x:(t.clientX-r.left)*(canvas.width/r.width),y:(t.clientY-r.top)*(canvas.height/r.height)}}
+  function tap(e){if(over||win)return;e.preventDefault();const m=pos(e);for(const p of plots){if(m.x>=p.x&&m.x<=p.x+p.w&&m.y>=p.y&&m.y<=p.y+p.h){if(p.weed){p.weed=false}else if(p.stage<3){p.stage++}else{p.stage=0;carrots++;if(carrots>=8){win=true;over=true}}upd();draw();return}}}
+  function tick(now){const dt=(now-last)/1000;last=now;if(!over&&!win){time-=dt;if(time<=0){time=0;over=true}if(Math.random()<0.008){const p=plots[Math.floor(Math.random()*plots.length)];if(p.stage>0&&p.stage<3)p.weed=true}upd();draw()}requestAnimationFrame(tick)}
+  canvas.addEventListener('click',tap);canvas.addEventListener('touchend',tap,{passive:false});
+  document.getElementById('again').onclick=reset;hero.onload=draw;reset();requestAnimationFrame(tick);
+})();
+  </script>
+</body>
+</html>
