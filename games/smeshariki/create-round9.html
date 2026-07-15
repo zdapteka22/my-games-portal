@@ -122,8 +122,10 @@
     .splash-video-wrap video,
     .splash-video-wrap img.splash-bg {
       position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-      opacity: 0.45;
+      opacity: 0.55;
     }
+    .splash-video-wrap video { opacity: 0.7; z-index: 1; }
+    .splash-video-wrap img.splash-bg { z-index: 0; }
     .splash-video-wrap canvas#splashHeroCanvas {
       position: absolute; inset: 0; width: 100%; height: 100%;
       z-index: 2;
@@ -198,10 +200,11 @@
             <button type="button" class="btn btn-sec" id="btnPreviewSplash">▶ Смотреть заставку сейчас</button>
           </div>
         </div>
-        <div style="margin-top:14px;border:2px solid #ffcc00;border-radius:14px;overflow:hidden;max-width:420px">
-          <div style="background:#ffcc00;color:#1a1000;font-weight:900;padding:6px 10px;font-size:13px">ЗАСТАВКА (превью)</div>
-          <img src="create-original/splash_video.webp" alt="Заставка" style="width:100%;display:block;background:#000"
-               onerror="this.src='create-original/splash.jpg'">
+        <div style="margin-top:14px;border:2px solid #ffcc00;border-radius:14px;overflow:hidden;max-width:480px">
+          <div style="background:#ffcc00;color:#1a1000;font-weight:900;padding:6px 10px;font-size:13px">ЗАСТАВКА (видео с VK — вшито в игру)</div>
+          <video src="create-original/splash_video.mp4" muted playsinline controls
+            style="width:100%;display:block;background:#000;max-height:260px"
+            poster="create-original/splash_poster.jpg"></video>
         </div>
         <p class="hint" style="margin-top:8px"><b>Где заставка:</b> 1) превью выше · 2) после «Готово» · 3) когда выберешь, кого заменить в девятке (полный экран + твой перс).</p>
       </div>
@@ -224,7 +227,7 @@
       <div class="card">
         <h2>2. Меню: кого заменить? → потом ЗАСТАВКА</h2>
         <p>
-          Создан: <b id="yourNameLabel">твой персонаж</b>. Нажми героя — <b>вместо него</b> твой перс → <b>заставка YouTube</b> → твой перс делает <b>такие же движения, как у заменённого</b>.
+          Создан: <b id="yourNameLabel">твой персонаж</b>. Нажми героя — <b>на его месте встанет твой перс</b> → <b>заставка (видео с VK)</b> → твой перс делает <b>такие же движения</b>.
         </p>
         <div class="round-grid" id="roundGrid"></div>
         <div style="margin-top:14px">
@@ -252,12 +255,14 @@
     <div class="splash" id="splash" aria-live="polite">
     <div class="splash-label">★ ЗАСТАВКА ★</div>
     <div class="splash-video-wrap" id="splashVideoWrap">
-      <video id="splashVideo" muted playsinline loop preload="auto"
-        poster="create-original/splash_poster.jpg" style="display:none">
+      <video id="splashVideo" muted playsinline autoplay loop preload="auto"
+        poster="create-original/splash_poster.jpg">
         <source src="create-original/splash_video.mp4" type="video/mp4">
+        <source src="create-original/splash_vk.mp4" type="video/mp4">
       </video>
       <img class="splash-bg" id="splashBgAnim" src="create-original/splash_video.webp" alt=""
-           onerror="this.onerror=null;this.src='create-original/splash_video.gif';this.onerror=function(){this.src='create-original/splash.jpg';}">
+           style="display:none"
+           onerror="this.onerror=null;this.src='create-original/splash.jpg';">
       <canvas id="splashHeroCanvas" width="720" height="405"></canvas>
     </div>
     <div style="font-size:2rem" id="splashEmoji">🟡</div>
@@ -654,6 +659,9 @@
 
   function replaceCharacter(ch) {
     replaced = ch;
+    // сразу в меню: на месте этого героя — наш перс (сохраняем id замены)
+    try { localStorage.setItem("portal_smesh_replaced_id", ch.id); } catch (e) {}
+    renderRound();
     runSplash(ch, function () { setStep(3); });
   }
 
@@ -727,21 +735,34 @@
     var sp = document.getElementById("splash");
     var bar = document.getElementById("splashBar");
     var v = document.getElementById("splashVideo");
-    // пробуем локальный mp4, иначе webp/gif фон
+    var bg = document.getElementById("splashBgAnim");
     if (v) {
-      v.style.display = "none";
-      var tryMp4 = new Audio(); // detect via video element
-      v.src = "create-original/splash_video.mp4";
-      v.onloadeddata = function () {
-        v.style.display = "block";
-        v.muted = true;
-        v.play().catch(function () {});
+      v.style.display = "block";
+      v.muted = true;
+      v.loop = true;
+      // локальное видео с VK (splash_video.mp4 / splash_vk.mp4)
+      if (!v.getAttribute("data-src-set")) {
+        v.setAttribute("data-src-set", "1");
+      }
+      try {
+        v.currentTime = 0;
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {
+          // autoplay blocked — keep muted and try again
+          v.muted = true;
+          v.play().catch(function () {
+            if (bg) bg.style.display = "block";
+          });
+        });
+      } catch (e) {
+        if (bg) bg.style.display = "block";
+      }
+      v.onerror = function () {
+        v.style.display = "none";
+        if (bg) bg.style.display = "block";
       };
-      v.onerror = function () { v.style.display = "none"; };
-      v.load();
-      setTimeout(function () {
-        if (v.readyState < 2) v.style.display = "none";
-      }, 800);
+    } else if (bg) {
+      bg.style.display = "block";
     }
     sp.classList.add("on");
     document.getElementById("splashEmoji").textContent = ch.emoji || "🟡";
@@ -878,6 +899,14 @@
     ctx.closePath();
   }
 
+  try {
+    var rid = localStorage.getItem("portal_smesh_replaced_id");
+    if (rid) {
+      for (var i = 0; i < ROUND9.length; i++) {
+        if (ROUND9[i].id === rid) { replaced = ROUND9[i]; break; }
+      }
+    }
+  } catch (e) {}
   initCreateUI();
 })();
   </script>
