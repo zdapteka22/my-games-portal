@@ -364,24 +364,60 @@
       opacity: 0.9; font-size: 13px; padding: 8px 14px; min-height: 36px;
     }
 
-    /* НАШ перс — главный на заставке */
-    #splashHeroCanvas {
-      position: absolute !important;
-      left: 50% !important;
-      top: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      width: min(340px, 70vw) !important;
-      height: min(340px, 70vw) !important;
-      z-index: 1000 !important;
-      display: block !important;
-      pointer-events: none !important;
-      background: transparent !important;
-      filter: drop-shadow(0 10px 24px rgba(0,0,0,.6));
-    }
+    
     .splash-video-wrap {
       width: 100vw !important;
       height: 100vh !important;
     }
+
+    /* НАКЛЕЙКА В ЗАСТАВКЕ: тело заменённого + наше лицо НА голове */
+    .splash-glue {
+      position: absolute !important;
+      left: 50% !important;
+      top: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      width: min(280px, 62vw) !important;
+      height: min(280px, 62vw) !important;
+      z-index: 1000 !important;
+      pointer-events: none !important;
+      display: block !important;
+    }
+    .splash-glue .glue-body {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      display: block !important;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.55));
+      z-index: 1 !important;
+    }
+    .splash-glue .glue-face {
+      position: absolute !important;
+      left: 50% !important;
+      top: 26% !important;
+      width: 42% !important;
+      height: 42% !important;
+      transform: translate(-50%, -50%) !important;
+      border-radius: 50% !important;
+      border: 4px solid #ffcc00 !important;
+      box-shadow: 0 0 0 3px #fff, 0 4px 14px rgba(0,0,0,.55) !important;
+      z-index: 5 !important;
+      background: transparent !important;
+      display: block !important;
+    }
+    .splash-video-wrap video {
+      opacity: 0.35 !important;
+    }
+    .splash-glue.anim-bounce { animation: a-bounce 0.55s ease-in-out infinite; }
+    .splash-glue.anim-spin { animation: a-spin 1.1s linear infinite; }
+    .splash-glue.anim-sway { animation: a-sway 0.7s ease-in-out infinite; }
+    .splash-glue.anim-poet { animation: a-poet 1.2s ease-in-out infinite; }
+    .splash-glue.anim-stomp { animation: a-stomp 0.45s ease-in-out infinite; }
+    .splash-glue.anim-think { animation: a-think 1.4s ease-in-out infinite; }
+    .splash-glue.anim-waddle { animation: a-waddle 0.5s ease-in-out infinite; }
+    .splash-glue.anim-nod { animation: a-nod 0.6s ease-in-out infinite; }
+    .splash-glue.anim-bow { animation: a-bow 1.6s ease-in-out infinite; }
   </style>
   <!-- Ruffle: проигрыватель Flash-оригинала -->
   <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
@@ -477,13 +513,16 @@
     </section>
   </main>
 
-    <div class="splash" id="splash" aria-live="polite">
+        <div class="splash" id="splash" aria-live="polite">
     <div class="splash-video-wrap" id="splashVideoWrap">
       <video id="splashVideo" playsinline preload="auto" muted>
         <source src="create-original/splash_video.mp4" type="video/mp4">
       </video>
-      <!-- ТОЛЬКО НАШ ПЕРС (созданный), по центру заставки -->
-      <canvas id="splashHeroCanvas" width="500" height="500"></canvas>
+      <!-- НАКЛЕЙКА: тело=заменённый, лицо=наш перс ПРЯМО НА ГОЛОВЕ -->
+      <div id="splashGlue" class="splash-glue anim-bounce">
+        <img id="splashBodyImg" class="glue-body" alt="" src="images/krosh.png">
+        <canvas id="splashFaceCanvas" class="glue-face" width="160" height="160"></canvas>
+      </div>
     </div>
     <button type="button" class="btn btn-y" id="btnSkipSplash">✕</button>
   </div>
@@ -1054,81 +1093,86 @@
 
   var splashMiniSlot = null;
 
+
   function stopSplashMedia() {
     if (splashRaf) { cancelAnimationFrame(splashRaf); splashRaf = 0; }
     if (splashMiniSlot && splashMiniSlot.stop) { splashMiniSlot.stop(); splashMiniSlot = null; }
     var v = document.getElementById("splashVideo");
-    if (v) {
-      try {
-        v.pause();
-        v.onended = null;
-      } catch (e) {}
-    }
+    if (v) { try { v.pause(); v.onended = null; } catch (e) {} }
     if (splashTimer) { clearTimeout(splashTimer); clearInterval(splashTimer); splashTimer = null; }
   }
 
   function finishSplash() {
     stopSplashMedia();
     var sp = document.getElementById("splash");
-    if (sp) {
-      sp.classList.remove("on");
-      sp.style.display = "none";
-    }
+    if (sp) { sp.classList.remove("on"); sp.style.display = "none"; }
     var fn = splashDone;
     splashDone = null;
     if (fn) fn();
   }
 
-  /** Рисует НАШЕГО перса (созданного) с движениями заменённого — на заставке */
-  function paintSplashOurHero(now) {
-    var c = document.getElementById("splashHeroCanvas");
-    if (!c) return;
+  /** Наше лицо — canvas, сидит НА голове заменённого */
+  function paintGluedFace(now) {
+    var c = document.getElementById("splashFaceCanvas");
+    if (!c) {
+      splashRaf = requestAnimationFrame(paintGluedFace);
+      return;
+    }
     var ctx = c.getContext("2d");
     var w = c.width, h = c.height;
     ctx.clearRect(0, 0, w, h);
     var tt = (typeof now === "number" ? now : performance.now()) / 1000;
-    var anim = (splashCh && splashCh.anim) || "bounce";
     try {
-      // крупный наш герой по центру
-      drawHero(ctx, w / 2, h / 2 + 8, Math.min(w, h) * 0.40, hero, tt, anim);
+      drawHero(ctx, w / 2, h / 2 + 4, w * 0.44, hero, tt, "idle");
     } catch (e) {
       ctx.beginPath();
-      ctx.arc(w/2, h/2, 90, 0, Math.PI * 2);
+      ctx.arc(w / 2, h / 2, w * 0.4, 0, Math.PI * 2);
       ctx.fillStyle = (hero && hero.color) || "#4fc3f7";
       ctx.fill();
     }
-    splashRaf = requestAnimationFrame(paintSplashOurHero);
+    splashRaf = requestAnimationFrame(paintGluedFace);
   }
 
   function runSplash(ch, done) {
     splashDone = done;
-    splashCh = ch || { anim: "bounce" };
+    splashCh = ch || { anim: "bounce", img: "images/krosh.png" };
     splashStartedAt = Date.now();
     var sp = document.getElementById("splash");
     var v = document.getElementById("splashVideo");
-    var c = document.getElementById("splashHeroCanvas");
+    var glue = document.getElementById("splashGlue");
+    var body = document.getElementById("splashBodyImg");
+    var face = document.getElementById("splashFaceCanvas");
+
     if (sp) {
       sp.classList.add("on");
-      sp.style.cssText = "display:flex !important; position:fixed; inset:0; z-index:99999; background:#000; flex-direction:column";
+      sp.style.cssText = "display:flex !important;position:fixed;inset:0;z-index:99999;background:#000";
     }
-    if (c) {
-      c.width = 500;
-      c.height = 500;
-      c.style.cssText = "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,70vw);height:min(340px,70vw);z-index:1000;display:block;pointer-events:none;background:transparent;filter:drop-shadow(0 12px 28px rgba(0,0,0,.65))";
+    // ТЕЛО = заменённый герой
+    if (body) {
+      body.style.display = "block";
+      body.src = (ch && ch.img) ? ch.img : "images/krosh.png";
+      body.onerror = function () { body.src = "images/krosh.png"; };
     }
-    // сразу наш перс
+    // весь клей двигается как заменённый
+    if (glue) {
+      glue.className = "splash-glue anim-" + ((ch && ch.anim) || "bounce");
+      glue.style.cssText = "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(280px,62vw);height:min(280px,62vw);z-index:1000;pointer-events:none;display:block";
+    }
+    if (face) {
+      face.width = 160;
+      face.height = 160;
+      face.style.cssText = "position:absolute;left:50%;top:26%;width:42%;height:42%;transform:translate(-50%,-50%);border-radius:50%;border:4px solid #ffcc00;box-shadow:0 0 0 3px #fff,0 4px 14px rgba(0,0,0,.55);z-index:5;display:block;background:transparent";
+    }
     if (splashRaf) cancelAnimationFrame(splashRaf);
-    splashRaf = requestAnimationFrame(paintSplashOurHero);
-    // видео фон — НЕ loop, чтобы не дёргалось; не закрываем заставку по onended мгновенно
+    splashRaf = requestAnimationFrame(paintGluedFace);
+
     if (v) {
       try {
         v.loop = false;
         v.muted = true;
         v.controls = false;
         v.currentTime = 0;
-        v.onended = function () {
-          /* не сбрасываем — ждём таймер, герой остаётся */
-        };
+        v.onended = null;
         var pr = v.play();
         if (pr && pr.catch) pr.catch(function () {
           v.muted = true;
@@ -1137,7 +1181,6 @@
       } catch (e) {}
     }
     if (splashTimer) clearTimeout(splashTimer);
-    // заставка 12 сек: видео + наш перс, потом просто назад к девятке (без меню 3)
     splashTimer = setTimeout(function () {
       splashTimer = null;
       finishSplash();
