@@ -114,15 +114,16 @@
       border: 3px solid #ffcc00; box-shadow: 0 12px 40px rgba(255,180,0,.28);
       background: #000; position: relative; animation: popIn .5s ease;
     }
-    .splash-video-wrap iframe {
-      position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+    .splash-video-wrap video,
+    .splash-video-wrap img.splash-bg {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+      opacity: 0.45;
     }
-    .splash .splash-art {
-      width: min(420px, 88vw); max-height: 40vh; object-fit: contain;
-      border-radius: 16px; border: 3px solid #ffcc00;
-      box-shadow: 0 12px 40px rgba(255,180,0,.25); background: #1a1028;
-      display: none;
+    .splash-video-wrap canvas#splashHeroCanvas {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      z-index: 2;
     }
+    .splash .splash-art { display: none; }
     .splash h2 {
       font-size: clamp(1.2rem, 4vw, 1.9rem); color: var(--yellow);
       text-shadow: 0 4px 20px rgba(255,200,0,.4);
@@ -236,22 +237,23 @@
     </section>
   </main>
 
-  <div class="splash" id="splash" aria-live="polite">
-    <!-- Заставка: видео «Создай смешарика» с YouTube -->
+    <div class="splash" id="splash" aria-live="polite">
     <div class="splash-video-wrap" id="splashVideoWrap">
-      <iframe id="splashYt" title="Заставка Создай Смешарика"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <video id="splashVideo" muted playsinline loop preload="auto"
+        poster="create-original/splash_poster.jpg" style="display:none">
+        <source src="create-original/splash_video.mp4" type="video/mp4">
+      </video>
+      <img class="splash-bg" id="splashBgAnim" src="create-original/splash_video.webp" alt=""
+           onerror="this.onerror=null;this.src='create-original/splash_video.gif';this.onerror=function(){this.src='create-original/splash.jpg';}">
+      <canvas id="splashHeroCanvas" width="720" height="405"></canvas>
     </div>
-    <img class="splash-art" id="splashImg" src="create-original/splash_yt.jpg" alt="Заставка"
-         onerror="this.src='create-original/splash.jpg'">
     <div style="font-size:2rem" id="splashEmoji">🟡</div>
     <h2 id="splashTitle">Заставка…</h2>
-    <p id="splashText">Готовим анимацию</p>
+    <p id="splashText">Твой персонаж повторяет движения заменённого</p>
     <div style="width:min(280px,80vw);height:8px;background:#2a1a40;border-radius:99px;overflow:hidden">
       <div id="splashBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffcc00,#ff6bb5);transition:width .15s"></div>
     </div>
-    <button type="button" class="btn btn-y" id="btnSkipSplash" style="margin-top:4px">Пропустить → Мотор!</button>
+    <button type="button" class="btn btn-y" id="btnSkipSplash" style="margin-top:4px">Дальше → Мотор!</button>
   </div>
 
   <script>
@@ -635,14 +637,16 @@
     runSplash(ch, function () { setStep(3); });
   }
 
-  // YouTube: геймплей «Создай смешарика» (заставка)
-  var YT_SPLASH_ID = "73SwUgIpiNE";
+  // Локальная заставка: файл + canvas (наш перс = движения заменённого)
   var splashTimer = null;
   var splashDone = null;
+  var splashRaf = 0;
+  var splashCh = null;
 
   function stopSplashMedia() {
-    var yt = document.getElementById("splashYt");
-    if (yt) yt.removeAttribute("src");
+    if (splashRaf) { cancelAnimationFrame(splashRaf); splashRaf = 0; }
+    var v = document.getElementById("splashVideo");
+    if (v) { try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {} }
     if (splashTimer) { clearInterval(splashTimer); splashTimer = null; }
   }
 
@@ -655,39 +659,90 @@
     if (fn) fn();
   }
 
+  function paintSplashHero(now) {
+    var c = document.getElementById("splashHeroCanvas");
+    if (!c || !splashCh) return;
+    var ctx = c.getContext("2d");
+    var w = c.width, h = c.height;
+    ctx.clearRect(0, 0, w, h);
+    // soft vignette
+    var g = ctx.createRadialGradient(w/2, h*0.48, 40, w/2, h*0.5, w*0.45);
+    g.addColorStop(0, "rgba(40,20,80,0.15)");
+    g.addColorStop(1, "rgba(0,0,0,0.55)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    var t = now / 1000;
+    // ГЛАВНОЕ: наш перс с анимацией ЗАМЕНЁННОГО героя
+    drawHero(ctx, w / 2, h * 0.52, 90, hero, t, splashCh.anim);
+    ctx.fillStyle = "#ffcc00";
+    ctx.font = "bold 22px Segoe UI,sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText((hero.name || "Герой") + "  ←  " + splashCh.name, w / 2, 36);
+    ctx.fillStyle = "#eee";
+    ctx.font = "15px Segoe UI,sans-serif";
+    ctx.fillText("движения: " + splashCh.moveName, w / 2, 60);
+    var phrase = hero.phrase || splashCh.phrase || "";
+    if (phrase) {
+      ctx.font = "bold 16px Segoe UI,sans-serif";
+      var tw = ctx.measureText(phrase).width;
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      var bx = w/2 - tw/2 - 14, by = h * 0.16;
+      ctx.beginPath();
+      ctx.moveTo(bx+10, by);
+      ctx.arcTo(bx+tw+28, by, bx+tw+28, by+32, 10);
+      ctx.arcTo(bx+tw+28, by+32, bx, by+32, 10);
+      ctx.arcTo(bx, by+32, bx, by, 10);
+      ctx.arcTo(bx, by, bx+tw+28, by, 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#1a1028";
+      ctx.fillText(phrase, w/2, by + 22);
+    }
+    splashRaf = requestAnimationFrame(paintSplashHero);
+  }
+
   function runSplash(ch, done) {
     splashDone = done;
+    splashCh = ch;
     var sp = document.getElementById("splash");
     var bar = document.getElementById("splashBar");
-    var yt = document.getElementById("splashYt");
-    var img = document.getElementById("splashImg");
-    // видео-заставка с YouTube (autoplay muted — браузеры разрешают)
-    if (yt) {
-      yt.src = "https://www.youtube.com/embed/" + YT_SPLASH_ID +
-        "?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&start=0";
-    }
-    if (img) {
-      img.style.display = "none";
-      img.src = "create-original/splash_yt.jpg";
+    var v = document.getElementById("splashVideo");
+    // пробуем локальный mp4, иначе webp/gif фон
+    if (v) {
+      v.style.display = "none";
+      var tryMp4 = new Audio(); // detect via video element
+      v.src = "create-original/splash_video.mp4";
+      v.onloadeddata = function () {
+        v.style.display = "block";
+        v.muted = true;
+        v.play().catch(function () {});
+      };
+      v.onerror = function () { v.style.display = "none"; };
+      v.load();
+      setTimeout(function () {
+        if (v.readyState < 2) v.style.display = "none";
+      }, 800);
     }
     sp.classList.add("on");
     document.getElementById("splashEmoji").textContent = ch.emoji || "🟡";
     document.getElementById("splashTitle").textContent =
       (hero.name || "Твой герой") + " вместо " + ch.name + "!";
     document.getElementById("splashText").textContent =
-      "Заставка YouTube · потом «Мотор!» — движения «" + ch.moveName + "» как у " + ch.name;
+      "Заставка: твой перс делает «" + ch.moveName + "» как " + ch.name;
     bar.style.width = "0%";
+    if (splashRaf) cancelAnimationFrame(splashRaf);
+    splashRaf = requestAnimationFrame(paintSplashHero);
     var p = 0;
     if (splashTimer) clearInterval(splashTimer);
-    // ~12 сек заставки (видео играет), потом анимация
+    // ~8 сек заставки с анимацией, потом сцена «Мотор!»
     splashTimer = setInterval(function () {
-      p += 1.2;
+      p += 1.8;
       if (p >= 100) {
         p = 100;
         bar.style.width = "100%";
         clearInterval(splashTimer);
         splashTimer = null;
-        setTimeout(finishSplash, 300);
+        setTimeout(finishSplash, 250);
       } else bar.style.width = p + "%";
     }, 140);
   }
