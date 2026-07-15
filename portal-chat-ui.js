@@ -23,7 +23,7 @@
     let mode = "lobby"; // lobby | support | players
     let autoOn = true;
     let autoT = null;
-    let voiceOn = true; // voice notes can play
+    let voiceOn = false; // диктор ВЫКЛ — без озвучки чата
     let micOn = false;
     let recognition = null;
     let speakQueue = [];
@@ -131,46 +131,27 @@
         .trim();
     }
 
+    function stopDictor() {
+      speakQueue = [];
+      speaking = false;
+      try {
+        if (window.speechSynthesis) {
+          speechSynthesis.cancel();
+        }
+      } catch (_) {}
+    }
     function speakVoice(who, text) {
-      if (!voiceOn || !window.speechSynthesis) return;
-      const t = cleanSpeak((who || "") + ". " + text);
-      if (!t) return;
-      if (speakQueue.length > 4) speakQueue.shift();
-      speakQueue.push(t);
-      flushSpeak();
+      // диктор отключён — не озвучиваем
+      return;
     }
     function flushSpeak() {
-      if (!voiceOn || speaking || !speakQueue.length || !window.speechSynthesis) return;
-      const t = speakQueue.shift();
-      const u = new SpeechSynthesisUtterance(t);
-      u.lang = "ru-RU";
-      u.rate = 1.05;
-      const voices = speechSynthesis.getVoices() || [];
-      const ru = voices.filter(function (v) {
-        return /ru|Russian/i.test(v.lang + v.name);
-      });
-      if (ru[0]) u.voice = ru[0];
-      speaking = true;
-      u.onend = function () {
-        speaking = false;
-        setTimeout(flushSpeak, 80);
-      };
-      u.onerror = function () {
-        speaking = false;
-        setTimeout(flushSpeak, 80);
-      };
-      try {
-        speechSynthesis.speak(u);
-      } catch (_) {
-        speaking = false;
-      }
+      speakQueue = [];
+      speaking = false;
     }
 
-    /** kind: text | voice — voice only sometimes, TTS only for voice */
+    /** kind: text only — без диктора / TTS */
     function bubble(who, text, tone, kind) {
-      kind = kind === "voice" ? "voice" : "text";
-      // only random AI lines become voice (not all, not "dictor mode")
-      if (tone !== "me" && kind === "text" && Math.random() < 0.18) kind = "voice";
+      kind = "text";
 
       const row = document.createElement("div");
       row.style.cssText = "display:flex;flex-direction:column;gap:2px;max-width:92%";
@@ -208,7 +189,7 @@
       trimLog();
       log.scrollTop = log.scrollHeight;
       lastSpeaker = who;
-      if (kind === "voice" && tone !== "me" && tone !== "user") speakVoice(who, text);
+      // озвучка/диктор отключены
     }
 
     function clearLog() {
@@ -427,22 +408,11 @@
       });
     if (voiceBtn)
       voiceBtn.addEventListener("click", function () {
-        voiceOn = !voiceOn;
-        if (!voiceOn && window.speechSynthesis) {
-          try {
-            speechSynthesis.cancel();
-          } catch (_) {}
-          speakQueue = [];
-        } else if (window.speechSynthesis) {
-          const u = new SpeechSynthesisUtterance("ок");
-          u.volume = 0.01;
-          u.lang = "ru-RU";
-          try {
-            speechSynthesis.speak(u);
-          } catch (_) {}
-        }
+        // диктор полностью выкл — кнопка только гасит TTS
+        voiceOn = false;
+        stopDictor();
         setLive();
-        toast(voiceOn ? "Голосовые иногда озвучиваются" : "Войс выкл");
+        toast("Диктор выключен");
       });
 
     function startMic() {
@@ -502,15 +472,12 @@
     if (tabSupport) tabSupport.addEventListener("click", function () { switchMode("support"); });
     if (tabPlayers) tabPlayers.addEventListener("click", function () { switchMode("players"); });
 
+    // сразу гасим диктор при открытии
+    stopDictor();
     if (window.speechSynthesis) {
       try {
-        speechSynthesis.getVoices();
+        speechSynthesis.cancel();
       } catch (_) {}
-      window.speechSynthesis.onvoiceschanged = function () {
-        try {
-          speechSynthesis.getVoices();
-        } catch (_) {}
-      };
     }
 
     // default: open lobby OR support if hash
