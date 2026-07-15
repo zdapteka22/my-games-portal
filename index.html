@@ -944,6 +944,19 @@
     .google-btn .g-icon {
       width: 20px; height: 20px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/%3E%3Cpath fill='%23FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat;
     }
+    .vk-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: #0077ff; color: #fff !important; border: 0 !important; border-radius: 12px;
+      width: 100%; min-height: 46px; font-weight: 800; font: inherit; cursor: pointer;
+    }
+    .vk-btn:hover { filter: brightness(1.08); }
+    .tg-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: #2AABEE; color: #fff !important; border: 0 !important; border-radius: 12px;
+      width: 100%; min-height: 46px; font-weight: 800; font: inherit; cursor: pointer;
+    }
+    .tg-btn:hover { filter: brightness(1.08); }
+    #telegramLoginMount { display: flex; justify-content: center; min-height: 0; margin-top: 6px; }
     .auth-divider { text-align: center; color: #666; font-size: 12px; margin: 10px 0; }
     .auth-box label { display: grid; gap: 4px; font-size: 12px; color: #888; margin-bottom: 10px; }
     .auth-box input {
@@ -1060,8 +1073,11 @@
     <div class="auth-box">
       <button type="button" class="auth-close" data-close-modal="loginModal" aria-label="Закрыть">✕</button>
       <h2>🔐 Вход / регистрация</h2>
-      <p>Зарегистрируйся через Google — имя подтянется само. После входа отзывы пишутся от твоего аккаунта (поле «как тебя зовут» не нужно).</p>
+      <p>Войди через <b>VK</b>, <b>Telegram</b> или Google — ник сохранится. Отзывы и чат будут от твоего имени.</p>
       <div class="auth-actions">
+        <button type="button" class="vk-btn" id="vkLoginBtn">💙 Войти через VK</button>
+        <button type="button" class="tg-btn" id="tgLoginBtn">✈️ Войти через Telegram</button>
+        <div id="telegramLoginMount"></div>
         <button type="button" class="google-btn" id="googleLoginBtn">
           <span class="g-icon" aria-hidden="true"></span>
           Зарегистрироваться через Google
@@ -1069,14 +1085,14 @@
         <div id="googleBtnMount" style="display:flex;justify-content:center;min-height:44px"></div>
       </div>
       <div class="auth-divider">— или гость —</div>
-      <label>Ник гостя (если без Google)
+      <label>Ник гостя
         <input type="text" id="localNameInput" maxlength="40" placeholder="Ник в игре">
       </label>
       <div class="auth-actions">
         <button type="button" class="btn-play" id="localLoginBtn" style="height:46px">Войти как гость</button>
         <button type="button" class="btn-secondary" data-close-modal="loginModal" style="height:44px">Отмена</button>
       </div>
-      <p class="hint-mini" id="loginHint" style="margin-top:10px">Нажми Google — откроется окно Google. Владелец: укажи GOOGLE_CLIENT_ID в auth-config.js (иначе демо-вход).</p>
+      <p class="hint-mini" id="loginHint" style="margin-top:10px">VK / Telegram / Google. Владелец: ключи в <code>auth-config.js</code> (VK_APP_ID, TELEGRAM_BOT_USERNAME, GOOGLE_CLIENT_ID). Без ключей — демо-вход с ником.</p>
     </div>
   </div>
 
@@ -1919,6 +1935,157 @@
       closeModal("loginModal");
       toast("Вход через Google: " + (profile.name || "ок"));
     }
+    function loginSocial(provider, profile) {
+      const p = profile || {};
+      const name = String(p.name || p.first_name || p.username || "Игрок").trim().slice(0, 40);
+      const id = provider + "_" + (p.id || p.sub || p.uid || Date.now());
+      saveUser({
+        id: id,
+        name: name || (provider === "vk" ? "VK" : "Telegram"),
+        email: p.email || "",
+        picture: p.picture || p.photo_url || p.photo || "",
+        provider: provider,
+        username: p.username || ""
+      });
+      refreshAuthUI();
+      closeModal("loginModal");
+      const label = provider === "vk" ? "VK" : (provider === "telegram" ? "Telegram" : provider);
+      toast("Вход через " + label + ": " + (name || "ок"));
+    }
+    /** VK OAuth (implicit) — если VK_APP_ID задан; иначе демо-ник */
+    function loginViaVK() {
+      const appId = String(CFG.VK_APP_ID || "").trim();
+      if (!appId) {
+        const name = prompt("VK App ID не задан (auth-config.js). Ник для входа через VK:", "Игрок VK");
+        if (name) loginSocial("vk", { name: name.trim(), id: "demo_" + Date.now() });
+        else toast("Отмена. Укажи VK_APP_ID в auth-config.js для настоящего входа VK");
+        return;
+      }
+      const redirect = location.origin + location.pathname.replace(/\/?$/, "/") + "index.html";
+      // fallback path without double index
+      const redir = (location.href.split("#")[0].split("?")[0]).replace(/index\.html$/i, "") + "index.html";
+      const redirectUri = encodeURIComponent(redir);
+      const url =
+        "https://oauth.vk.com/authorize?client_id=" + encodeURIComponent(appId) +
+        "&display=popup&redirect_uri=" + redirectUri +
+        "&scope=email&response_type=token&v=5.199";
+      const w = window.open(url, "vk_auth_bc", "noopener,width=620,height=720");
+      if (!w) {
+        toast("Разреши всплывающие окна для VK");
+        return;
+      }
+      toast("Войди в VK во всплывающем окне…");
+      // после редиректа токен в hash — опрашиваем popup
+      let n = 0;
+      const timer = setInterval(function () {
+        n++;
+        try {
+          if (!w || w.closed) { clearInterval(timer); return; }
+          const href = w.location.href;
+          if (href && href.indexOf("access_token=") >= 0) {
+            clearInterval(timer);
+            const hash = w.location.hash.replace(/^#/, "");
+            const params = new URLSearchParams(hash);
+            const token = params.get("access_token");
+            const userId = params.get("user_id");
+            w.close();
+            if (!token) { toast("VK: нет токена"); return; }
+            fetch("https://api.vk.com/method/users.get?access_token=" + encodeURIComponent(token) +
+              "&user_ids=" + encodeURIComponent(userId || "") +
+              "&fields=photo_100&v=5.199")
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                const u = data && data.response && data.response[0];
+                if (!u) {
+                  loginSocial("vk", { name: "VK " + (userId || ""), id: userId || Date.now() });
+                  return;
+                }
+                loginSocial("vk", {
+                  id: u.id,
+                  name: ((u.first_name || "") + " " + (u.last_name || "")).trim() || ("VK " + u.id),
+                  picture: u.photo_100 || ""
+                });
+              })
+              .catch(function () {
+                loginSocial("vk", { name: "VK " + (userId || "user"), id: userId || Date.now() });
+              });
+          }
+        } catch (_) {
+          // cross-origin until redirect back — ignore
+        }
+        if (n > 180) { clearInterval(timer); try { w.close(); } catch (_) {} }
+      }, 500);
+    }
+    /** Telegram Login Widget или демо @ник */
+    function loginViaTelegram() {
+      const bot = String(CFG.TELEGRAM_BOT_USERNAME || "").trim().replace(/^@/, "");
+      if (!bot) {
+        let nick = prompt("Telegram-бот не задан (TELEGRAM_BOT_USERNAME в auth-config.js).\nНик Telegram (@username):", "@player");
+        if (!nick) { toast("Отмена"); return; }
+        nick = String(nick).trim().replace(/^@/, "");
+        if (!nick) { toast("Введи ник"); return; }
+        loginSocial("telegram", { name: nick, username: nick, id: "demo_tg_" + Date.now() });
+        return;
+      }
+      // виджет Telegram
+      const mount = document.getElementById("telegramLoginMount");
+      if (!mount) {
+        toast("Нет блока Telegram");
+        return;
+      }
+      mount.innerHTML = "";
+      window.onTelegramAuth = function (user) {
+        if (!user) return;
+        const name = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || "Telegram";
+        loginSocial("telegram", {
+          id: user.id,
+          name: name,
+          username: user.username || "",
+          picture: user.photo_url || ""
+        });
+      };
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "https://telegram.org/js/telegram-widget.js?22";
+      s.setAttribute("data-telegram-login", bot);
+      s.setAttribute("data-size", "large");
+      s.setAttribute("data-radius", "12");
+      s.setAttribute("data-onauth", "onTelegramAuth(user)");
+      s.setAttribute("data-request-access", "write");
+      mount.appendChild(s);
+      toast("Нажми кнопку Telegram ниже (виджет)");
+    }
+    /** Если VK вернул token в URL текущей страницы (redirect) */
+    function tryConsumeVkHash() {
+      try {
+        const hash = (location.hash || "").replace(/^#/, "");
+        if (!hash || hash.indexOf("access_token=") < 0) return;
+        const params = new URLSearchParams(hash);
+        const token = params.get("access_token");
+        const userId = params.get("user_id");
+        if (!token) return;
+        history.replaceState(null, "", location.pathname + location.search);
+        fetch("https://api.vk.com/method/users.get?access_token=" + encodeURIComponent(token) +
+          "&user_ids=" + encodeURIComponent(userId || "") +
+          "&fields=photo_100&v=5.199")
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            const u = data && data.response && data.response[0];
+            if (u) {
+              loginSocial("vk", {
+                id: u.id,
+                name: ((u.first_name || "") + " " + (u.last_name || "")).trim() || ("VK " + u.id),
+                picture: u.photo_100 || ""
+              });
+            } else if (userId) {
+              loginSocial("vk", { name: "VK " + userId, id: userId });
+            }
+          })
+          .catch(function () {
+            if (userId) loginSocial("vk", { name: "VK " + userId, id: userId });
+          });
+      } catch (_) {}
+    }
     function logoutUser() {
       saveUser(null);
       refreshAuthUI();
@@ -1950,15 +2117,26 @@
       if (user) {
         if (loginBtn) loginBtn.hidden = true;
         if (chip) chip.hidden = false;
-        if (nameEl) nameEl.textContent = user.name || "Игрок";
+        if (nameEl) {
+          const prov = user.provider === "vk" ? " · VK" : (user.provider === "telegram" ? " · TG" : (user.provider === "google" ? " · G" : ""));
+          nameEl.textContent = (user.name || "Игрок") + prov;
+        }
         if (av) {
+          const el = document.getElementById("userAv");
           if (user.picture) {
-            av.outerHTML = '<img id="userAv" src="' + String(user.picture).replace(/"/g, "") + '" alt="">';
-          } else {
-            const el = document.getElementById("userAv");
             if (el && el.tagName === "IMG") {
-              el.replaceWith(Object.assign(document.createElement("span"), { id: "userAv", className: "av", textContent: "👤" }));
-            } else if (el) el.textContent = "👤";
+              el.src = String(user.picture);
+            } else if (el) {
+              el.outerHTML = '<img id="userAv" class="av" src="' + String(user.picture).replace(/"/g, "") + '" alt="">';
+            }
+          } else {
+            let icon = "👤";
+            if (user.provider === "vk") icon = "💙";
+            else if (user.provider === "telegram") icon = "✈️";
+            else if (user.provider === "google") icon = "G";
+            if (el && el.tagName === "IMG") {
+              el.replaceWith(Object.assign(document.createElement("span"), { id: "userAv", className: "av", textContent: icon }));
+            } else if (el) el.textContent = icon;
           }
         }
         if (star) star.hidden = !prem;
@@ -1977,7 +2155,10 @@
       const revForm = document.getElementById("userReviewForm");
       if (asUser) {
         asUser.textContent = user
-          ? ("Отзыв от: " + (user.name || "Игрок") + (user.provider === "google" ? " · Google" : " · гость"))
+          ? ("Отзыв от: " + (user.name || "Игрок") + (
+              user.provider === "google" ? " · Google" :
+              user.provider === "vk" ? " · VK" :
+              user.provider === "telegram" ? " · Telegram" : " · гость"))
           : "Войди, чтобы писать отзыв";
       }
       if (needLogin) needLogin.style.display = user ? "none" : "block";
@@ -3965,6 +4146,9 @@
     on("localLoginBtn", "click", () => {
       loginLocal((document.getElementById("localNameInput") || {}).value);
     });
+    on("vkLoginBtn", "click", () => { loginViaVK(); });
+    on("tgLoginBtn", "click", () => { loginViaTelegram(); });
+    try { tryConsumeVkHash(); } catch (_) {}
     on("googleLoginBtn", "click", () => {
       const clientId = (CFG.GOOGLE_CLIENT_ID || "").trim();
       // Всегда пытаемся открыть Google (выбор аккаунта)
