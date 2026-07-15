@@ -154,31 +154,31 @@
       width: 100%; height: 100%; object-fit: contain;
       display: block; transform-origin: 50% 80%;
     }
-    .art.anim-bounce, .art.anim-bounce img, .stage-wrap.anim-bounce .stage-hero-img {
+    .art.anim-bounce, .art.anim-bounce img, .sticker-stack.anim-bounce, .sticker-stack.anim-bounce .base-char, .stage-wrap.anim-bounce .stage-hero-img, .stage-wrap .sticker-stack.anim-bounce, .stage-wrap .sticker-stack.anim-bounce .base-char {
       animation: a-bounce 0.55s ease-in-out infinite;
     }
-    .art.anim-spin, .art.anim-spin img, .stage-wrap.anim-spin .stage-hero-img {
+    .art.anim-spin, .art.anim-spin img, .sticker-stack.anim-spin, .sticker-stack.anim-spin .base-char, .stage-wrap.anim-spin .stage-hero-img, .stage-wrap .sticker-stack.anim-spin, .stage-wrap .sticker-stack.anim-spin .base-char {
       animation: a-spin 1.1s linear infinite;
     }
-    .art.anim-sway, .art.anim-sway img, .stage-wrap.anim-sway .stage-hero-img {
+    .art.anim-sway, .art.anim-sway img, .sticker-stack.anim-sway, .sticker-stack.anim-sway .base-char, .stage-wrap.anim-sway .stage-hero-img, .stage-wrap .sticker-stack.anim-sway, .stage-wrap .sticker-stack.anim-sway .base-char {
       animation: a-sway 0.7s ease-in-out infinite;
     }
-    .art.anim-poet, .art.anim-poet img, .stage-wrap.anim-poet .stage-hero-img {
+    .art.anim-poet, .art.anim-poet img, .sticker-stack.anim-poet, .sticker-stack.anim-poet .base-char, .stage-wrap.anim-poet .stage-hero-img, .stage-wrap .sticker-stack.anim-poet, .stage-wrap .sticker-stack.anim-poet .base-char {
       animation: a-poet 1.2s ease-in-out infinite;
     }
-    .art.anim-stomp, .art.anim-stomp img, .stage-wrap.anim-stomp .stage-hero-img {
+    .art.anim-stomp, .art.anim-stomp img, .sticker-stack.anim-stomp, .sticker-stack.anim-stomp .base-char, .stage-wrap.anim-stomp .stage-hero-img, .stage-wrap .sticker-stack.anim-stomp, .stage-wrap .sticker-stack.anim-stomp .base-char {
       animation: a-stomp 0.45s ease-in-out infinite;
     }
-    .art.anim-think, .art.anim-think img, .stage-wrap.anim-think .stage-hero-img {
+    .art.anim-think, .art.anim-think img, .sticker-stack.anim-think, .sticker-stack.anim-think .base-char, .stage-wrap.anim-think .stage-hero-img, .stage-wrap .sticker-stack.anim-think, .stage-wrap .sticker-stack.anim-think .base-char {
       animation: a-think 1.4s ease-in-out infinite;
     }
-    .art.anim-waddle, .art.anim-waddle img, .stage-wrap.anim-waddle .stage-hero-img {
+    .art.anim-waddle, .art.anim-waddle img, .sticker-stack.anim-waddle, .sticker-stack.anim-waddle .base-char, .stage-wrap.anim-waddle .stage-hero-img, .stage-wrap .sticker-stack.anim-waddle, .stage-wrap .sticker-stack.anim-waddle .base-char {
       animation: a-waddle 0.5s ease-in-out infinite;
     }
-    .art.anim-nod, .art.anim-nod img, .stage-wrap.anim-nod .stage-hero-img {
+    .art.anim-nod, .art.anim-nod img, .sticker-stack.anim-nod, .sticker-stack.anim-nod .base-char, .stage-wrap.anim-nod .stage-hero-img, .stage-wrap .sticker-stack.anim-nod, .stage-wrap .sticker-stack.anim-nod .base-char {
       animation: a-nod 0.6s ease-in-out infinite;
     }
-    .art.anim-bow, .art.anim-bow img, .stage-wrap.anim-bow .stage-hero-img {
+    .art.anim-bow, .art.anim-bow img, .sticker-stack.anim-bow, .sticker-stack.anim-bow .base-char, .stage-wrap.anim-bow .stage-hero-img, .stage-wrap .sticker-stack.anim-bow, .stage-wrap .sticker-stack.anim-bow .base-char {
       animation: a-bow 1.6s ease-in-out infinite;
     }
     @keyframes a-bounce {
@@ -268,6 +268,44 @@
       border-top: 3px solid #ffcc00;
       position: relative;
       z-index: 10;
+    }
+    .sticker-stack {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      display: grid;
+      place-items: center;
+    }
+    .sticker-stack .base-char {
+      width: 100%; height: 100%; object-fit: contain;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.4));
+      transform-origin: 50% 80%;
+    }
+    .sticker-stack .our-sticker {
+      position: absolute;
+      width: 42%; height: 42%;
+      left: 50%; top: 38%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,.45);
+      z-index: 3;
+      pointer-events: none;
+    }
+    .sticker-stack .our-sticker canvas {
+      width: 100% !important; height: 100% !important;
+      display: block; border-radius: 50%;
+    }
+    .splash-hero-band .sticker-stack {
+      width: min(28vh, 140px);
+      height: min(28vh, 140px);
+    }
+    .stage-wrap .sticker-stack {
+      width: min(180px, 40vw);
+      height: min(180px, 40vw);
+    }
+    .art .sticker-stack {
+      width: 88px; height: 88px;
     }
     .splash-hero-band #splashHeroCanvas {
       width: min(42vh, 90vw) !important;
@@ -362,7 +400,12 @@
     <section class="panel" id="panel-stage">
       <div class="card">
         <div class="stage-wrap" id="stageWrap">
-          <canvas id="stageHeroCanvas" width="400" height="400" style="width:min(320px,70vw);height:auto;display:block"></canvas>
+          <div class="sticker-stack" id="stageSticker">
+            <img class="base-char" id="stageBaseImg" alt="" src="">
+            <div class="our-sticker">
+              <canvas id="stageHeroCanvas" width="96" height="96"></canvas>
+            </div>
+          </div>
         </div>
         <div class="stage-bar">
           <button type="button" class="btn btn-y" id="btnReplay">↻ Видео</button>
@@ -380,7 +423,12 @@
       </video>
     </div>
     <div class="splash-hero-band" id="splashHeroBand">
-      <canvas id="splashHeroCanvas" width="400" height="400"></canvas>
+      <div class="sticker-stack" id="splashSticker">
+        <img class="base-char" id="splashBaseImg" alt="" src="">
+        <div class="our-sticker" id="splashOurSticker">
+          <canvas id="splashHeroCanvas" width="96" height="96"></canvas>
+        </div>
+      </div>
     </div>
     <button type="button" class="btn btn-y" id="btnSkipSplash">✕</button>
   </div>
@@ -757,9 +805,66 @@
     cardAnimRafs = [];
   }
 
+  function makeSticker(ch, size, anim) {
+    // base = заменённый герой (картинка), поверх — маленький наш перс
+    var stack = document.createElement("div");
+    stack.className = "sticker-stack anim-" + (anim || ch.anim || "bounce");
+    if (size) {
+      stack.style.width = size + "px";
+      stack.style.height = size + "px";
+    }
+    var base = document.createElement("img");
+    base.className = "base-char";
+    base.alt = "";
+    base.draggable = false;
+    if (ch.img) {
+      base.src = ch.img;
+      base.onerror = function () {
+        base.style.display = "none";
+        stack.style.fontSize = (size ? size * 0.5 : 40) + "px";
+        if (!stack.querySelector(".emoji-fb")) {
+          var e = document.createElement("div");
+          e.className = "emoji-fb";
+          e.textContent = ch.emoji || "🟡";
+          stack.insertBefore(e, stack.firstChild);
+        }
+      };
+    } else {
+      base.style.display = "none";
+      var e = document.createElement("div");
+      e.className = "emoji-fb";
+      e.style.fontSize = (size ? size * 0.55 : 44) + "px";
+      e.textContent = ch.emoji || "🟡";
+      stack.appendChild(e);
+    }
+    stack.appendChild(base);
+    var stick = document.createElement("div");
+    stick.className = "our-sticker";
+    var c = document.createElement("canvas");
+    c.width = 96; c.height = 96;
+    stick.appendChild(c);
+    stack.appendChild(stick);
+    // рисуем нашего перса (маленький) + лёгкая анимация на canvas
+    var ctx = c.getContext("2d");
+    var t0 = performance.now();
+    var alive = true;
+    var slot = { id: 0, stop: function () { alive = false; } };
+    cardAnimRafs.push(slot);
+    function loop(now) {
+      if (!alive) return;
+      var tt = (now - t0) / 1000;
+      ctx.clearRect(0, 0, 96, 96);
+      try { drawHero(ctx, 48, 50, 28, hero, tt, "idle"); } catch (err) {}
+      slot.id = requestAnimationFrame(loop);
+    }
+    slot.id = requestAnimationFrame(loop);
+    return stack;
+  }
+
   function renderRound() {
     stopCardAnims();
     var grid = document.getElementById("roundGrid");
+    if (!grid) return;
     grid.innerHTML = "";
     ROUND9.forEach(function (ch) {
       var isRep = replaced && replaced.id === ch.id;
@@ -768,39 +873,15 @@
       card.className = "char-card" + (isRep ? " replaced" : "");
       var art = document.createElement("div");
       art.className = "art";
-      art.style.background = isRep ? "#1a1028" : "transparent";
-
+      art.style.background = "transparent";
       if (isRep) {
-        // НАШ персонаж (цвет/лицо) + движения заменённого
-        var c = document.createElement("canvas");
-        c.width = 120; c.height = 120;
-        c.style.width = "88px"; c.style.height = "88px";
-        art.appendChild(c);
-        (function (canvas, anim) {
-          var ctx = canvas.getContext("2d");
-          var t0 = performance.now();
-          var alive = true;
-          var slot = { id: 0, stop: function () { alive = false; } };
-          cardAnimRafs.push(slot);
-          function loop2(now) {
-            if (!alive) return;
-            var tt = (now - t0) / 1000;
-            ctx.clearRect(0, 0, 120, 120);
-            try { drawHero(ctx, 60, 62, 42, hero, tt, anim); } catch (e) {}
-            slot.id = requestAnimationFrame(loop2);
-          }
-          slot.id = requestAnimationFrame(loop2);
-        })(c, ch.anim);
+        // наш перс ЗАКЛЕЕН на заменённого + движения заменённого (CSS)
+        art.appendChild(makeSticker(ch, 88, ch.anim));
       } else if (ch.img) {
         var img = document.createElement("img");
         img.src = ch.img;
         img.alt = "";
         img.draggable = false;
-        img.onerror = function () {
-          art.innerHTML = "";
-          art.style.fontSize = "3rem";
-          art.textContent = ch.emoji || "🟡";
-        };
         art.appendChild(img);
       } else {
         art.style.fontSize = "3rem";
@@ -833,19 +914,65 @@
 
   function stopSplashMedia() {
     if (splashRaf) { cancelAnimationFrame(splashRaf); splashRaf = 0; }
+    if (splashMiniSlot && splashMiniSlot.stop) { splashMiniSlot.stop(); splashMiniSlot = null; }
     var v = document.getElementById("splashVideo");
     if (v) { try { v.pause(); } catch (e) {} }
-    if (splashTimer) { clearInterval(splashTimer); splashTimer = null; }
+    if (splashTimer) { clearTimeout(splashTimer); clearInterval(splashTimer); splashTimer = null; }
   }
 
+  function paintOurMini(canvas, anim, t0) {
+    if (!canvas) return null;
+    var ctx = canvas.getContext("2d");
+    var alive = true;
+    var slot = { id: 0, stop: function () { alive = false; } };
+    function loop(now) {
+      if (!alive) return;
+      var tt = ((typeof now === "number" ? now : performance.now()) - t0) / 1000;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      try { drawHero(ctx, canvas.width/2, canvas.height/2 + 2, canvas.width * 0.30, hero, tt, anim || "idle"); } catch (e) {}
+      slot.id = requestAnimationFrame(loop);
+    }
+    slot.id = requestAnimationFrame(loop);
+    return slot;
+  }
+
+  function setupStickerStack(stackId, baseImgId, canvasId, ch) {
+    var stack = document.getElementById(stackId);
+    var base = document.getElementById(baseImgId);
+    var canvas = document.getElementById(canvasId);
+    if (stack) {
+      stack.className = "sticker-stack anim-" + ((ch && ch.anim) || "bounce");
+    }
+    if (base) {
+      if (ch && ch.img) {
+        base.style.display = "block";
+        base.src = ch.img;
+      } else {
+        base.style.display = "none";
+      }
+    }
+    // маленький наш перс «наклейка»
+    if (splashRaf) { cancelAnimationFrame(splashRaf); splashRaf = 0; }
+    var slot = paintOurMini(canvas, "idle", performance.now());
+    if (slot) {
+      // store on splashRaf for stop
+      splashMiniSlot = slot;
+    }
+  }
+
+  var splashMiniSlot = null;
+
+  function paintSplashHero() { /* legacy no-op, sticker used */ }
+
   function finishSplash() {
-    // минимум 6 сек на заставке, чтобы точно увидеть героя
     var waited = Date.now() - splashStartedAt;
-    if (waited < 6000 && splashDone) {
-      setTimeout(finishSplash, 6000 - waited);
+    if (waited < 5000 && splashDone) {
+      setTimeout(finishSplash, 5000 - waited);
       return;
     }
     stopSplashMedia();
+    if (splashMiniSlot && splashMiniSlot.stop) splashMiniSlot.stop();
+    splashMiniSlot = null;
     var sp = document.getElementById("splash");
     if (sp) sp.classList.remove("on");
     var fn = splashDone;
@@ -853,49 +980,15 @@
     if (fn) fn();
   }
 
-  function paintSplashHero(now) {
-    var c = document.getElementById("splashHeroCanvas");
-    if (!c) {
-      splashRaf = requestAnimationFrame(paintSplashHero);
-      return;
-    }
-    if (!splashCh) splashCh = { anim: "bounce" };
-    var ctx = c.getContext("2d");
-    var w = c.width, h = c.height;
-    ctx.clearRect(0, 0, w, h);
-    // фон полосы
-    ctx.fillStyle = "#12081f";
-    ctx.fillRect(0, 0, w, h);
-    var g = ctx.createRadialGradient(w/2, h*0.45, 10, w/2, h*0.5, w*0.5);
-    g.addColorStop(0, "rgba(80,40,140,0.5)");
-    g.addColorStop(1, "rgba(10,4,20,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-    var tt = (typeof now === "number" ? now : performance.now()) / 1000;
-    try {
-      drawHero(ctx, w * 0.5, h * 0.52, Math.min(w, h) * 0.32, hero, tt, (splashCh && splashCh.anim) || "bounce");
-    } catch (e) {
-      // fallback ball
-      ctx.beginPath();
-      ctx.arc(w/2, h/2, 80, 0, Math.PI*2);
-      ctx.fillStyle = (hero && hero.color) || "#4fc3f7";
-      ctx.fill();
-    }
-    splashRaf = requestAnimationFrame(paintSplashHero);
-  }
-
   function runSplash(ch, done) {
     splashDone = done;
-    splashCh = ch || { anim: "bounce", name: "?" };
+    splashCh = ch || { anim: "bounce", img: null };
     splashStartedAt = Date.now();
     var sp = document.getElementById("splash");
     var v = document.getElementById("splashVideo");
-    var band = document.getElementById("splashHeroBand");
     if (sp) sp.classList.add("on");
-    if (band) band.style.display = "flex";
-    // старт героя СРАЗУ
-    if (splashRaf) cancelAnimationFrame(splashRaf);
-    splashRaf = requestAnimationFrame(paintSplashHero);
+    // наклейка: наш маленький на заменённого + анимация как у заменённого
+    setupStickerStack("splashSticker", "splashBaseImg", "splashHeroCanvas", splashCh);
     if (v) {
       try {
         v.loop = true;
@@ -903,16 +996,11 @@
         v.controls = false;
         v.currentTime = 0;
         var pr = v.play();
-        if (pr && pr.catch) pr.catch(function () {
-          v.muted = true;
-          v.play().catch(function () {});
-        });
+        if (pr && pr.catch) pr.catch(function () { v.muted = true; v.play().catch(function(){}); });
       } catch (e) {}
-      // НЕ закрываем заставку мгновенно по onended — видео зациклено
       v.onended = null;
     }
-    if (splashTimer) clearInterval(splashTimer);
-    // заставка ~12 сек (видео + герой), потом шаг 3
+    if (splashTimer) clearTimeout(splashTimer);
     splashTimer = setTimeout(function () {
       splashTimer = null;
       finishSplash();
@@ -940,31 +1028,29 @@
     if (!replaced) replaced = ROUND9[0];
     var ch = replaced;
     var wrap = document.getElementById("stageWrap");
-    var canvas = document.getElementById("stageHeroCanvas");
-    if (!wrap || !canvas) return;
+    if (!wrap) return;
     wrap.className = "stage-wrap";
-    // убрать старые emoji
     wrap.querySelectorAll(".emoji-fallback").forEach(function (n) { n.remove(); });
-    var imgEl = document.getElementById("stageHeroImg");
-    if (imgEl) imgEl.style.display = "none";
-    canvas.style.display = "block";
-    var ctx = canvas.getContext("2d");
-    var t0 = performance.now();
-    function frame(now) {
-      var tt = (now - t0) / 1000;
-      var w = canvas.width, h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
-      // фон сцены
-      var g = ctx.createRadialGradient(w/2, h*0.45, 20, w/2, h*0.5, w*0.55);
-      g.addColorStop(0, "rgba(60,30,100,0.35)");
-      g.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, w, h);
-      // НАШ перс (созданный) + движения заменённого
-      drawHero(ctx, w/2, h*0.52, 110, hero, tt, ch.anim || "bounce");
+    // наклейка наш на заменённого, меньше
+    var stack = document.getElementById("stageSticker");
+    var base = document.getElementById("stageBaseImg");
+    var canvas = document.getElementById("stageHeroCanvas");
+    if (stack) stack.className = "sticker-stack anim-" + (ch.anim || "bounce");
+    if (base) {
+      if (ch.img) { base.style.display = "block"; base.src = ch.img; }
+      else { base.style.display = "none"; }
+    }
+    if (canvas) {
+      var ctx = canvas.getContext("2d");
+      var t0 = performance.now();
+      function frame(now) {
+        var tt = (now - t0) / 1000;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        try { drawHero(ctx, 48, 50, 28, hero, tt, "idle"); } catch (e) {}
+        animRaf = requestAnimationFrame(frame);
+      }
       animRaf = requestAnimationFrame(frame);
     }
-    animRaf = requestAnimationFrame(frame);
   }
 
   function roundRect(ctx, x, y, w, h, r) {
