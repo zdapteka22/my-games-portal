@@ -523,24 +523,44 @@
     const list = loadUserReviews();
     list.unshift(rev);
     saveUserReviews(list.slice(0, 150));
-    // try same cloud as main reviews
+    // try same cloud as main reviews (jsonblob = GET+PUT массива)
     let shared = false;
     try {
-      let url = "https://crudcrud.com/api/69a6d57b5d794a17abf2b3ee0069358f/reviews";
+      let url = "https://jsonblob.com/api/jsonBlob/019fb362-238d-7326-b0bd-171f88ac73c9";
+      let kind = "jsonblob";
       try {
-        const cfg = await fetch("data/reviews-config.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null);
+        const cfg = await fetch("data/reviews-config.json?v=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null);
         if (cfg && cfg.sharedUrl) url = cfg.sharedUrl;
+        if (cfg && cfg.sharedKind) kind = cfg.sharedKind;
+        else if (String(url).indexOf("jsonblob.com") !== -1) kind = "jsonblob";
       } catch (_) {}
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(rev)
-      });
-      shared = res.ok;
+      if (kind === "jsonblob" || String(url).indexOf("jsonblob.com") !== -1) {
+        let arr = [];
+        const g = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+        if (g.ok) {
+          const j = await g.json();
+          arr = Array.isArray(j) ? j : (j && Array.isArray(j.reviews) ? j.reviews : []);
+        }
+        arr = arr.filter(function (x) { return !x || String(x.id) !== String(rev.id); });
+        arr.unshift(rev);
+        const put = await fetch(url, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(arr.slice(0, 200))
+        });
+        shared = put.ok;
+      } else {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(rev)
+        });
+        shared = res.ok;
+      }
     } catch (_) {}
     e.target.reset();
     document.getElementById("reviewNote").textContent = shared
-      ? "✅ Отзыв в облаке — другие могут увидеть (обнови у друга: Ctrl+F5)"
+      ? "✅ Отзыв в общем облаке — другие увидят после обновления (Ctrl+F5)"
       : "⚠️ Сохранено только на этом устройстве — облако не ответило";
     renderReviews();
   });

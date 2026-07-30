@@ -25,7 +25,7 @@ jobs:
           if [ ! -f data/user-reviews.json ]; then
             echo '{"reviews":[]}' > data/user-reviews.json
           fi
-          curl -fsSL "$URL" -o /tmp/cloud.json || echo '[]' > /tmp/cloud.json
+          curl -fsSL -H "Accept: application/json" "$URL" -o /tmp/cloud.json || echo '[]' > /tmp/cloud.json
           python3 <<'PY'
           import json
           from pathlib import Path
@@ -35,6 +35,8 @@ jobs:
               cloud = json.loads(cloud_path.read_text(encoding="utf-8"))
           except Exception:
               cloud = []
+          if isinstance(cloud, dict) and isinstance(cloud.get("reviews"), list):
+              cloud = cloud["reviews"]
           if not isinstance(cloud, list):
               cloud = []
           try:
@@ -51,10 +53,11 @@ jobs:
               rid = str(r.get("id") or r.get("_id") or "")
               if not rid:
                   continue
-              # normalize
               item = {
                   "id": str(r.get("id") or r.get("_id")),
                   "who": str(r.get("who") or "Игрок")[:40],
+                  "userId": str(r.get("userId") or "")[:80],
+                  "provider": str(r.get("provider") or "")[:40],
                   "game": str(r.get("game") or "other")[:40],
                   "stars": max(1, min(5, int(r.get("stars") or 5))),
                   "text": str(r.get("text") or "")[:400],

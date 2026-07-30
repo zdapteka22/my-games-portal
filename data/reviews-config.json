@@ -1,5 +1,7 @@
 {
-  "sharedUrl": "https://crudcrud.com/api/69a6d57b5d794a17abf2b3ee0069358f/reviews",
-  "chatUrl": "https://crudcrud.com/api/69a6d57b5d794a17abf2b3ee0069358f/chats",
+  "sharedUrl": "https://jsonblob.com/api/jsonBlob/019fb362-238d-7326-b0bd-171f88ac73c9",
+  "sharedKind": "jsonblob",
+  "chatUrl": "https://jsonblob.com/api/jsonBlob/019fb364-72e0-752d-8d78-8dcb03fbda50",
+  "chatKind": "jsonblob",
   "repo": "zdapteka22/my-games-portal"
 }
