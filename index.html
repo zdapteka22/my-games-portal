@@ -1311,6 +1311,11 @@
         <button type="button" class="rev-filter" data-rev="labyrinth">🌀 Лабиринт</button>
       </div>
 
+      <h3 style="margin:14px 0 6px;font-size:1.05rem;color:#9ad4ff">✍️ Отзывы игроков (общие · все браузеры)</h3>
+      <p class="menu-sub" id="userReviewsStatus" style="margin:0 0 10px">Загрузка общих отзывов…</p>
+      <div id="userReviewsMount" class="reviews-grid-static" style="margin-bottom:18px"></div>
+
+      <h3 style="margin:8px 0 8px;font-size:1.05rem;color:#888">🎭 Демо-отзывы</h3>
       <div class="reviews-grid-static" id="reviewsGridStatic">
         <!-- ===== ЗМЕЙКА ===== -->
         <article class="review-card-static" data-game="snake">
@@ -1522,7 +1527,6 @@
           <div class="review-game">об игре: Танчики · 🤖 ИИ · плохой отзыв</div>
         </article>
       </div>
-      <div id="userReviewsMount" class="reviews-grid-static" style="margin-top:14px"></div>
     </section>
 
     <section class="menu-block" id="menu">
@@ -4031,10 +4035,17 @@
 
     function renderUserReviews() {
       const mount = document.getElementById("userReviewsMount");
+      const status = document.getElementById("userReviewsStatus");
       if (!mount) return;
       const list = mergeReviews();
+      if (status) {
+        const sharedN = list.filter(function (r) { return r && r.shared; }).length;
+        status.textContent = list.length
+          ? ("Общих/загруженных: " + list.length + (sharedN ? (" · из облака/файла: " + sharedN) : "") + ". Если писал на другом ПК — открой сайт там раз, отзывы выложатся сами.")
+          : "Пока нет отзывов игроков. Напиши во вкладке «Мой отзыв» → «Опубликовать для всех».";
+      }
       if (!list.length) {
-        mount.innerHTML = "";
+        mount.innerHTML = "<p style='color:#888;padding:8px 0'>Пусто — напиши первый общий отзыв.</p>";
         wireReviewPeople();
         return;
       }
