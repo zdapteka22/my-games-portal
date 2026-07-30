@@ -1723,8 +1723,9 @@
       <div class="card" id="userReview">
         <h3>✍️ Добавить свой отзыв</h3>
         <p style="color:#aaa;font-size:14px;margin-bottom:14px">
-          Нужен <b>вход</b> (Google или гость). Имя берётся из аккаунта — поле «как тебя зовут» убрано.
-          Отзыв уходит в общее облако, чтобы его видели с другого аккаунта/телефона.
+          Нужен <b>вход</b> (Google или гость). Имя берётся из аккаунта.
+          Отзыв сразу уходит в общее облако — его видят все.
+          Если кто-то писал раньше и отзыв был «только здесь» — просто открой сайт с того устройства: отзывы выложатся сами.
         </p>
         <div id="reviewNeedLogin" style="display:none;padding:12px;background:#1a1208;border:1px solid #5a4020;border-radius:12px;margin-bottom:12px">
           <b style="color:#ffcc00">Сначала войди</b>
@@ -3747,15 +3748,41 @@
     async function flushPendingReviews() {
       let q = [];
       try { q = JSON.parse(localStorage.getItem("portal_reviews_pending_cloud_v1") || "[]"); } catch (_) { q = []; }
-      if (!Array.isArray(q) || !q.length) return;
+      if (!Array.isArray(q)) q = [];
+      // Авто: выкладываем ВСЕ локальные отзывы (и свои, и чужие с этого ПК), чтобы их видели все
+      const fromLocal = [].concat(loadUserReviews() || [], loadReviewsFromUserMaps() || []);
+      const byId = {};
+      [].concat(q, fromLocal).forEach(function (raw) {
+        const n = normalizeReview(raw);
+        if (n) byId[n.id] = Object.assign({}, raw, n);
+      });
+      const list = Object.keys(byId).map(function (k) { return byId[k]; });
+      if (!list.length) return { ok: 0, total: 0 };
       const left = [];
-      for (let i = 0; i < q.length; i++) {
-        const rev = q[i];
+      let okN = 0;
+      for (let i = 0; i < list.length; i++) {
+        const rev = list[i];
         if (!rev || !rev.id) continue;
         const pub = await publishReviewToCloud(rev);
-        if (!pub.ok) left.push(rev);
+        if (pub.ok) okN++;
+        else left.push(rev);
       }
       try { localStorage.setItem("portal_reviews_pending_cloud_v1", JSON.stringify(left.slice(0, 30))); } catch (_) {}
+      // пометить локальные как shared
+      if (okN) {
+        try {
+          const loc = loadUserReviews().map(function (r) {
+            if (!r) return r;
+            const n = normalizeReview(r);
+            if (n && byId[n.id] && left.every(function (x) { return !x || x.id !== n.id; })) {
+              r.shared = true;
+            }
+            return r;
+          });
+          saveUserReviews(loc);
+        } catch (_) {}
+      }
+      return { ok: okN, total: list.length };
     }
 
     function cleanFriendName(raw) {
@@ -4872,11 +4899,18 @@
     try { renderAdminQueue(); } catch (_) {}
     try { renderFriends(); } catch (_) {}
     try { wireReviewPeople(); } catch (_) {}
-    // Load shared reviews (visible on any account / device)
+    // Load shared reviews + auto-publish any local leftovers so everyone sees them
     (async function () {
       try {
         await fetchSharedReviews();
-        await flushPendingReviews();
+        const flushed = await flushPendingReviews();
+        if (flushed && flushed.ok) {
+          await fetchSharedReviews();
+          const note = document.getElementById("reviewNote");
+          if (note && flushed.ok > 0) {
+            note.textContent = "✅ Авто: выложено в общее " + flushed.ok + " из " + flushed.total + " локальных отзывов.";
+          }
+        }
         renderUserReviews();
         applyReviewFilter(
           (document.querySelector(".rev-filter.active") || {}).getAttribute
