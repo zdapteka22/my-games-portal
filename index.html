@@ -683,6 +683,34 @@
     .friend-modal-box h3 { margin: 0 0 8px; font-size: 18px; }
     .friend-modal-box p { margin: 0 0 14px; color: #bbb; font-size: 14px; line-height: 1.4; }
     .friend-modal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .notif-wrap { position: relative; }
+    .notif-bell {
+      position: relative; min-height: 36px; padding: 6px 10px; border-radius: 999px;
+      border: 1px solid #444; background: #1a1a1a; color: #fff; cursor: pointer; font: inherit; font-weight: 800;
+    }
+    .notif-bell:hover { border-color: var(--yg-yellow, #fc0); }
+    .notif-badge {
+      position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px;
+      border-radius: 999px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 800;
+      display: grid; place-items: center;
+    }
+    .notif-panel {
+      position: absolute; right: 0; top: calc(100% + 8px); width: min(360px, 92vw);
+      max-height: 70vh; overflow: auto; z-index: 400;
+      background: #141414; border: 1px solid #3a3a3a; border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.45); padding: 10px;
+    }
+    .notif-panel[hidden] { display: none !important; }
+    .notif-panel h4 { margin: 0 0 8px; font-size: 14px; }
+    .notif-item {
+      border: 1px solid #333; border-radius: 12px; padding: 10px; margin-bottom: 8px; background: #1a1a1a;
+    }
+    .notif-item.unread { border-color: #5a8; }
+    .notif-item p { margin: 0 0 6px; font-size: 13px; line-height: 1.35; }
+    .notif-item time { color: #777; font-size: 11px; display: block; }
+    .notif-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .notif-actions .btn-play, .notif-actions .btn-secondary { height: 34px; font-size: 12px; min-width: 0; padding: 0 10px; }
+    .notif-empty { color: #777; font-size: 13px; margin: 8px 0; }
     @media (max-width: 800px) {
       .classics-grid { grid-template-columns: 1fr; gap: 12px; }
       .nav-cats a { display: none; }
@@ -1006,6 +1034,13 @@
       <div class="search-drop" id="searchDrop" hidden role="listbox" aria-label="Результаты поиска"></div>
     </div>
     <div class="auth-bar" id="authBar">
+      <div class="notif-wrap">
+        <button type="button" class="notif-bell" id="notifBell" title="Уведомления" aria-label="Уведомления">🔔 <span id="notifBadge" class="notif-badge" hidden>0</span></button>
+        <div class="notif-panel" id="notifPanel" hidden role="dialog" aria-label="Уведомления">
+          <h4>Уведомления</h4>
+          <div id="notifList"><p class="notif-empty">Загрузка…</p></div>
+        </div>
+      </div>
       <button type="button" class="btn-prem" id="premiumBtn" title="Премиум">⭐ Premium 10₽</button>
       <button type="button" class="btn-auth" id="loginBtn">Войти</button>
       <div class="user-chip" id="userChip" hidden>
@@ -1612,7 +1647,7 @@
       <div class="card" id="friendsPanel">
         <h3 data-i18n="friendsTitle">👥 Друзья</h3>
         <p style="color:#aaa;font-size:14px;margin-bottom:12px" data-i18n="friendsHint">
-          Добавь друзей по имени или телефону. На телефоне — «Трубка друзей». Можно звать в «Битву всех игр» (2 игрока на одном устройстве).
+          Добавь друга по имени — ему придёт уведомление «хотите добавить в друзья?». Можно пригласить в игру — тоже придёт уведомление.
         </p>
         <!-- Phone UI for friends -->
         <div class="friend-phone" id="friendPhone">
@@ -1862,9 +1897,10 @@
   <div class="friend-modal" id="friendModal" hidden role="dialog" aria-modal="true" aria-labelledby="friendModalTitle">
     <div class="friend-modal-box">
       <h3 id="friendModalTitle">Профиль</h3>
-      <p id="friendModalText">Добавить этого человека в друзья?</p>
+      <p id="friendModalText">Отправить заявку в друзья? Ему придёт уведомление.</p>
       <div class="friend-modal-actions">
-        <button type="button" class="btn-play" id="friendAddBtn" style="height:44px;font-size:15px;min-width:160px">➕ Добавить в друзья</button>
+        <button type="button" class="btn-play" id="friendAddBtn" style="height:44px;font-size:15px;min-width:160px">📩 Заявка в друзья</button>
+        <button type="button" class="btn-secondary" id="friendInviteBtn" style="height:44px;font-size:14px">🎮 Пригласить в игру</button>
         <button type="button" class="btn-secondary" id="friendCloseBtn" style="height:44px">Закрыть</button>
       </div>
     </div>
@@ -2263,7 +2299,7 @@
         navAll: "☰ Все игры", navClassics: "Классика", navVideos: "Видео", navReviews: "Отзывы",
         navCatalog: "Каталог", navAdd: "Добавить", navGames2: "Игры 2", navFriends: "Друзья",
         tabCreate: "Создать игру", tabFriends: "Друзья", tabReview: "Мой отзыв", tabAdmin: "Проверка",
-        friendsTitle: "👥 Друзья", friendsHint: "Добавь друзей по имени. Можно играть с другом в «Битве всех игр» (2 игрока на одном устройстве).",
+        friendsTitle: "👥 Друзья", friendsHint: "Заявка в друзья и приглашение в игру — другу приходит уведомление. Можно играть в «Битве всех игр» (2 игрока).",
         friendsName: "Имя друга *", friendsNamePh: "Как зовут", friendsAdd: "➕ Добавить", friendsPlay: "🤝 Играть с другом",
         friendsEmpty: "Пока нет друзей — добавь выше или нажми имя в отзывах",
         friendsPlayOne: "В бой с другом", createTitle: "🛠️ Способ 2: Создать игру на сайте",
@@ -3831,7 +3867,7 @@
             (f.phone
               ? "<a href='tel:" + esc(String(f.phone).replace(/[^\d+]/g, "")) + "' style='text-decoration:none'><button type='button'>📞</button></a>"
               : "") +
-            "<a href='play.html?id=battle' style='text-decoration:none'><button type='button' data-invite='" + esc(f.name) + "'>⚔️</button></a>" +
+            "<button type='button' data-invite='" + esc(f.name) + "' title='Пригласить'>⚔️</button>" +
             "<button type='button' data-unfriend='" + esc(f.id) + "' style='background:#4a1a1a;color:#f88'>×</button>" +
             "</div>"
           ).join("");
@@ -3848,6 +3884,7 @@
               "<span style='font-size:1.3rem'>👤</span>" +
               "<div style='flex:1;min-width:120px'><b>" + esc(f.name) + "</b>" +
               (f.phone ? "<br><span style='color:#8ac;font-size:12px'>" + esc(f.phone) + "</span>" : "") + "</div>" +
+              "<button type='button' class='btn-secondary' data-invite='" + esc(f.name) + "' style='height:36px;font-size:13px'>📩 Пригласить</button>" +
               "<a class='btn-play' href='play.html?id=battle' style='height:36px;font-size:13px;min-width:120px;display:inline-grid;place-items:center;text-decoration:none'>" +
               esc(t("friendsPlayOne")) + "</a>" +
               (f.phone ? "<a class='btn-secondary' href='tel:" + esc(String(f.phone).replace(/[^\d+]/g, "")) +
@@ -3876,12 +3913,12 @@
       const already = isFriend(friendModalName);
       if (text) {
         text.textContent = already
-          ? (friendModalName + " уже в друзьях." + (meta ? " " + meta : ""))
-          : ("Добавить «" + friendModalName + "» в друзья?" + (meta ? "\n" + meta : ""));
+          ? (friendModalName + " уже в друзьях. Можно пригласить в игру." + (meta ? " " + meta : ""))
+          : ("Отправить «" + friendModalName + "» заявку в друзья? Ему придёт уведомление." + (meta ? "\n" + meta : ""));
       }
       if (addBtn) {
         addBtn.disabled = already;
-        addBtn.textContent = already ? "✓ Уже в друзьях" : "➕ Добавить в друзья";
+        addBtn.textContent = already ? "✓ Уже в друзьях" : "📩 Заявка в друзья";
       }
       if (modal) modal.hidden = false;
     }
@@ -3893,6 +3930,16 @@
     }
 
     function addFriend(name, phone) {
+      // заявка + уведомление (не мгновенное добавление)
+      if (window.PortalSocial && window.PortalSocial.sendFriendRequest) {
+        window.PortalSocial.sendFriendRequest(name, phone);
+        closeFriendModal();
+        return;
+      }
+      addFriendConfirmed(name, phone);
+    }
+
+    function addFriendConfirmed(name, phone) {
       const clean = cleanFriendName(name);
       if (!clean) return;
       if (isFriend(clean)) {
@@ -3911,6 +3958,8 @@
       toast("В друзьях: " + clean);
       closeFriendModal();
     }
+    window.addFriendConfirmed = addFriendConfirmed;
+    window.toast = toast;
 
     function wireReviewPeople() {
       document.querySelectorAll(".review-who").forEach(function (el) {
@@ -4099,6 +4148,7 @@
       clearTimeout(toast._t);
       toast._t = setTimeout(() => { el.hidden = true; }, 2800);
     }
+    window.toast = toast;
 
     function esc(s) {
       return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -4350,7 +4400,7 @@
       addFriend(name, phone);
       e.target.reset();
       const note = document.getElementById("friendFormNote");
-      if (note) note.textContent = "✓ " + name + (phone ? " · " + phone : "");
+      if (note) note.textContent = "📩 Заявка «" + name + "» — другу придёт уведомление";
       renderFriends();
     });
 
@@ -4963,6 +5013,15 @@
     on("friendAddBtn", "click", () => {
       if (friendModalName) addFriend(friendModalName);
     });
+    on("friendInviteBtn", "click", () => {
+      if (!friendModalName) return;
+      if (window.PortalSocial && window.PortalSocial.sendInvite) {
+        window.PortalSocial.sendInvite(friendModalName, "battle", "Битва всех игр");
+        closeFriendModal();
+      } else {
+        toast("Приглашение недоступно");
+      }
+    });
     on("friendCloseBtn", "click", closeFriendModal);
     on("friendModal", "click", (e) => {
       if (e.target.id === "friendModal") closeFriendModal();
@@ -4980,6 +5039,7 @@
     }
   </script>
   <script src="portal-chat-ui.js"></script>
+  <script src="friends-social.js"></script>
   <script>
     (function () {
       var n = document.getElementById("navSupportChat");
