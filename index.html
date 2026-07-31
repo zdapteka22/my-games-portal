@@ -1588,6 +1588,7 @@
       <button class="tab" data-tab="add" type="button" data-i18n="tabAdd">Отправить игру</button>
       <button class="tab" data-tab="create" type="button" data-i18n="tabCreate">Создать игру</button>
       <button class="tab" data-tab="friends" type="button" data-i18n="tabFriends">Друзья</button>
+      <button class="tab" data-tab="requests" type="button">📩 Заявки <span id="requestsTabBadge" class="notif-badge" style="position:static;display:inline-grid;margin-left:4px" hidden>0</span></button>
       <button class="tab" data-tab="review" type="button" data-i18n="tabReview">Мой отзыв</button>
       <button class="tab" data-tab="admin" type="button" data-i18n="tabAdmin">Проверка</button>
     </div>
@@ -1681,6 +1682,18 @@
           </div>
         </div>
         <div id="friendsPanelList" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <div id="panel-requests" class="panel">
+      <div class="card" id="requestsPanel">
+        <h3>📩 Заявки в друзья и приглашения</h3>
+        <p style="color:#aaa;font-size:14px;margin-bottom:12px">
+          Сюда приходят заявки с любого аккаунта. Нажми <b>Обновить</b>, если только что кинули запрос.
+          Прими — человек попадёт в друзья.
+        </p>
+        <button type="button" class="btn-secondary" id="requestsRefreshBtn" style="height:40px;font-size:13px;margin-bottom:12px">🔄 Обновить заявки</button>
+        <div id="requestsList"><p class="notif-empty">Загрузка…</p></div>
       </div>
     </div>
 

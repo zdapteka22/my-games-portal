@@ -1,6 +1,7 @@
 /**
- * Friend requests + game invites with notifications (cloud jsonblob + local).
- * Depends on: loadUser, toast, addFriendConfirmed (window hooks from index.html)
+ * Friend requests + invites.
+ * Pending friend_requests are listed in tab «Заявки» for every logged-in user
+ * (so the other account always sees them). Invites still prefer name match.
  */
 (function (w) {
   const LOCAL_KEY = "portal_social_inbox_v1";
@@ -18,6 +19,14 @@
     }
   }
 
+  function normName(s) {
+    return String(s || "")
+      .replace(/[✍️🧒👧👪📺🎬🤖🎮👤📩🔔]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  }
+
   function loadInbox() {
     try {
       const a = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]");
@@ -28,7 +37,7 @@
   }
   function saveInbox(list) {
     try {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify((list || []).slice(0, 120)));
+      localStorage.setItem(LOCAL_KEY, JSON.stringify((list || []).slice(0, 200)));
     } catch (_) {}
   }
   function loadSeen() {
@@ -91,7 +100,7 @@
     try {
       const r = await fetch(socialUrl, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: { "Content-Type": "application/json; charset=utf-8", Accept: "application/json" },
         body: JSON.stringify((list || []).slice(0, 300))
       });
       return r.ok;
@@ -102,14 +111,30 @@
 
   async function publishEvent(ev) {
     const list = await cloudGet();
-    const without = list.filter(function (x) {
-      return !x || String(x.id) !== String(ev.id);
+    const byId = {};
+    list.forEach(function (x) {
+      if (x && x.id) byId[x.id] = x;
     });
-    without.unshift(ev);
-    const ok = await cloudPut(without);
+    byId[ev.id] = ev;
+    const merged = Object.keys(byId)
+      .map(function (k) {
+        return byId[k];
+      })
+      .sort(function (a, b) {
+        return String(b.date || "").localeCompare(String(a.date || ""));
+      });
+    const ok = await cloudPut(merged);
     const inbox = loadInbox();
-    inbox.unshift(ev);
-    saveInbox(inbox);
+    const map = {};
+    inbox.forEach(function (x) {
+      if (x && x.id) map[x.id] = x;
+    });
+    map[ev.id] = ev;
+    saveInbox(
+      Object.keys(map).map(function (k) {
+        return map[k];
+      })
+    );
     try {
       if (w.BroadcastChannel) {
         const bc = new BroadcastChannel("bluecat_social");
@@ -123,49 +148,93 @@
   function matchTarget(ev, user) {
     if (!ev || !user) return false;
     const toId = String(ev.toId || "");
-    const toName = String(ev.toName || "").trim().toLowerCase();
     const myId = String(user.id || "");
-    const myName = String(user.name || "").trim().toLowerCase();
     if (toId && myId && toId === myId) return true;
-    if (toName && myName && toName === myName) return true;
+    const toName = normName(ev.toName);
+    const myName = normName(user.name);
+    if (toName && myName && (toName === myName || toName.indexOf(myName) !== -1 || myName.indexOf(toName) !== -1)) {
+      return true;
+    }
     return false;
   }
 
   function matchFrom(ev, user) {
     if (!ev || !user) return false;
     const fromId = String(ev.fromId || "");
-    const fromName = String(ev.fromName || "").trim().toLowerCase();
     const myId = String(user.id || "");
-    const myName = String(user.name || "").trim().toLowerCase();
     if (fromId && myId && fromId === myId) return true;
-    if (fromName && myName && fromName === myName) return true;
-    return false;
+    return normName(ev.fromName) === normName(user.name);
   }
 
-  function relevantForMe(ev, user) {
+  /** Incoming friend requests: ALL pending (board) so other account always sees them */
+  function pendingFriendRequests() {
+    const byId = {};
+    loadInbox().forEach(function (ev) {
+      if (ev && ev.type === "friend_request" && (!ev.status || ev.status === "pending") && ev.id) {
+        byId[ev.id] = ev;
+      }
+    });
+    return Object.keys(byId)
+      .map(function (k) {
+        return byId[k];
+      })
+      .sort(function (a, b) {
+        return String(b.date || "").localeCompare(String(a.date || ""));
+      });
+  }
+
+  function pendingInvitesForMe(user) {
+    if (!user) return [];
+    return loadInbox()
+      .filter(function (ev) {
+        return ev && ev.type === "invite" && (!ev.status || ev.status === "pending") && matchTarget(ev, user);
+      })
+      .sort(function (a, b) {
+        return String(b.date || "").localeCompare(String(a.date || ""));
+      });
+  }
+
+  function myOutgoing(user) {
+    if (!user) return [];
+    return loadInbox()
+      .filter(function (ev) {
+        return (
+          ev &&
+          (ev.type === "friend_request" || ev.type === "invite") &&
+          (!ev.status || ev.status === "pending") &&
+          matchFrom(ev, user)
+        );
+      })
+      .sort(function (a, b) {
+        return String(b.date || "").localeCompare(String(a.date || ""));
+      });
+  }
+
+  function resultsForMe(user) {
+    if (!user) return [];
+    return loadInbox()
+      .filter(function (ev) {
+        return ev && (ev.type === "friend_result" || ev.type === "invite_result") && matchTarget(ev, user);
+      })
+      .slice(0, 20);
+  }
+
+  function relevantForBell(ev, user) {
     if (!ev || !user) return false;
-    if (ev.status && ev.status !== "pending") {
-      // accepted/declined replies go to sender
-      if (ev.type === "friend_result" || ev.type === "invite_result") return matchTarget(ev, user);
-      return false;
+    if (ev.type === "friend_request" && (!ev.status || ev.status === "pending")) {
+      // bell: highlight if addressed to me OR any pending (so user notices)
+      return matchTarget(ev, user) || true;
     }
-    if (ev.type === "friend_request" || ev.type === "invite") return matchTarget(ev, user);
+    if (ev.type === "invite" && (!ev.status || ev.status === "pending")) return matchTarget(ev, user);
     if (ev.type === "friend_result" || ev.type === "invite_result") return matchTarget(ev, user);
     return false;
-  }
-
-  function unreadCount(user) {
-    const seen = loadSeen();
-    return myNotifications(user).filter(function (ev) {
-      return ev && ev.id && !seen[ev.id];
-    }).length;
   }
 
   function myNotifications(user) {
     if (!user) return [];
     const byId = {};
-    loadInbox().concat([]).forEach(function (ev) {
-      if (relevantForMe(ev, user)) byId[ev.id] = ev;
+    loadInbox().forEach(function (ev) {
+      if (relevantForBell(ev, user)) byId[ev.id] = ev;
     });
     return Object.keys(byId)
       .map(function (k) {
@@ -177,12 +246,19 @@
       .slice(0, 40);
   }
 
+  function unreadCount(user) {
+    if (!user) return 0;
+    const seen = loadSeen();
+    const incoming = pendingFriendRequests().concat(pendingInvitesForMe(user));
+    return incoming.filter(function (ev) {
+      return ev && ev.id && !seen[ev.id] && !matchFrom(ev, user);
+    }).length;
+  }
+
   async function refreshFromCloud() {
-    const user = me();
     const cloud = await cloudGet();
-    const inbox = loadInbox();
     const byId = {};
-    inbox.forEach(function (ev) {
+    loadInbox().forEach(function (ev) {
       if (ev && ev.id) byId[ev.id] = ev;
     });
     cloud.forEach(function (ev) {
@@ -199,7 +275,7 @@
   function ensureLogin() {
     const user = me();
     if (!user) {
-      if (typeof w.toast === "function") w.toast("Сначала войди — чтобы слать заявки и получать уведомления");
+      if (typeof w.toast === "function") w.toast("Сначала войди");
       const btn = document.getElementById("loginBtn");
       if (btn) btn.click();
       return null;
@@ -212,7 +288,7 @@
     if (!user) return { ok: false };
     const clean = String(toName || "").trim().slice(0, 40);
     if (!clean) return { ok: false };
-    if (String(user.name || "").trim().toLowerCase() === clean.toLowerCase()) {
+    if (normName(user.name) === normName(clean)) {
       if (typeof w.toast === "function") w.toast("Нельзя добавить себя");
       return { ok: false };
     }
@@ -224,6 +300,7 @@
       fromName: String(user.name || "Игрок").slice(0, 40),
       toId: "",
       toName: clean,
+      toNameNorm: normName(clean),
       phone: String(phone || "").trim().slice(0, 20),
       date: new Date().toISOString()
     };
@@ -232,9 +309,14 @@
     saveOut(out);
     const ok = await publishEvent(ev);
     if (typeof w.toast === "function") {
-      w.toast(ok ? "Заявка отправлена «" + clean + "» — жди ответ" : "Заявка сохранена (облако недоступно) — на этом ПК увидит, если войдёт под этим именем");
+      w.toast(
+        ok
+          ? "Заявка ушла в облако → на другом аккаунте открой вкладку «Заявки»"
+          : "Облако не ответило — заявка только здесь"
+      );
     }
     renderUI();
+    openRequestsTab();
     return { ok: true, ev: ev, shared: ok };
   }
 
@@ -251,6 +333,7 @@
       fromName: String(user.name || "Игрок").slice(0, 40),
       toId: "",
       toName: clean,
+      toNameNorm: normName(clean),
       gameId: String(gameId || "battle"),
       gameTitle: String(gameTitle || "Битва всех игр").slice(0, 60),
       date: new Date().toISOString()
@@ -260,7 +343,7 @@
     saveOut(out);
     const ok = await publishEvent(ev);
     if (typeof w.toast === "function") {
-      w.toast(ok ? "Приглашение отправлено «" + clean + "»" : "Приглашение сохранено локально");
+      w.toast(ok ? "Приглашение в «Заявки» у друга" : "Приглашение сохранено локально");
     }
     renderUI();
     return { ok: true, ev: ev, shared: ok };
@@ -268,12 +351,26 @@
 
   async function respond(evId, accept) {
     const user = me();
-    if (!user) return;
-    const inbox = loadInbox();
-    const ev = inbox.find(function (x) {
+    if (!user) {
+      ensureLogin();
+      return;
+    }
+    let inbox = loadInbox();
+    let ev = inbox.find(function (x) {
       return x && x.id === evId;
     });
+    if (!ev) {
+      await refreshFromCloud();
+      inbox = loadInbox();
+      ev = inbox.find(function (x) {
+        return x && x.id === evId;
+      });
+    }
     if (!ev) return;
+    if (matchFrom(ev, user) && (ev.type === "friend_request" || ev.type === "invite")) {
+      if (typeof w.toast === "function") w.toast("Это твоя исходящая заявка");
+      return;
+    }
     markSeen(evId);
     ev.status = accept ? "accepted" : "declined";
     saveInbox(inbox);
@@ -299,34 +396,28 @@
     };
     await publishEvent(result);
 
-    // update original in cloud
     const cloud = await cloudGet();
     const updated = cloud.map(function (x) {
-      if (x && x.id === ev.id) {
-        x.status = ev.status;
-      }
+      if (x && x.id === ev.id) x.status = ev.status;
       return x;
     });
     await cloudPut(updated);
 
     if (ev.type === "invite" && accept) {
-      const gid = ev.gameId || "battle";
-      location.href = "play.html?id=" + encodeURIComponent(gid) + "&mode=2&invite=1";
+      location.href = "play.html?id=" + encodeURIComponent(ev.gameId || "battle") + "&mode=2&invite=1";
       return;
     }
-    if (typeof w.toast === "function") {
-      w.toast(accept ? "Принято ✓" : "Отклонено");
-    }
+    if (typeof w.toast === "function") w.toast(accept ? "Принято ✓" : "Отклонено");
     renderUI();
   }
 
   function labelFor(ev) {
     if (!ev) return "";
     if (ev.type === "friend_request") {
-      return "👤 " + (ev.fromName || "Игрок") + " хочет добавить вас в друзья";
+      return "👤 " + (ev.fromName || "Игрок") + " → «" + (ev.toName || "?") + "»: хочет в друзья";
     }
     if (ev.type === "invite") {
-      return "🎮 " + (ev.fromName || "Игрок") + " приглашает в «" + (ev.gameTitle || "игру") + "»";
+      return "🎮 " + (ev.fromName || "Игрок") + " приглашает «" + (ev.toName || "") + "» в «" + (ev.gameTitle || "игру") + "»";
     }
     if (ev.type === "friend_result") {
       return ev.status === "accepted"
@@ -341,65 +432,159 @@
     return "Уведомление";
   }
 
-  function renderUI() {
+  function cardHtml(ev, user, mode) {
+    const pending = !ev.status || ev.status === "pending";
+    const mineOut = matchFrom(ev, user);
+    const forMe = matchTarget(ev, user);
+    let actions = "";
+    if (pending && !mineOut && (ev.type === "friend_request" || (ev.type === "invite" && forMe))) {
+      actions =
+        "<div class='notif-actions'>" +
+        "<button type='button' class='btn-play' data-notif-accept='" +
+        ev.id +
+        "'>Принять</button>" +
+        "<button type='button' class='btn-secondary' data-notif-decline='" +
+        ev.id +
+        "'>Отклонить</button>" +
+        "</div>";
+    } else if (pending && mineOut) {
+      actions = "<div class='notif-actions'><span style='color:#8ac;font-size:12px'>Исходящая · ждём ответ</span></div>";
+    } else {
+      actions =
+        "<div class='notif-actions'><button type='button' class='btn-secondary' data-notif-seen='" +
+        ev.id +
+        "'>Ок</button></div>";
+    }
+    const hint =
+      ev.type === "friend_request" && pending && !mineOut
+        ? "<div style='color:#888;font-size:11px;margin-top:4px'>Кому: " +
+          esc(ev.toName || "—") +
+          (forMe ? " · это тебе" : " · прими, если это ты") +
+          "</div>"
+        : "";
+    return (
+      "<article class='notif-item" +
+      (forMe && pending ? " unread" : "") +
+      "' data-id='" +
+      esc(ev.id) +
+      "'>" +
+      "<p>" +
+      esc(labelFor(ev)) +
+      "</p>" +
+      hint +
+      "<time>" +
+      esc(String(ev.date || "").replace("T", " ").slice(0, 16)) +
+      "</time>" +
+      actions +
+      "</article>"
+    );
+  }
+
+  function esc(s) {
+    return String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function renderRequestsTab() {
+    const box = document.getElementById("requestsList");
+    const badge = document.getElementById("requestsTabBadge");
+    const user = me();
+    const n = unreadCount(user);
+    if (badge) {
+      badge.hidden = n < 1;
+      badge.textContent = String(n > 9 ? "9+" : n);
+    }
+    if (!box) return;
+    if (!user) {
+      box.innerHTML = "<p class='notif-empty'>Войди — тогда увидишь заявки от других аккаунтов.</p>";
+      return;
+    }
+    const incomingFr = pendingFriendRequests().filter(function (ev) {
+      return !matchFrom(ev, user);
+    });
+    const invites = pendingInvitesForMe(user);
+    const outgoing = myOutgoing(user);
+    const results = resultsForMe(user);
+
+    let html = "";
+    html += "<h4 style='margin:0 0 8px;color:#9ad4ff'>📥 Входящие заявки в друзья</h4>";
+    if (!incomingFr.length) {
+      html += "<p class='notif-empty'>Пока пусто. Когда кто-то кинет заявку — она появится здесь на любом аккаунте.</p>";
+    } else {
+      html += incomingFr.map(function (ev) {
+        return cardHtml(ev, user, "in");
+      }).join("");
+    }
+
+    html += "<h4 style='margin:16px 0 8px;color:#9ad4ff'>🎮 Приглашения в игру</h4>";
+    if (!invites.length) html += "<p class='notif-empty'>Нет приглашений на твой ник.</p>";
+    else {
+      html += invites.map(function (ev) {
+        return cardHtml(ev, user, "inv");
+      }).join("");
+    }
+
+    html += "<h4 style='margin:16px 0 8px;color:#aaa'>📤 Мои исходящие</h4>";
+    if (!outgoing.length) html += "<p class='notif-empty'>Ты ещё никому не кидал заявку.</p>";
+    else {
+      html += outgoing.map(function (ev) {
+        return cardHtml(ev, user, "out");
+      }).join("");
+    }
+
+    if (results.length) {
+      html += "<h4 style='margin:16px 0 8px;color:#aaa'>Ответы</h4>";
+      html += results.map(function (ev) {
+        return cardHtml(ev, user, "res");
+      }).join("");
+    }
+
+    box.innerHTML = html;
+  }
+
+  function renderBell() {
     const user = me();
     const badge = document.getElementById("notifBadge");
     const listEl = document.getElementById("notifList");
-    const n = user ? unreadCount(user) : 0;
+    const n = unreadCount(user);
     if (badge) {
       badge.hidden = n < 1;
       badge.textContent = String(n > 9 ? "9+" : n);
     }
     if (!listEl) return;
     if (!user) {
-      listEl.innerHTML = "<p class='notif-empty'>Войди, чтобы видеть заявки и приглашения.</p>";
+      listEl.innerHTML = "<p class='notif-empty'>Войди, чтобы видеть заявки.</p>";
       return;
     }
-    const items = myNotifications(user);
+    const items = pendingFriendRequests()
+      .filter(function (ev) {
+        return !matchFrom(ev, user);
+      })
+      .concat(pendingInvitesForMe(user))
+      .concat(resultsForMe(user))
+      .slice(0, 25);
     if (!items.length) {
-      listEl.innerHTML = "<p class='notif-empty'>Пока нет уведомлений.</p>";
+      listEl.innerHTML = "<p class='notif-empty'>Пусто. Открой вкладку «Заявки».</p>";
       return;
     }
-    const seen = loadSeen();
     listEl.innerHTML = items
       .map(function (ev) {
-        const pending = !ev.status || ev.status === "pending";
-        const isReq = ev.type === "friend_request" || ev.type === "invite";
-        const unread = !seen[ev.id] ? " unread" : "";
-        let actions = "";
-        if (pending && isReq) {
-          actions =
-            "<div class='notif-actions'>" +
-            "<button type='button' class='btn-play' data-notif-accept='" +
-            ev.id +
-            "'>Принять</button>" +
-            "<button type='button' class='btn-secondary' data-notif-decline='" +
-            ev.id +
-            "'>Отклонить</button>" +
-            "</div>";
-        } else {
-          actions =
-            "<div class='notif-actions'><button type='button' class='btn-secondary' data-notif-seen='" +
-            ev.id +
-            "'>Ок</button></div>";
-        }
-        return (
-          "<article class='notif-item" +
-          unread +
-          "' data-id='" +
-          ev.id +
-          "'>" +
-          "<p>" +
-          labelFor(ev) +
-          "</p>" +
-          "<time>" +
-          String(ev.date || "").replace("T", " ").slice(0, 16) +
-          "</time>" +
-          actions +
-          "</article>"
-        );
+        return cardHtml(ev, user, "bell");
       })
       .join("");
+  }
+
+  function renderUI() {
+    renderBell();
+    renderRequestsTab();
+  }
+
+  function openRequestsTab() {
+    const tab = document.querySelector('.tab[data-tab="requests"]');
+    if (tab) tab.click();
   }
 
   function togglePanel(force) {
@@ -409,10 +594,6 @@
     else panel.hidden = !panel.hidden;
     if (!panel.hidden) {
       refreshFromCloud();
-      const user = me();
-      myNotifications(user).forEach(function (ev) {
-        if (ev && ev.id && (ev.type === "friend_result" || ev.type === "invite_result")) markSeen(ev.id);
-      });
       renderUI();
     }
   }
@@ -425,6 +606,15 @@
         e.preventDefault();
         e.stopPropagation();
         togglePanel();
+      });
+    }
+    const refreshBtn = document.getElementById("requestsRefreshBtn");
+    if (refreshBtn && !refreshBtn.getAttribute("data-wired")) {
+      refreshBtn.setAttribute("data-wired", "1");
+      refreshBtn.addEventListener("click", function () {
+        refreshFromCloud().then(function () {
+          if (typeof w.toast === "function") w.toast("Заявки обновлены");
+        });
       });
     }
     document.addEventListener("click", function (e) {
@@ -443,7 +633,6 @@
         renderUI();
       } else {
         const panel = document.getElementById("notifPanel");
-        const bell2 = document.getElementById("notifBell");
         if (panel && !panel.hidden && !e.target.closest("#notifPanel") && !e.target.closest("#notifBell")) {
           panel.hidden = true;
         }
@@ -451,8 +640,7 @@
       const inv = e.target.closest && e.target.closest("[data-invite]");
       if (inv) {
         e.preventDefault();
-        const name = inv.getAttribute("data-invite");
-        sendInvite(name, "battle", "Битва всех игр");
+        sendInvite(inv.getAttribute("data-invite"), "battle", "Битва всех игр");
       }
     });
     try {
@@ -477,7 +665,7 @@
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(function () {
       refreshFromCloud();
-    }, 10000);
+    }, 8000);
   }
 
   w.PortalSocial = {
@@ -486,7 +674,8 @@
     refresh: refreshFromCloud,
     render: renderUI,
     start: start,
-    togglePanel: togglePanel
+    togglePanel: togglePanel,
+    openRequestsTab: openRequestsTab
   };
 
   if (document.readyState === "loading") {
