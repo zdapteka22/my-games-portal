@@ -445,12 +445,12 @@
     if (ev.type === "invite" && accept) {
       const gid = ev.gameId || "snake";
       const map = {
-        snake: "play.html?id=snake&mode=2",
-        tanks: "play.html?id=tanks&mode=2",
-        pacman: "play.html?id=pacman&mode=2",
-        labyrinth: "play.html?id=labyrinth&mode=2",
-        mario: "play.html?id=mario&mode=2",
-        battle: "play.html?id=battle&mode=2",
+        snake: "play.html?id=snake&mode=2&invite=1",
+        tanks: "play.html?id=tanks&mode=2&invite=1",
+        pacman: "play.html?id=pacman&mode=2&invite=1",
+        labyrinth: "play.html?id=labyrinth&mode=2&invite=1",
+        mario: "play.html?id=mario&mode=2&invite=1",
+        battle: "play.html?id=battle&mode=2&invite=1",
         smeshariki: "games/smeshariki/index.html"
       };
       location.href = map[gid] || ("play.html?id=" + encodeURIComponent(gid) + "&mode=2&invite=1");

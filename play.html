@@ -393,11 +393,18 @@
   }
 
   function gameSrc() {
-    if (meta.src) {
-      // relative to play.html at site root
-      return "games/" + meta.src.replace(/^games\//, "");
-    }
-    return null;
+    if (!meta.src) return null;
+    // relative to play.html at site root
+    let path = "games/" + meta.src.replace(/^games\//, "");
+    // mode=2 / invite / friend → в iframe, иначе танчики/змейка остаются 1P vs ИИ
+    const pass = new URLSearchParams();
+    const q = new URLSearchParams(location.search);
+    ["mode", "invite", "friend"].forEach(function (k) {
+      const v = q.get(k);
+      if (v) pass.set(k, v);
+    });
+    const qs = pass.toString();
+    return qs ? path + "?" + qs : path;
   }
 
   function mountPlay() {
