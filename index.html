@@ -3880,7 +3880,7 @@
             (f.phone
               ? "<a href='tel:" + esc(String(f.phone).replace(/[^\d+]/g, "")) + "' style='text-decoration:none'><button type='button'>📞</button></a>"
               : "") +
-            "<button type='button' data-invite='" + esc(f.name) + "' title='Пригласить'>⚔️</button>" +
+            "<button type='button' data-invite='" + esc(f.name) + "' data-invite-game='snake' title='Пригласить в Змейку'>⚔️</button>" +
             "<button type='button' data-unfriend='" + esc(f.id) + "' style='background:#4a1a1a;color:#f88'>×</button>" +
             "</div>"
           ).join("");
@@ -3897,9 +3897,9 @@
               "<span style='font-size:1.3rem'>👤</span>" +
               "<div style='flex:1;min-width:120px'><b>" + esc(f.name) + "</b>" +
               (f.phone ? "<br><span style='color:#8ac;font-size:12px'>" + esc(f.phone) + "</span>" : "") + "</div>" +
-              "<button type='button' class='btn-secondary' data-invite='" + esc(f.name) + "' style='height:36px;font-size:13px'>📩 Пригласить</button>" +
-              "<a class='btn-play' href='play.html?id=battle' style='height:36px;font-size:13px;min-width:120px;display:inline-grid;place-items:center;text-decoration:none'>" +
-              esc(t("friendsPlayOne")) + "</a>" +
+              "<button type='button' class='btn-secondary' data-invite='" + esc(f.name) + "' data-invite-game='snake' style='height:36px;font-size:13px'>📩 В Змейку</button>" +
+              "<a class='btn-play' href='play.html?id=snake&mode=2' style='height:36px;font-size:13px;min-width:120px;display:inline-grid;place-items:center;text-decoration:none'>" +
+              "Играть вместе</a>" +
               (f.phone ? "<a class='btn-secondary' href='tel:" + esc(String(f.phone).replace(/[^\d+]/g, "")) +
               "' style='height:36px;font-size:13px;display:inline-grid;place-items:center;text-decoration:none;padding:0 12px'>📞</a>" : "") +
               "<button type='button' class='btn-secondary' data-unfriend='" + esc(f.id) + "' style='height:36px;font-size:13px'>×</button>" +
@@ -3908,10 +3908,9 @@
         }
       }
       const playBtn = document.getElementById("playWithFriendBtn");
-      if (playBtn && list.length) {
-        playBtn.href = "play.html?id=battle";
-      } else if (playBtn) {
-        playBtn.href = "play.html?id=battle";
+      if (playBtn) {
+        playBtn.href = "play.html?id=snake&mode=2";
+        playBtn.textContent = "🤝 Змейка с другом";
       }
     }
 
@@ -5028,12 +5027,31 @@
     });
     on("friendInviteBtn", "click", () => {
       if (!friendModalName) return;
-      if (window.PortalSocial && window.PortalSocial.sendInvite) {
-        window.PortalSocial.sendInvite(friendModalName, "battle", "Битва всех игр");
-        closeFriendModal();
-      } else {
+      if (!(window.PortalSocial && window.PortalSocial.sendInvite)) {
         toast("Приглашение недоступно");
+        return;
       }
+      const pick = window.prompt(
+        "Куда пригласить друга?\nsnake / tanks / pacman / labyrinth / mario / battle / smeshariki",
+        "snake"
+      );
+      if (!pick) return;
+      const gid = String(pick).trim().toLowerCase();
+      const titles = {
+        snake: "Змейка",
+        tanks: "Танчики",
+        pacman: "Пакман",
+        labyrinth: "Лабиринт",
+        mario: "Марио",
+        battle: "Битва всех игр",
+        smeshariki: "Смешарики"
+      };
+      if (!titles[gid]) {
+        toast("Неизвестная игра — напиши snake или tanks");
+        return;
+      }
+      window.PortalSocial.sendInvite(friendModalName, gid, titles[gid]);
+      closeFriendModal();
     });
     on("friendCloseBtn", "click", closeFriendModal);
     on("friendModal", "click", (e) => {

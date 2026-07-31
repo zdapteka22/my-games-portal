@@ -640,7 +640,18 @@
       const inv = e.target.closest && e.target.closest("[data-invite]");
       if (inv) {
         e.preventDefault();
-        sendInvite(inv.getAttribute("data-invite"), "battle", "Битва всех игр");
+        const name = inv.getAttribute("data-invite");
+        const gid = inv.getAttribute("data-invite-game") || "snake";
+        const titles = {
+          snake: "Змейка",
+          tanks: "Танчики",
+          pacman: "Пакман",
+          labyrinth: "Лабиринт",
+          mario: "Марио",
+          battle: "Битва всех игр",
+          smeshariki: "Смешарики"
+        };
+        sendInvite(name, gid, titles[gid] || gid);
       }
     });
     try {
