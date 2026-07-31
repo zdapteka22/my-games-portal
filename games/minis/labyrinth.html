@@ -66,8 +66,10 @@
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
     <button type="button" id="lMode1" style="padding:8px 12px;border-radius:10px;border:2px solid #ffcc00;background:#14301a;color:#7dff9a;font-weight:800">👤 1 игрок</button>
-    <button type="button" id="lMode2" style="padding:8px 12px;border-radius:10px;border:2px solid #555;background:#111;color:#ddd;font-weight:800">👥 2 игрока / с другом</button>
+    <button type="button" id="lMode2" style="padding:8px 12px;border-radius:10px;border:2px solid #555;background:#111;color:#ddd;font-weight:800">👥 2 игрока здесь</button>
+    <button type="button" id="lFriend" style="padding:8px 12px;border-radius:10px;border:2px solid #555;background:#111;color:#ffcc00;font-weight:800">🤝 С другом</button>
   </div>
+  <script src="../../invite-friend.js"></script>
   <div class="hud">
     <span>Уровень: <b id="lvl">1</b></span>
     <span>Время: <b id="time">0</b>с</span>
@@ -381,6 +383,15 @@
 
   document.getElementById("lMode1")?.addEventListener("click", () => { twoPlayer = false; reset(true); });
   document.getElementById("lMode2")?.addEventListener("click", () => { twoPlayer = true; reset(true); });
+  if (window.InviteFriend) {
+    InviteFriend.wireButton(document.getElementById("lFriend"), {
+      gameId: "labyrinth",
+      gameTitle: "Лабиринт",
+      onLocal2P: function () {
+        document.getElementById("lMode2").click();
+      }
+    });
+  }
 
   document.addEventListener("keydown", e => {
     keys[e.key] = true;

@@ -65,8 +65,10 @@
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
     <button type="button" id="mode1" style="padding:8px 14px;border-radius:10px;border:2px solid #ffcc00;background:#2a2a10;color:#ffcc00;font-weight:800">👤 1 игрок</button>
-    <button type="button" id="mode2" style="padding:8px 14px;border-radius:10px;border:2px solid #555;background:#1a1a1a;color:#ddd;font-weight:800">👥 2 игрока</button>
+    <button type="button" id="mode2" style="padding:8px 14px;border-radius:10px;border:2px solid #555;background:#1a1a1a;color:#ddd;font-weight:800">👥 2 игрока здесь</button>
+    <button type="button" id="modeFriend" style="padding:8px 14px;border-radius:10px;border:2px solid #555;background:#1a1a1a;color:#ffcc00;font-weight:800">🤝 С другом</button>
   </div>
+  <script src="../../invite-friend.js"></script>
   <canvas id="c" width="640" height="420" tabindex="0"></canvas>
   <p class="hint" id="hint">
     <b>P1:</b> WASD · Пробел 🔥 · <b>P2:</b> стрелки · Enter 🔥 · R — рестарт<br>
@@ -151,6 +153,15 @@
   if (twoPlayer) {
     document.getElementById("mode2").style.borderColor = "#ffcc00";
     document.getElementById("mode1").style.borderColor = "#555";
+  }
+  if (window.InviteFriend) {
+    InviteFriend.wireButton(document.getElementById("modeFriend"), {
+      gameId: "tanks",
+      gameTitle: "Танчики",
+      onLocal2P: function () {
+        document.getElementById("mode2").click();
+      }
+    });
   }
 
   function hitWall(x, y, r) {

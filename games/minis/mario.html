@@ -182,22 +182,30 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="nav ghost" id="btnMusic" title="Музыка и звуки (монеты, гумбы, блоки…)">🔊 Звук</button>
       <button type="button" class="nav ghost" id="btnEditor">✏️ Редактор</button>
-      <a class="ghost" href="mario.html?mode=2" title="Режим с другом в этой игре" id="btnFriendMario">🤝 С другом</a>
+      <button type="button" class="ghost" id="btnFriendMario" title="Выбрать друга">🤝 С другом</button>
       <a class="ghost" href="../../index.html">Сайт</a>
     </div>
   </div>
   <div id="friendMarioNote" style="display:none;width:min(900px,98vw);padding:8px 12px;background:rgba(0,0,0,.55);border:2px solid #ffcc00;border-radius:10px;font-size:13px;font-weight:700;text-align:center">
-    Режим «с другом» в Марио: один проходит уровень, второй может подсказывать / чередоваться. Для 2 игроков сразу на одном экране — Змейка, Танчики, Пакман, Лабиринт (кнопка «2 игрока» внутри игры).
+    Режим «с другом»: приглашение ушло — друг примет во вкладке «Заявки». Или «2 игрока здесь» на одном устройстве.
   </div>
+  <script src="../../invite-friend.js"></script>
   <script>
     (function () {
-      try {
-        var m = new URLSearchParams(location.search).get("mode");
-        if (m === "2" || m === "friend") {
-          var n = document.getElementById("friendMarioNote");
-          if (n) n.style.display = "block";
-        }
-      } catch (e) {}
+      var btn = document.getElementById("btnFriendMario");
+      if (btn && window.InviteFriend) {
+        InviteFriend.wireButton(btn, {
+          gameId: "mario",
+          gameTitle: "Марио",
+          onLocal2P: function () {
+            var n = document.getElementById("friendMarioNote");
+            if (n) {
+              n.style.display = "block";
+              n.textContent = "Вы на одном устройстве: проходите по очереди / подсказывайте. Для 2 игроков на экране лучше Змейка или Танчики.";
+            }
+          }
+        });
+      }
     })();
   </script>
   <div class="hud">

@@ -69,8 +69,10 @@
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
     <button type="button" id="pMode1" style="padding:8px 12px;border-radius:10px;border:2px solid #ffcc00;background:#141428;color:#ffcc00;font-weight:800">👤 1 игрок</button>
-    <button type="button" id="pMode2" style="padding:8px 12px;border-radius:10px;border:2px solid #555;background:#111;color:#ddd;font-weight:800">👥 2 игрока / с другом</button>
+    <button type="button" id="pMode2" style="padding:8px 12px;border-radius:10px;border:2px solid #555;background:#111;color:#ddd;font-weight:800">👥 2 игрока здесь</button>
+    <button type="button" id="pFriend" style="padding:8px 12px;border-radius:10px;border:2px solid #555;background:#111;color:#ffcc00;font-weight:800">🤝 С другом</button>
   </div>
+  <script src="../../invite-friend.js"></script>
   <canvas id="c" width="448" height="496" tabindex="0"></canvas>
   <p class="hint" id="pHint"><b>P1:</b> WASD · <b>P2:</b> стрелки · Пробел пауза · R заново<br>Собери все точки вместе! Призраки опасны обоим.</p>
   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:min(448px,96vw)">
@@ -472,6 +474,15 @@
   document.getElementById("pMode2")?.addEventListener("click", () => {
     twoPlayer = true; resetLevel(true);
   });
+  if (window.InviteFriend) {
+    InviteFriend.wireButton(document.getElementById("pFriend"), {
+      gameId: "pacman",
+      gameTitle: "Пакман",
+      onLocal2P: function () {
+        document.getElementById("pMode2").click();
+      }
+    });
+  }
 
   document.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
