@@ -110,9 +110,10 @@
   }
 
   async function publishEvent(ev) {
+    // merge carefully so we never wipe other people's pending invites/requests
     const list = await cloudGet();
     const byId = {};
-    list.forEach(function (x) {
+    (list || []).forEach(function (x) {
       if (x && x.id) byId[x.id] = x;
     });
     byId[ev.id] = ev;
@@ -124,9 +125,35 @@
         return String(b.date || "").localeCompare(String(a.date || ""));
       });
     const ok = await cloudPut(merged);
+    if (!ok) {
+      // retry once
+      const again = await cloudGet();
+      (again || []).forEach(function (x) {
+        if (x && x.id) byId[x.id] = x;
+      });
+      byId[ev.id] = ev;
+      const merged2 = Object.keys(byId).map(function (k) {
+        return byId[k];
+      });
+      const ok2 = await cloudPut(merged2);
+      if (!ok2) {
+        const inbox = loadInbox();
+        inbox.unshift(ev);
+        saveInbox(inbox);
+        return false;
+      }
+    }
+    // verify landed
+    const check = await cloudGet();
+    const landed = (check || []).some(function (x) {
+      return x && x.id === ev.id;
+    });
     const inbox = loadInbox();
     const map = {};
     inbox.forEach(function (x) {
+      if (x && x.id) map[x.id] = x;
+    });
+    (check || []).forEach(function (x) {
       if (x && x.id) map[x.id] = x;
     });
     map[ev.id] = ev;
@@ -142,7 +169,7 @@
         bc.close();
       }
     } catch (_) {}
-    return ok;
+    return landed;
   }
 
   function matchTarget(ev, user) {
@@ -183,15 +210,25 @@
       });
   }
 
-  function pendingInvitesForMe(user) {
-    if (!user) return [];
-    return loadInbox()
-      .filter(function (ev) {
-        return ev && ev.type === "invite" && (!ev.status || ev.status === "pending") && matchTarget(ev, user);
+  /** Incoming invites: ALL pending (board) — same as friend requests */
+  function pendingInvites() {
+    const byId = {};
+    loadInbox().forEach(function (ev) {
+      if (ev && ev.type === "invite" && (!ev.status || ev.status === "pending") && ev.id) {
+        byId[ev.id] = ev;
+      }
+    });
+    return Object.keys(byId)
+      .map(function (k) {
+        return byId[k];
       })
       .sort(function (a, b) {
         return String(b.date || "").localeCompare(String(a.date || ""));
       });
+  }
+
+  function pendingInvitesForMe(user) {
+    return pendingInvites();
   }
 
   function myOutgoing(user) {
@@ -221,11 +258,8 @@
 
   function relevantForBell(ev, user) {
     if (!ev || !user) return false;
-    if (ev.type === "friend_request" && (!ev.status || ev.status === "pending")) {
-      // bell: highlight if addressed to me OR any pending (so user notices)
-      return matchTarget(ev, user) || true;
-    }
-    if (ev.type === "invite" && (!ev.status || ev.status === "pending")) return matchTarget(ev, user);
+    if (ev.type === "friend_request" && (!ev.status || ev.status === "pending")) return true;
+    if (ev.type === "invite" && (!ev.status || ev.status === "pending")) return true;
     if (ev.type === "friend_result" || ev.type === "invite_result") return matchTarget(ev, user);
     return false;
   }
@@ -249,7 +283,7 @@
   function unreadCount(user) {
     if (!user) return 0;
     const seen = loadSeen();
-    const incoming = pendingFriendRequests().concat(pendingInvitesForMe(user));
+    const incoming = pendingFriendRequests().concat(pendingInvites());
     return incoming.filter(function (ev) {
       return ev && ev.id && !seen[ev.id] && !matchFrom(ev, user);
     }).length;
@@ -334,8 +368,8 @@
       toId: "",
       toName: clean,
       toNameNorm: normName(clean),
-      gameId: String(gameId || "battle"),
-      gameTitle: String(gameTitle || "Битва всех игр").slice(0, 60),
+      gameId: String(gameId || "snake"),
+      gameTitle: String(gameTitle || "Змейка").slice(0, 60),
       date: new Date().toISOString()
     };
     const out = loadOut();
@@ -343,9 +377,14 @@
     saveOut(out);
     const ok = await publishEvent(ev);
     if (typeof w.toast === "function") {
-      w.toast(ok ? "Приглашение в «Заявки» у друга" : "Приглашение сохранено локально");
+      w.toast(
+        ok
+          ? "Приглашение в облаке → друг: вкладка «Заявки» → Обновить"
+          : "Не удалось сохранить в облако — друг не увидит. Попробуй ещё раз"
+      );
     }
     renderUI();
+    openRequestsTab();
     return { ok: true, ev: ev, shared: ok };
   }
 
@@ -404,7 +443,17 @@
     await cloudPut(updated);
 
     if (ev.type === "invite" && accept) {
-      location.href = "play.html?id=" + encodeURIComponent(ev.gameId || "battle") + "&mode=2&invite=1";
+      const gid = ev.gameId || "snake";
+      const map = {
+        snake: "play.html?id=snake&mode=2",
+        tanks: "play.html?id=tanks&mode=2",
+        pacman: "play.html?id=pacman&mode=2",
+        labyrinth: "play.html?id=labyrinth&mode=2",
+        mario: "play.html?id=mario&mode=2",
+        battle: "play.html?id=battle&mode=2",
+        smeshariki: "games/smeshariki/index.html"
+      };
+      location.href = map[gid] || ("play.html?id=" + encodeURIComponent(gid) + "&mode=2&invite=1");
       return;
     }
     if (typeof w.toast === "function") w.toast(accept ? "Принято ✓" : "Отклонено");
@@ -437,12 +486,15 @@
     const mineOut = matchFrom(ev, user);
     const forMe = matchTarget(ev, user);
     let actions = "";
-    if (pending && !mineOut && (ev.type === "friend_request" || (ev.type === "invite" && forMe))) {
+    if (pending && !mineOut && (ev.type === "friend_request" || ev.type === "invite")) {
+      const acceptLabel = ev.type === "invite" ? "Играть" : "Принять";
       actions =
         "<div class='notif-actions'>" +
         "<button type='button' class='btn-play' data-notif-accept='" +
         ev.id +
-        "'>Принять</button>" +
+        "'>" +
+        acceptLabel +
+        "</button>" +
         "<button type='button' class='btn-secondary' data-notif-decline='" +
         ev.id +
         "'>Отклонить</button>" +
@@ -456,9 +508,10 @@
         "'>Ок</button></div>";
     }
     const hint =
-      ev.type === "friend_request" && pending && !mineOut
+      pending && !mineOut
         ? "<div style='color:#888;font-size:11px;margin-top:4px'>Кому: " +
           esc(ev.toName || "—") +
+          (ev.gameTitle ? " · игра: " + esc(ev.gameTitle) : "") +
           (forMe ? " · это тебе" : " · прими, если это ты") +
           "</div>"
         : "";
@@ -505,7 +558,9 @@
     const incomingFr = pendingFriendRequests().filter(function (ev) {
       return !matchFrom(ev, user);
     });
-    const invites = pendingInvitesForMe(user);
+    const invites = pendingInvites().filter(function (ev) {
+      return !matchFrom(ev, user);
+    });
     const outgoing = myOutgoing(user);
     const results = resultsForMe(user);
 
@@ -520,8 +575,9 @@
     }
 
     html += "<h4 style='margin:16px 0 8px;color:#9ad4ff'>🎮 Приглашения в игру</h4>";
-    if (!invites.length) html += "<p class='notif-empty'>Нет приглашений на твой ник.</p>";
-    else {
+    if (!invites.length) {
+      html += "<p class='notif-empty'>Нет приглашений. Друг должен нажать «Пригласить» / «В Змейку» — потом здесь «Обновить».</p>";
+    } else {
       html += invites.map(function (ev) {
         return cardHtml(ev, user, "inv");
       }).join("");
@@ -563,7 +619,11 @@
       .filter(function (ev) {
         return !matchFrom(ev, user);
       })
-      .concat(pendingInvitesForMe(user))
+      .concat(
+        pendingInvites().filter(function (ev) {
+          return !matchFrom(ev, user);
+        })
+      )
       .concat(resultsForMe(user))
       .slice(0, 25);
     if (!items.length) {
