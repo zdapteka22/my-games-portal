@@ -1042,10 +1042,10 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
         <option value="spin">Крутится</option>
         <option value="none">Без анимации</option>
       </select>
-      <label class="tool-l">Глубина: <span id="depthVal">0.45</span></label>
-      <input type="range" id="depth" min="0.1" max="1.2" step="0.05" value="0.45"/>
-      <label class="tool-l">Качество: <span id="resVal">80</span></label>
-      <input type="range" id="res" min="40" max="120" step="8" value="80"/>
+      <label class="tool-l">Глубина: <span id="depthVal">0.30</span></label>
+      <input type="range" id="depth" min="0.1" max="0.55" step="0.05" value="0.30"/>
+      <label class="tool-l">Качество: <span id="resVal">96</span></label>
+      <input type="range" id="res" min="48" max="140" step="8" value="96"/>
       <label class="check"><input type="checkbox" id="spin" checked/> Вращать сцену</label>
       <button class="tool-btn" id="btnBuild" type="button" disabled>2. Создать 3D (вырезка + модель)</button>
       <div class="tool-row">
@@ -1138,126 +1138,185 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
     parts = null;
   }
 
+  /** Crop image to opaque character + slight padding (keeps cutout tight). */
+  function cropToAlpha(img, pad) {
+    pad = pad == null ? 4 : pad;
+    var c0 = document.createElement("canvas");
+    c0.width = img.naturalWidth || img.width;
+    c0.height = img.naturalHeight || img.height;
+    if (c0.width < 2 || c0.height < 2) return img;
+    var ctx0 = c0.getContext("2d");
+    ctx0.clearRect(0, 0, c0.width, c0.height);
+    ctx0.drawImage(img, 0, 0);
+    var d0 = ctx0.getImageData(0, 0, c0.width, c0.height).data;
+    var minX = c0.width, minY = c0.height, maxX = 0, maxY = 0, found = false;
+    for (var y = 0; y < c0.height; y++) {
+      for (var x = 0; x < c0.width; x++) {
+        if (d0[(y * c0.width + x) * 4 + 3] > 28) {
+          found = true;
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (!found) return img;
+    minX = Math.max(0, minX - pad);
+    minY = Math.max(0, minY - pad);
+    maxX = Math.min(c0.width - 1, maxX + pad);
+    maxY = Math.min(c0.height - 1, maxY + pad);
+    var cw = maxX - minX + 1, ch = maxY - minY + 1;
+    var out = document.createElement("canvas");
+    out.width = cw; out.height = ch;
+    out.getContext("2d").drawImage(c0, minX, minY, cw, ch, 0, 0, cw, ch);
+    return out;
+  }
+
   function texFromImage(img) {
+    var src = cropToAlpha(img, 6);
     var c = document.createElement("canvas");
-    var s = Math.min(1, 1024 / Math.max(img.width, img.height));
-    c.width = Math.max(1, Math.round(img.width * s));
-    c.height = Math.max(1, Math.round(img.height * s));
-    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    var sw = src.width || src.naturalWidth || 1;
+    var sh = src.height || src.naturalHeight || 1;
+    var s = Math.min(1, 1024 / Math.max(sw, sh));
+    c.width = Math.max(1, Math.round(sw * s));
+    c.height = Math.max(1, Math.round(sh * s));
+    var ctx = c.getContext("2d");
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.drawImage(src, 0, 0, c.width, c.height);
     var t = new THREE.CanvasTexture(c);
     if (THREE.sRGBEncoding !== undefined) t.encoding = THREE.sRGBEncoding;
     t.needsUpdate = true;
+    t.flipY = true;
     return t;
   }
 
   function mat(map) {
     return new THREE.MeshStandardMaterial({
-      map: map, roughness: 0.5, metalness: 0.05, side: THREE.DoubleSide,
-      transparent: true, alphaTest: 0.05
+      map: map, roughness: 0.55, metalness: 0.02, side: THREE.DoubleSide,
+      transparent: true, alphaTest: 0.15, depthWrite: true
     });
   }
 
-  function buildTPose(map, depthAmt) {
-    var root = new THREE.Group();
-    // тёмное тело без растянутой картинки; картинка только на «карточке» перса
-    var m = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.7, metalness: 0.1 });
-    var torsoH = 0.55, torsoW = 0.36, torsoD = 0.18 + depthAmt * 0.08;
-    var headR = 0.14, armLen = 0.55, armR = 0.07, legLen = 0.72, legR = 0.085;
-    var hipY = legLen, shoulderY = hipY + torsoH * 0.85;
-
-    var torso = new THREE.Mesh(new THREE.BoxGeometry(torsoW, torsoH, torsoD), m);
-    torso.position.set(0, hipY + torsoH / 2, 0);
-    root.add(torso);
-
-    var head = new THREE.Mesh(new THREE.SphereGeometry(headR, 16, 12), m);
-    head.position.set(0, shoulderY + 0.12 + headR, 0);
-    root.add(head);
-
-    function makeArm(side) {
-      var g = new THREE.Group();
-      g.position.set(side * torsoW / 2, shoulderY, 0);
-      var mesh = new THREE.Mesh(new THREE.CylinderGeometry(armR, armR, armLen, 10), m);
-      mesh.rotation.z = Math.PI / 2;
-      mesh.position.x = side * armLen / 2;
-      g.add(mesh);
-      return g;
-    }
-    var leftArm = makeArm(-1), rightArm = makeArm(1);
-    root.add(leftArm); root.add(rightArm);
-
-    function makeLeg(side) {
-      var g = new THREE.Group();
-      g.position.set(side * 0.1, legLen, 0);
-      var mesh = new THREE.Mesh(new THREE.CylinderGeometry(legR, legR, legLen, 10), m);
-      mesh.position.y = -legLen / 2;
-      g.add(mesh);
-      return g;
-    }
-    var leftLeg = makeLeg(-1), rightLeg = makeLeg(1);
-    root.add(leftLeg); root.add(rightLeg);
-
-    var card = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.9, 1.55),
-      new THREE.MeshStandardMaterial({ map: map, transparent: true, alphaTest: 0.08, side: THREE.DoubleSide, roughness: 0.45 })
-    );
-    card.position.set(0, 0.85, torsoD / 2 + 0.03);
-    root.add(card);
-    var cardBack = card.clone();
-    cardBack.position.z = -(torsoD / 2 + 0.03);
-    cardBack.rotation.y = Math.PI;
-    root.add(cardBack);
-
-    parts = { root: root, torso: torso, head: head, leftArm: leftArm, rightArm: rightArm, leftLeg: leftLeg, rightLeg: rightLeg, _torsoBaseY: torso.position.y };
-    return root;
-  }
-
+  /**
+   * Solid character mesh: cutout silhouette extruded + side walls (склеенный перс).
+   * - keeps aspect ratio
+   * - crops to alpha
+   * - smooth mild depth (no spikes)
+   * - closed sides so it looks 3D, not a broken sheet
+   */
   function buildSolid(img, res, depthAmt, thickAmt) {
-    var w = res, h = res;
+    depthAmt = Math.min(0.55, Math.max(0.08, depthAmt || 0.28));
+    thickAmt = Math.min(0.55, Math.max(0.12, thickAmt || 0.22));
+    res = Math.max(48, Math.min(160, res || 96));
+
+    var src = cropToAlpha(img, 4);
+    var sw = src.width || src.naturalWidth || 1;
+    var sh = src.height || src.naturalHeight || 1;
+    var aspect = sw / Math.max(sh, 1);
+
+    // grid: longest side = res, keep aspect
+    var w, h;
+    if (aspect >= 1) {
+      w = res;
+      h = Math.max(24, Math.round(res / aspect));
+    } else {
+      h = res;
+      w = Math.max(24, Math.round(res * aspect));
+    }
+
     var c = document.createElement("canvas");
     c.width = w; c.height = h;
     var ctx = c.getContext("2d");
     ctx.clearRect(0, 0, w, h);
-    var scale = Math.min(w / img.width, h / img.height);
-    var dw = img.width * scale, dh = img.height * scale;
-    ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(src, 0, 0, w, h);
     var data = ctx.getImageData(0, 0, w, h).data;
 
-    var positions = [], uvs = [], indices = [];
-    var front = new Int32Array(w * h).fill(-1);
-    var back = new Int32Array(w * h).fill(-1);
     var solid = new Uint8Array(w * h);
-    var depthM = new Float32Array(w * h);
+    var alphaM = new Float32Array(w * h);
+    var depthRaw = new Float32Array(w * h);
+    var n = w * h;
 
-    for (var y = 0; y < h; y++) {
-      for (var x = 0; x < w; x++) {
-        var i = (y * w + x) * 4;
-        var a = data[i + 3] / 255;
-        var L = (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]) / 255;
-        // only character (transparent bg from cutout)
-        solid[y * w + x] = a > 0.12 ? 1 : 0;
-        depthM[y * w + x] = L * a;
+    for (var i = 0; i < n; i++) {
+      var p = i * 4;
+      var a = data[p + 3] / 255;
+      alphaM[i] = a;
+      solid[i] = a > 0.18 ? 1 : 0;
+      // mild depth from brightness — clamped, no spikes
+      var L = (0.2126 * data[p] + 0.7152 * data[p + 1] + 0.0722 * data[p + 2]) / 255;
+      depthRaw[i] = a > 0.18 ? (0.35 + 0.65 * L) : 0;
+    }
+
+    // fill small holes (1px) so body is «склеен»
+    var solid2 = new Uint8Array(solid);
+    for (var y = 1; y < h - 1; y++) {
+      for (var x = 1; x < w - 1; x++) {
+        var id = y * w + x;
+        if (solid[id]) continue;
+        var nb = solid[id - 1] + solid[id + 1] + solid[id - w] + solid[id + w];
+        if (nb >= 3) solid2[id] = 1;
+      }
+    }
+    solid = solid2;
+
+    // blur depth 3x3 on solid pixels only
+    var depthM = new Float32Array(n);
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        id = y * w + x;
+        if (!solid[id]) { depthM[id] = 0; continue; }
+        var sum = 0, cnt = 0;
+        for (var dy = -1; dy <= 1; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            var xx = x + dx, yy = y + dy;
+            if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+            var j = yy * w + xx;
+            if (!solid[j]) continue;
+            sum += depthRaw[j];
+            cnt++;
+          }
+        }
+        depthM[id] = cnt ? sum / cnt : depthRaw[id];
       }
     }
 
-    function addV(x, y, z, u, v) {
+    var positions = [], uvs = [], indices = [];
+    var front = new Int32Array(n).fill(-1);
+    var back = new Int32Array(n).fill(-1);
+
+    // world size ~1.6 on longest side
+    var worldW = aspect >= 1 ? 1.6 : 1.6 * aspect;
+    var worldH = aspect >= 1 ? 1.6 / aspect : 1.6;
+
+    function addV(X, Y, Z, u, v) {
       var idx = positions.length / 3;
-      positions.push(x, y, z);
+      positions.push(X, Y, Z);
       uvs.push(u, v);
       return idx;
     }
 
     for (y = 0; y < h; y++) {
       for (x = 0; x < w; x++) {
-        var id = y * w + x;
+        id = y * w + x;
         if (!solid[id]) continue;
-        var u = x / (w - 1), v = y / (h - 1);
-        var X = (u - 0.5) * 1.7, Y = (0.5 - v) * 1.7;
-        var d = depthM[id];
-        front[id] = addV(X, Y, d * depthAmt + thickAmt * 0.5, u, 1 - v);
-        back[id] = addV(X, Y, -thickAmt * 0.5 - d * depthAmt * 0.2, u, 1 - v);
+        var u = (x + 0.5) / w;
+        var v = (y + 0.5) / h;
+        var X = (u - 0.5) * worldW;
+        var Y = (0.5 - v) * worldH;
+        var d = depthM[id] * depthAmt;
+        // front / back with base thickness
+        front[id] = addV(X, Y, thickAmt * 0.5 + d * 0.55, u, 1 - v);
+        back[id] = addV(X, Y, -thickAmt * 0.5 - d * 0.15, u, 1 - v);
       }
     }
 
+    function isSolid(xx, yy) {
+      if (xx < 0 || yy < 0 || xx >= w || yy >= h) return false;
+      return solid[yy * w + xx] === 1;
+    }
+
+    // front + back quads
     for (y = 0; y < h - 1; y++) {
       for (x = 0; x < w - 1; x++) {
         var i00 = y * w + x, i10 = y * w + x + 1, i01 = (y + 1) * w + x, i11 = (y + 1) * w + x + 1;
@@ -1270,11 +1329,41 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
       }
     }
 
+    // side walls — glue silhouette edges into a closed solid
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        id = y * w + x;
+        if (!solid[id] || front[id] < 0) continue;
+        var f = front[id], bk = back[id];
+        // right edge of silhouette
+        if (!isSolid(x + 1, y) && isSolid(x, y + 1) && front[id + w] >= 0) {
+          var f2 = front[id + w], bk2 = back[id + w];
+          indices.push(f, f2, bk2, f, bk2, bk);
+        }
+        // bottom edge of silhouette
+        if (!isSolid(x, y + 1) && isSolid(x + 1, y) && front[id + 1] >= 0) {
+          f2 = front[id + 1]; bk2 = back[id + 1];
+          indices.push(f, bk, bk2, f, bk2, f2);
+        }
+      }
+    }
+
+    if (positions.length < 9 || indices.length < 3) {
+      return null;
+    }
+
     var geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     geo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geo.setIndex(indices);
     geo.computeVertexNormals();
+    geo.computeBoundingBox();
+    if (geo.boundingBox) {
+      var cx = (geo.boundingBox.min.x + geo.boundingBox.max.x) / 2;
+      var cy = (geo.boundingBox.min.y + geo.boundingBox.max.y) / 2;
+      var cz = (geo.boundingBox.min.z + geo.boundingBox.max.z) / 2;
+      geo.translate(-cx, -cy, -cz);
+    }
     return geo;
   }
 
@@ -1395,40 +1484,39 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
       }
 
       // 2) BUILD 3D
-      showLoad("Создаю 3D-модель…", "T-pose / объём + текстура персонажа", 95);
-      setStatus("Собираю 3D…", "wait");
+      showLoad("Создаю 3D-модель…", "Силуэт + склейка боков + текстура", 95);
+      setStatus("Склеиваю 3D-перса…", "wait");
 
       if (texture) texture.dispose();
       texture = texFromImage(workImg);
       clearMesh();
 
-      var depthAmt = (depthEl && depthEl.value) ? Number(depthEl.value) : 0.45;
-      var res = (resEl && resEl.value) ? Number(resEl.value) : 80;
-      if (!depthAmt || isNaN(depthAmt)) depthAmt = 0.45;
-      if (!res || isNaN(res)) res = 80;
+      var depthAmt = (depthEl && depthEl.value) ? Number(depthEl.value) : 0.35;
+      var res = (resEl && resEl.value) ? Number(resEl.value) : 96;
+      if (!depthAmt || isNaN(depthAmt)) depthAmt = 0.35;
+      if (!res || isNaN(res)) res = 96;
+      // softer depth = less «spikes»; thickness = solid cookie character
+      depthAmt = Math.min(depthAmt, 0.5);
 
-      // Всегда 3D только из вырезанного перса (без белого манекена с картинкой)
-      {
-        var geo = buildSolid(workImg, res, depthAmt, 0.28);
-        if (!geo || !geo.attributes.position || geo.attributes.position.count < 3) {
-          throw new Error("Не удалось построить меш — попробуй PNG с прозрачным фоном или другую картинку");
-        }
-        var mesh = new THREE.Mesh(geo, mat(texture));
-        meshRoot = new THREE.Group();
-        meshRoot.add(mesh);
-        // лёгкая анимация — крутим группу
-        parts = { root: meshRoot, torso: mesh, head: null, leftArm: null, rightArm: null, leftLeg: null, rightLeg: null, _torsoBaseY: 0 };
-        scene.add(meshRoot);
-        controls.target.set(0, 0, 0);
-        camera.position.set(1.3, 0.3, 1.9);
-        stats.textContent = geo.attributes.position.count + " вершин · только перс";
+      var geo = buildSolid(workImg, res, depthAmt, 0.24);
+      if (!geo || !geo.attributes.position || geo.attributes.position.count < 3) {
+        throw new Error("Не удалось склеить меш — нужен PNG с прозрачным фоном или вырезка AI");
       }
+      var mesh = new THREE.Mesh(geo, mat(texture));
+      meshRoot = new THREE.Group();
+      meshRoot.add(mesh);
+      parts = { root: meshRoot, torso: mesh, head: null, leftArm: null, rightArm: null, leftLeg: null, rightLeg: null, _torsoBaseY: 0 };
+      scene.add(meshRoot);
+      controls.target.set(0, 0, 0);
+      camera.position.set(0, 0.15, 2.2);
+      controls.update();
+      stats.textContent = geo.attributes.position.count + " верш. · вырез + склейка";
 
       hint.style.display = "none";
       btnGlb.disabled = false;
       btnObj.disabled = false;
       setPct(100);
-      setStatus("✓ Готово: вырезан перс + 3D. Скачай GLB.", true);
+      setStatus("✓ Готово: перс вырезан и склеен в 3D. Скачай GLB.", true);
     } catch (e) {
       console.error(e);
       setStatus("Ошибка: " + e.message, false);
