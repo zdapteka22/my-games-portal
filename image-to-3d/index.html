@@ -1073,7 +1073,7 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
   var btnBuild = $("btnBuild"), btnGlb = $("btnGlb"), btnObj = $("btnObj");
   var status = $("status"), hint = $("hint"), stats = $("stats");
   var depthEl = $("depth"), resEl = $("res"), depthVal = $("depthVal"), resVal = $("resVal");
-  var modeEl = $("mode"), animEl = $("anim"), spinEl = $("spin"), doCut = $("doCut");
+  var animEl = $("anim"), spinEl = $("spin"), doCut = $("doCut");
   var drop = $("drop"), view = $("view");
   var loading = $("loading"), loadTitle = $("loadTitle"), loadSub = $("loadSub"), loadBar = $("loadBar");
 
@@ -1371,7 +1371,7 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
 
     try {
       // 1) CUTOUT
-      if (doCut.checked) {
+      if (doCut && doCut.checked) {
         setStatus("Вырезаю только персонажа…", "wait");
         showLoad("Вырезаю персонажа…", "Фон удаляется, остаётся только перс", 10);
         try {
@@ -1402,9 +1402,10 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
       texture = texFromImage(workImg);
       clearMesh();
 
-      var depthAmt = Number(depthEl.value) || 0.45;
-      var res = Number(resEl.value) || 80;
-      var mode = modeEl.value;
+      var depthAmt = (depthEl && depthEl.value) ? Number(depthEl.value) : 0.45;
+      var res = (resEl && resEl.value) ? Number(resEl.value) : 80;
+      if (!depthAmt || isNaN(depthAmt)) depthAmt = 0.45;
+      if (!res || isNaN(res)) res = 80;
 
       // Всегда 3D только из вырезанного перса (без белого манекена с картинкой)
       {
@@ -1468,7 +1469,7 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
 
   function applyAnim(t) {
     if (!parts || !meshRoot) return;
-    var mode = animEl.value;
+    var mode = (animEl && animEl.value) ? animEl.value : "idle";
     var torso = parts.torso, head = parts.head, leftArm = parts.leftArm, rightArm = parts.rightArm;
     var leftLeg = parts.leftLeg, rightLeg = parts.rightLeg, root = parts.root;
     if (torso) { torso.rotation.set(0, 0, 0); torso.position.y = parts._torsoBaseY || torso.position.y; }
@@ -1501,7 +1502,7 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
     requestAnimationFrame(loop);
     var t = (performance.now() - t0) / 1000;
     applyAnim(t);
-    if (spinEl.checked && meshRoot && animEl.value === "none") meshRoot.rotation.y += 0.008;
+    if (spinEl && spinEl.checked && meshRoot && animEl && animEl.value === "none") meshRoot.rotation.y += 0.008;
     controls.update();
     renderer.render(scene, camera);
   }
