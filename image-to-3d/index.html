@@ -1292,7 +1292,7 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
         previewCut.removeAttribute("src");
         previews.classList.add("on");
         btnBuild.disabled = false;
-        setStatus("✓ Фото: " + file.name + ". Жми «Создать 3D» — вырежет перса и сделает 3D только из него (без белого манекена).", true);
+        setStatus("✓ Фото: " + file.name + ". Фото ОК. Нажми ЖЁЛТУЮ кнопку «Создать 3D» ниже и ПОДОЖДИ загрузку.", true);
       };
       img.onerror = function () { setStatus("Не удалось открыть файл.", false); };
       img.src = sourceUrl;
@@ -1355,6 +1355,7 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
   }
 
   btnBuild.addEventListener("click", async function () {
+    // СБОРКА_СТАРТ
     if (!sourceImg || !sourceUrl) {
       alert("Сначала выбери изображение!");
       setStatus("Сначала выбери файл.", false);
@@ -1364,6 +1365,8 @@ input[type=range]{width:100%;accent-color:var(--yg-yellow)}
     btnBuild.disabled = true;
     btnGlb.disabled = true;
     btnObj.disabled = true;
+    showLoad("Создаём 3D…", "1) вырезка перса  2) модель. Не закрывай вкладку.", 8);
+    setStatus("Идёт создание 3D… смотри затемнение экрана", "wait");
     var workImg = sourceImg;
 
     try {
