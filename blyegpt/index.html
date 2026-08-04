@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BlyeGPT — бесплатный AI-помощник | 100 токенов каждый час</title>
+  <meta name="description" content="BlyeGPT — бесплатный AI-помощник. Вход, 100 токенов каждый час бесплатно. Работает в браузере." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --card: #1c1c1c;
+      --border: #333;
+      --text: #fff;
+      --muted: #aaa;
+      --yellow: #ffcc00;
+      --yellow-h: #ffe066;
+      --accent: #5b9dff;
+      --ok: #3dd68c;
+      --err: #ff6b6b;
+      --radius: 16px;
+      --font: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: var(--font);
+      background: radial-gradient(1200px 600px at 20% -10%, #1a1400 0%, transparent 50%),
+                  radial-gradient(900px 500px at 100% 0%, #0a1628 0%, transparent 45%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100%;
+    }
+    a { color: var(--yellow); }
+    .wrap { max-width: 920px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; padding: 0 14px 14px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: rgba(10,10,10,.88); backdrop-filter: blur(10px); z-index: 5;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
+    .brand .logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--yellow), #ff8a00);
+      color: #111; display: grid; place-items: center; font-size: 18px;
+    }
+    .badge {
+      font-size: 11px; font-weight: 800; letter-spacing: .04em;
+      background: var(--yellow); color: #111; padding: 3px 8px; border-radius: 999px;
+    }
+    .hdr-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .tok {
+      background: var(--card); border: 1px solid var(--border); border-radius: 999px;
+      padding: 6px 12px; font-size: 13px; color: var(--muted);
+    }
+    .tok b { color: var(--yellow); }
+    .tok .cd { color: var(--ok); font-variant-numeric: tabular-nums; }
+    button, .btn {
+      border: 0; cursor: pointer; font-family: inherit; font-weight: 700;
+      border-radius: 12px; padding: 10px 14px; font-size: 14px;
+    }
+    .btn-y { background: var(--yellow); color: #111; }
+    .btn-y:hover { background: var(--yellow-h); }
+    .btn-g { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-g:hover { border-color: #555; }
+    .btn-y:disabled, .btn-g:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* AUTH */
+    #auth-view { flex: 1; display: grid; place-items: center; padding: 24px 0; }
+    .auth-card {
+      width: min(420px, 100%); background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    }
+    .auth-card h1 { margin: 0 0 6px; font-size: 24px; }
+    .auth-card p.sub { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tabs button { flex: 1; background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+    .tabs button.on { background: var(--yellow); color: #111; border-color: var(--yellow); }
+    label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+    input[type=text], input[type=password], input[type=email], textarea {
+      width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      border-radius: 12px; padding: 12px 14px; font-size: 15px; font-family: inherit; outline: none;
+    }
+    input:focus, textarea:focus { border-color: var(--yellow); }
+    .auth-err { color: var(--err); font-size: 13px; min-height: 18px; margin: 8px 0; }
+    .free-box {
+      margin-top: 16px; padding: 12px; border-radius: 12px;
+      background: rgba(255,204,0,.08); border: 1px solid rgba(255,204,0,.25);
+      font-size: 13px; color: var(--muted); line-height: 1.4;
+    }
+    .free-box b { color: var(--yellow); }
+
+    /* APP */
+    #app-view { flex: 1; display: none; flex-direction: column; min-height: 0; }
+    #app-view.on { display: flex; }
+    #auth-view.off { display: none; }
+
+    .chat {
+      flex: 1; overflow-y: auto; padding: 16px 0 8px;
+      display: flex; flex-direction: column; gap: 12px; min-height: 280px;
+    }
+    .msg {
+      max-width: min(720px, 92%); padding: 12px 14px; border-radius: 14px;
+      line-height: 1.5; font-size: 15px; white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.user {
+      align-self: flex-end; background: #1a2740; border: 1px solid #2a4060;
+    }
+    .msg.bot {
+      align-self: flex-start; background: var(--card); border: 1px solid var(--border);
+    }
+    .msg .who { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+    .msg.user .who { color: var(--accent); }
+    .msg.bot .who { color: var(--yellow); }
+    .msg.sys { align-self: center; background: transparent; border: 0; color: var(--muted); font-size: 13px; text-align: center; }
+
+    .composer {
+      display: flex; gap: 10px; align-items: flex-end;
+      padding: 12px; background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-top: 8px;
+    }
+    .composer textarea {
+      flex: 1; min-height: 48px; max-height: 140px; resize: vertical;
+      border: 0; background: transparent; padding: 8px;
+    }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 8px; text-align: center; }
+
+    .modal-bg {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65);
+      z-index: 20; place-items: center; padding: 16px;
+    }
+    .modal-bg.on { display: grid; }
+    .modal {
+      width: min(400px, 100%); background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .modal h3 { margin: 0 0 8px; }
+    .modal p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">✦</div>
+        <span>BlyeGPT</span>
+        <span class="badge">FREE</span>
+      </div>
+      <div class="hdr-right" id="hdr-auth">
+        <span class="tok" id="tok-pill" style="display:none">
+          Токены: <b id="tok-val">100</b>
+          · сброс через <span class="cd" id="tok-cd">59:59</span>
+        </span>
+        <span id="user-name" style="color:var(--muted);font-size:13px;display:none"></span>
+        <button type="button" class="btn-g" id="btn-settings" style="display:none">⚙</button>
+        <button type="button" class="btn-g" id="btn-logout" style="display:none">Выйти</button>
+      </div>
+    </header>
+
+    <!-- LOGIN -->
+    <div id="auth-view">
+      <div class="auth-card">
+        <h1>BlyeGPT</h1>
+        <p class="sub">Бесплатный помощник. Войди — получи <b style="color:var(--yellow)">100 токенов каждый час</b>.</p>
+        <div class="tabs">
+          <button type="button" class="on" id="tab-login">Вход</button>
+          <button type="button" id="tab-reg">Регистрация</button>
+        </div>
+        <div id="form-login">
+          <label>Логин</label>
+          <input type="text" id="login-user" autocomplete="username" placeholder="имя" />
+          <label>Пароль</label>
+          <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••" />
+          <div class="auth-err" id="login-err"></div>
+          <button type="button" class="btn-y" id="btn-login" style="width:100%;margin-top:8px">Войти</button>
+        </div>
+        <div id="form-reg" style="display:none">
+          <label>Логин (3+ символа)</label>
+          <input type="text" id="reg-user" autocomplete="username" placeholder="имя" />
+          <label>Пароль (4+ символа)</label>
+          <input type="password" id="reg-pass" autocomplete="new-password" placeholder="••••••" />
+          <div class="auth-err" id="reg-err"></div>
+          <button type="button" class="btn-y" id="btn-reg" style="width:100%;margin-top:8px">Создать аккаунт</button>
+        </div>
+        <div class="free-box">
+          <b>100% бесплатно</b><br/>
+          • 100 токенов каждый час (автообновление)<br/>
+          • 1 сообщение = 1 токен<br/>
+          • Без карты · без подписки
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT APP -->
+    <div id="app-view">
+      <div class="chat" id="chat"></div>
+      <div class="composer">
+        <textarea id="input" rows="2" placeholder="Напиши задачу… (Enter — отправить, Shift+Enter — новая строка)"></textarea>
+        <button type="button" class="btn-y" id="btn-send">Отправить</button>
+      </div>
+      <p class="hint">BlyeGPT · FREE · 100 токенов/час · работает в браузере</p>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="settings-modal">
+    <div class="modal">
+      <h3>Настройки</h3>
+      <p>Опционально: ключ xAI для более умных ответов (свой ключ). Без ключа — встроенный бесплатный помощник.</p>
+      <label>xAI API key (необязательно)</label>
+      <input type="password" id="set-key" placeholder="xai-… пусто = бесплатный режим" />
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button type="button" class="btn-y" id="set-save" style="flex:1">Сохранить</button>
+        <button type="button" class="btn-g" id="set-close" style="flex:1">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  var TOKENS_PER_HOUR = 100;
+  var HOUR_MS = 60 * 60 * 1000;
+  var COST_PER_MSG = 1;
+  var LS_USERS = "blyegpt_users_v1";
+  var LS_SESSION = "blyegpt_session_v1";
+  var LS_KEY = "blyegpt_xai_key_v1";
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function loadUsers() {
+    try { return JSON.parse(localStorage.getItem(LS_USERS) || "{}"); } catch (e) { return {}; }
+  }
+  function saveUsers(u) { localStorage.setItem(LS_USERS, JSON.stringify(u)); }
+
+  function hash(s) {
+    // simple non-crypto hash for demo login (not bank-grade)
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(16);
+  }
+
+  function session() {
+    try { return JSON.parse(localStorage.getItem(LS_SESSION) || "null"); } catch (e) { return null; }
+  }
+  function setSession(s) {
+    if (s) localStorage.setItem(LS_SESSION, JSON.stringify(s));
+    else localStorage.removeItem(LS_SESSION);
+  }
+
+  /** Ensure tokens refill every hour to 100 */
+  function ensureTokens(user) {
+    var now = Date.now();
+    if (!user.tokenResetAt) {
+      user.tokens = TOKENS_PER_HOUR;
+      user.tokenResetAt = now + HOUR_MS;
+    }
+    // refill every hour that passed
+    while (now >= user.tokenResetAt) {
+      user.tokens = TOKENS_PER_HOUR;
+      user.tokenResetAt += HOUR_MS;
+    }
+    // if still overdue window edge
+    if (user.tokens == null || user.tokens < 0) user.tokens = TOKENS_PER_HOUR;
+    if (user.tokens > TOKENS_PER_HOUR) user.tokens = TOKENS_PER_HOUR;
+    return user;
+  }
+
+  function persistUser(user) {
+    var users = loadUsers();
+    users[user.login.toLowerCase()] = user;
+    saveUsers(users);
+  }
+
+  function getUser() {
+    var s = session();
+    if (!s || !s.login) return null;
+    var users = loadUsers();
+    var u = users[s.login.toLowerCase()];
+    if (!u) return null;
+    u = ensureTokens(u);
+    persistUser(u);
+    return u;
+  }
+
+  function fmtCd(ms) {
+    if (ms < 0) ms = 0;
+    var s = Math.floor(ms / 1000);
+    var m = Math.floor(s / 60);
+    var h = Math.floor(m / 60);
+    m = m % 60;
+    s = s % 60;
+    if (h > 0) return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+
+  function updateTokUI() {
+    var u = getUser();
+    if (!u) return;
+    $("tok-val").textContent = String(u.tokens);
+    var left = (u.tokenResetAt || Date.now()) - Date.now();
+    $("tok-cd").textContent = fmtCd(left);
+  }
+
+  // —— UI auth tabs ——
+  $("tab-login").onclick = function () {
+    $("tab-login").classList.add("on");
+    $("tab-reg").classList.remove("on");
+    $("form-login").style.display = "";
+    $("form-reg").style.display = "none";
+  };
+  $("tab-reg").onclick = function () {
+    $("tab-reg").classList.add("on");
+    $("tab-login").classList.remove("on");
+    $("form-reg").style.display = "";
+    $("form-login").style.display = "none";
+  };
+
+  $("btn-reg").onclick = function () {
+    var login = ($("reg-user").value || "").trim();
+    var pass = $("reg-pass").value || "";
+    $("reg-err").textContent = "";
+    if (login.length < 3) { $("reg-err").textContent = "Логин минимум 3 символа"; return; }
+    if (pass.length < 4) { $("reg-err").textContent = "Пароль минимум 4 символа"; return; }
+    var users = loadUsers();
+    var key = login.toLowerCase();
+    if (users[key]) { $("reg-err").textContent = "Такой логин уже есть"; return; }
+    var now = Date.now();
+    users[key] = {
+      login: login,
+      pass: hash(pass + "::blyegpt"),
+      tokens: TOKENS_PER_HOUR,
+      tokenResetAt: now + HOUR_MS,
+      created: now
+    };
+    saveUsers(users);
+    setSession({ login: login });
+    enterApp();
+  };
+
+  $("btn-login").onclick = function () {
+    var login = ($("login-user").value || "").trim();
+    var pass = $("login-pass").value || "";
+    $("login-err").textContent = "";
+    var users = loadUsers();
+    var u = users[login.toLowerCase()];
+    if (!u || u.pass !== hash(pass + "::blyegpt")) {
+      $("login-err").textContent = "Неверный логин или пароль";
+      return;
+    }
+    u = ensureTokens(u);
+    persistUser(u);
+    setSession({ login: u.login });
+    enterApp();
+  };
+
+  $("btn-logout").onclick = function () {
+    setSession(null);
+    location.reload();
+  };
+
+  $("btn-settings").onclick = function () {
+    $("set-key").value = localStorage.getItem(LS_KEY) || "";
+    $("settings-modal").classList.add("on");
+  };
+  $("set-close").onclick = function () { $("settings-modal").classList.remove("on"); };
+  $("set-save").onclick = function () {
+    var k = ($("set-key").value || "").trim();
+    if (k) localStorage.setItem(LS_KEY, k);
+    else localStorage.removeItem(LS_KEY);
+    $("settings-modal").classList.remove("on");
+    addSys("Ключ " + (k ? "сохранён" : "очищен") + ". Бесплатные 100 ток/час остаются.");
+  };
+
+  function enterApp() {
+    var u = getUser();
+    if (!u) return;
+    $("auth-view").classList.add("off");
+    $("app-view").classList.add("on");
+    $("tok-pill").style.display = "";
+    $("user-name").style.display = "";
+    $("user-name").textContent = u.login;
+    $("btn-logout").style.display = "";
+    $("btn-settings").style.display = "";
+    updateTokUI();
+    if (!$("chat").dataset.ready) {
+      $("chat").dataset.ready = "1";
+      addBot(
+        "Привет, " + u.login + "! Я BlyeGPT.\n\n" +
+        "✓ Бесплатно\n" +
+        "✓ 100 токенов каждый час (сейчас: " + u.tokens + ")\n" +
+        "✓ 1 сообщение = 1 токен\n\n" +
+        "Спроси что угодно или напиши задачу."
+      );
+    }
+  }
+
+  // —— chat ——
+  function addMsg(role, text) {
+    var el = document.createElement("div");
+    el.className = "msg " + role;
+    if (role === "sys") {
+      el.textContent = text;
+    } else {
+      var who = document.createElement("div");
+      who.className = "who";
+      who.textContent = role === "user" ? "Ты" : "BlyeGPT";
+      el.appendChild(who);
+      el.appendChild(document.createTextNode(text));
+    }
+    $("chat").appendChild(el);
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }
+  function addUser(t) { addMsg("user", t); }
+  function addBot(t) { addMsg("bot", t); }
+  function addSys(t) { addMsg("sys", t); }
+
+  function localBrain(text) {
+    var low = text.toLowerCase().trim();
+    if (/^(привет|здравств|hi|hello)/.test(low)) {
+      return "Привет! Чем помочь? У тебя бесплатные токены — пиши смело.";
+    }
+    if (/помощ|команд|что уме|help/.test(low)) {
+      return (
+        "Я бесплатный BlyeGPT:\n" +
+        "• ответы на вопросы\n" +
+        "• идеи, тексты, код\n" +
+        "• подсказки по GMod / файлам\n" +
+        "• 100 токенов каждый час\n\n" +
+        "В ⚙ можно вставить свой xAI-ключ для более умного режима."
+      );
+    }
+    if (/токен|бесплат|лимит|час/.test(low)) {
+      var u = getUser();
+      return (
+        "Система FREE:\n" +
+        "• " + TOKENS_PER_HOUR + " токенов каждый час\n" +
+        "• у тебя сейчас: " + (u ? u.tokens : "?") + "\n" +
+        "• сброс/пополнение через: " + (u ? fmtCd(u.tokenResetAt - Date.now()) : "?") + "\n" +
+        "• это полностью бесплатно, карта не нужна"
+      );
+    }
+    if (/gmod|гаррис|nextbot|аддон/.test(low)) {
+      return (
+        "По GMod:\n" +
+        "1) Клади аддон в garrysmod/addons/\n" +
+        "2) Иконки: materials/entities/<classname>.png + .vtf/.vmt\n" +
+        "3) В addon.json type/tags только из списка Workshop\n" +
+        "4) mat_reloadallmaterials если текстуры старые\n\n" +
+        "Напиши точнее, что чинить — подскажу шаги."
+      );
+    }
+    if (/кто ты|что ты/.test(low)) {
+      return "Я BlyeGPT — бесплатный веб-помощник. 100 токенов/час, вход, работает в браузере.";
+    }
+    // generic helpful reply
+    var tips = [
+      "Понял запрос. ",
+      "Ок, давай разберём. ",
+      "Сделаем по шагам. "
+    ];
+    var tip = tips[Math.floor(Math.random() * tips.length)];
+    return (
+      tip + "Ты написал: «" + text.slice(0, 200) + (text.length > 200 ? "…" : "") + "».\n\n" +
+      "Краткий план:\n" +
+      "1) Уточни цель одним предложением\n" +
+      "2) Что уже пробовал\n" +
+      "3) Ошибка/скрин если есть\n\n" +
+      "Могу: набросать текст, список шагов, команду, идею структуры.\n" +
+      "Напиши «сделай …» — дам готовый вариант.\n\n" +
+      "(Бесплатный режим. Для сильного AI — ключ xAI в ⚙.)"
+    );
+  }
+
+  async function aiReply(text) {
+    var key = localStorage.getItem(LS_KEY) || "";
+    if (!key) return localBrain(text);
+    try {
+      var res = await fetch("https://api.x.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + key
+        },
+        body: JSON.stringify({
+          model: "grok-2-latest",
+          messages: [
+            { role: "system", content: "Ты BlyeGPT — полезный русскоязычный помощник. Отвечай кратко и по делу. Пользователь на бесплатном тарифе 100 токенов/час." },
+            { role: "user", content: text }
+          ],
+          temperature: 0.6
+        })
+      });
+      if (!res.ok) {
+        var err = await res.text();
+        return "API ошибка " + res.status + ". Переключаюсь на бесплатный режим.\n" + localBrain(text);
+      }
+      var data = await res.json();
+      return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || localBrain(text);
+    } catch (e) {
+      return "Сеть недоступна — бесплатный локальный ответ:\n" + localBrain(text);
+    }
+  }
+
+  async function send() {
+    var text = ($("input").value || "").trim();
+    if (!text) return;
+    var u = getUser();
+    if (!u) { location.reload(); return; }
+    u = ensureTokens(u);
+    if (u.tokens < COST_PER_MSG) {
+      addSys("Токены кончились. Новые " + TOKENS_PER_HOUR + " через " + fmtCd(u.tokenResetAt - Date.now()) + " — бесплатно.");
+      updateTokUI();
+      return;
+    }
+    u.tokens -= COST_PER_MSG;
+    persistUser(u);
+    updateTokUI();
+
+    $("input").value = "";
+    addUser(text);
+    $("btn-send").disabled = true;
+    addSys("думаю…");
+    var reply = await aiReply(text);
+    // remove last sys "думаю"
+    var chat = $("chat");
+    if (chat.lastChild && chat.lastChild.classList.contains("sys")) chat.removeChild(chat.lastChild);
+    addBot(reply);
+    $("btn-send").disabled = false;
+    $("input").focus();
+  }
+
+  $("btn-send").onclick = send;
+  $("input").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+
+  // countdown tick
+  setInterval(function () {
+    if (!session()) return;
+    var u = getUser();
+    if (!u) return;
+    var before = u.tokens;
+    u = ensureTokens(u);
+    if (u.tokens !== before) {
+      persistUser(u);
+      addSys("⏱ Новый час! Начислено " + TOKENS_PER_HOUR + " бесплатных токенов.");
+    }
+    updateTokUI();
+  }, 1000);
+
+  // boot
+  if (getUser()) enterApp();
+})();
+  </script>
+</body>
+</html>
