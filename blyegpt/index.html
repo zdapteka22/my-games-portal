@@ -52,11 +52,20 @@
     }
     .hdr-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
     .tok {
-      background: var(--card); border: 1px solid var(--border); border-radius: 999px;
-      padding: 6px 12px; font-size: 13px; color: var(--muted);
+      background: var(--card); border: 1px solid var(--yellow);
+      border-radius: 999px; padding: 8px 14px; font-size: 14px; color: #fff;
+      font-weight: 700; white-space: nowrap;
     }
-    .tok b { color: var(--yellow); }
-    .tok .cd { color: var(--ok); font-variant-numeric: tabular-nums; }
+    .tok b { color: var(--yellow); font-size: 18px; }
+    .tok .cd { color: var(--ok); font-variant-numeric: tabular-nums; font-weight: 600; }
+    .tok-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      margin: 10px 0 0; padding: 12px 14px; border-radius: 14px;
+      background: linear-gradient(90deg, rgba(255,204,0,.12), rgba(61,214,140,.08));
+      border: 1px solid rgba(255,204,0,.35);
+    }
+    .tok-bar .big { font-size: 22px; font-weight: 800; color: var(--yellow); }
+    .tok-bar .sub { font-size: 12px; color: var(--muted); }
     button, .btn {
       border: 0; cursor: pointer; font-family: inherit; font-weight: 700;
       border-radius: 12px; padding: 10px 14px; font-size: 14px;
@@ -149,11 +158,12 @@
         <span class="badge">FREE</span>
       </div>
       <div class="hdr-right" id="hdr-auth">
-        <span class="tok" id="tok-pill" style="display:none">
-          Токены: <b id="tok-val">100</b>
-          · сброс через <span class="cd" id="tok-cd">59:59</span>
+        <span class="tok" id="tok-pill" style="display:none" title="Бесплатные токены">
+          ⚡ <b id="tok-val">100</b> / 100
+          · ⏱ <span class="cd" id="tok-cd">60:00</span>
         </span>
         <span id="user-name" style="color:var(--muted);font-size:13px;display:none"></span>
+        <button type="button" class="btn-y" id="btn-refill" style="display:none;padding:8px 12px;font-size:13px">+100</button>
         <button type="button" class="btn-g" id="btn-settings" style="display:none">⚙</button>
         <button type="button" class="btn-g" id="btn-logout" style="display:none">Выйти</button>
       </div>
@@ -195,6 +205,13 @@
 
     <!-- CHAT APP -->
     <div id="app-view">
+      <div class="tok-bar" id="tok-bar" style="display:none">
+        <div>
+          <div>Бесплатные токены: <span class="big" id="tok-val-big">100</span> / 100</div>
+          <div class="sub">Новые 100 токенов каждый час · сейчас бесплатно</div>
+        </div>
+        <div class="sub">До обновления: <b style="color:var(--ok)" id="tok-cd-big">60:00</b></div>
+      </div>
       <div class="chat" id="chat"></div>
       <div class="composer">
         <textarea id="input" rows="2" placeholder="Напиши задачу… (Enter — отправить, Shift+Enter — новая строка)"></textarea>
@@ -227,53 +244,106 @@
   var LS_USERS = "blyegpt_users_v1";
   var LS_SESSION = "blyegpt_session_v1";
   var LS_KEY = "blyegpt_xai_key_v1";
+  var memUsers = {}; // fallback if localStorage blocked
+  var memSession = null;
 
   var $ = function (id) { return document.getElementById(id); };
 
-  function loadUsers() {
-    try { return JSON.parse(localStorage.getItem(LS_USERS) || "{}"); } catch (e) { return {}; }
+  function lsGet(k) {
+    try { return localStorage.getItem(k); } catch (e) { return null; }
   }
-  function saveUsers(u) { localStorage.setItem(LS_USERS, JSON.stringify(u)); }
+  function lsSet(k, v) {
+    try { localStorage.setItem(k, v); return true; } catch (e) { return false; }
+  }
+  function lsDel(k) {
+    try { localStorage.removeItem(k); } catch (e) {}
+  }
+
+  function loadUsers() {
+    try {
+      var raw = lsGet(LS_USERS);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return memUsers || {};
+  }
+  function saveUsers(u) {
+    memUsers = u;
+    if (!lsSet(LS_USERS, JSON.stringify(u))) {
+      console.warn("localStorage недоступен — токены только в этой вкладке");
+    }
+  }
 
   function hash(s) {
-    // simple non-crypto hash for demo login (not bank-grade)
     var h = 2166136261;
     for (var i = 0; i < s.length; i++) {
       h ^= s.charCodeAt(i);
-      h = Math.imul(h, 16777619);
+      h = Math.imul ? Math.imul(h, 16777619) : (h * 16777619) | 0;
     }
     return (h >>> 0).toString(16);
   }
 
   function session() {
-    try { return JSON.parse(localStorage.getItem(LS_SESSION) || "null"); } catch (e) { return null; }
+    try {
+      var raw = lsGet(LS_SESSION);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return memSession;
   }
   function setSession(s) {
-    if (s) localStorage.setItem(LS_SESSION, JSON.stringify(s));
-    else localStorage.removeItem(LS_SESSION);
+    memSession = s;
+    if (s) lsSet(LS_SESSION, JSON.stringify(s));
+    else lsDel(LS_SESSION);
   }
 
-  /** Ensure tokens refill every hour to 100 */
+  function num(v, d) {
+    var n = Number(v);
+    return isFinite(n) ? n : d;
+  }
+
+  /** Heal + refill tokens every hour to 100 FREE */
   function ensureTokens(user) {
+    if (!user) return user;
     var now = Date.now();
-    if (!user.tokenResetAt) {
+    var tokens = num(user.tokens, -1);
+    var resetAt = num(user.tokenResetAt, 0);
+
+    // broken / first time → full pack
+    if (tokens < 0 || !resetAt || resetAt < 100000) {
+      user.tokens = TOKENS_PER_HOUR;
+      user.tokenResetAt = now + HOUR_MS;
+      return user;
+    }
+
+    // safety: prevent infinite loop
+    var guard = 0;
+    while (now >= user.tokenResetAt && guard < 10000) {
+      user.tokens = TOKENS_PER_HOUR;
+      user.tokenResetAt = num(user.tokenResetAt, now) + HOUR_MS;
+      guard++;
+    }
+    if (guard >= 10000) {
       user.tokens = TOKENS_PER_HOUR;
       user.tokenResetAt = now + HOUR_MS;
     }
-    // refill every hour that passed
-    while (now >= user.tokenResetAt) {
-      user.tokens = TOKENS_PER_HOUR;
-      user.tokenResetAt += HOUR_MS;
-    }
-    // if still overdue window edge
-    if (user.tokens == null || user.tokens < 0) user.tokens = TOKENS_PER_HOUR;
+
+    user.tokens = num(user.tokens, TOKENS_PER_HOUR);
+    if (user.tokens < 0) user.tokens = 0;
     if (user.tokens > TOKENS_PER_HOUR) user.tokens = TOKENS_PER_HOUR;
+    // if somehow 0 and reset far away but account is fresh-broken — give pack once via lastGrant
+    if (user.tokens === 0 && !user._seenZero) user._seenZero = true;
+    return user;
+  }
+
+  function grantFull(user) {
+    user.tokens = TOKENS_PER_HOUR;
+    user.tokenResetAt = Date.now() + HOUR_MS;
     return user;
   }
 
   function persistUser(user) {
+    if (!user || !user.login) return;
     var users = loadUsers();
-    users[user.login.toLowerCase()] = user;
+    users[String(user.login).toLowerCase()] = user;
     saveUsers(users);
   }
 
@@ -281,30 +351,52 @@
     var s = session();
     if (!s || !s.login) return null;
     var users = loadUsers();
-    var u = users[s.login.toLowerCase()];
-    if (!u) return null;
+    var key = String(s.login).toLowerCase();
+    var u = users[key];
+    if (!u) {
+      // orphan session → recreate free user shell
+      u = {
+        login: s.login,
+        pass: s.pass || "",
+        tokens: TOKENS_PER_HOUR,
+        tokenResetAt: Date.now() + HOUR_MS,
+        created: Date.now()
+      };
+      users[key] = u;
+      saveUsers(users);
+    }
+    u.login = u.login || s.login;
     u = ensureTokens(u);
+    // never show empty on first paint after login heal
+    if (u.tokens == null || isNaN(u.tokens)) u.tokens = TOKENS_PER_HOUR;
     persistUser(u);
     return u;
   }
 
   function fmtCd(ms) {
-    if (ms < 0) ms = 0;
+    if (!isFinite(ms) || ms < 0) ms = 0;
     var s = Math.floor(ms / 1000);
     var m = Math.floor(s / 60);
     var h = Math.floor(m / 60);
     m = m % 60;
     s = s % 60;
-    if (h > 0) return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
-    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    if (h > 0) return h + ":" + p(m) + ":" + p(s);
+    return p(m) + ":" + p(s);
   }
 
   function updateTokUI() {
     var u = getUser();
     if (!u) return;
-    $("tok-val").textContent = String(u.tokens);
-    var left = (u.tokenResetAt || Date.now()) - Date.now();
-    $("tok-cd").textContent = fmtCd(left);
+    var t = num(u.tokens, 0);
+    var left = num(u.tokenResetAt, Date.now()) - Date.now();
+    var cd = fmtCd(left);
+    if ($("tok-val")) $("tok-val").textContent = String(t);
+    if ($("tok-cd")) $("tok-cd").textContent = cd;
+    if ($("tok-val-big")) $("tok-val-big").textContent = String(t);
+    if ($("tok-cd-big")) $("tok-cd-big").textContent = cd;
+    if ($("tok-pill")) $("tok-pill").style.display = "inline-block";
+    if ($("tok-bar")) $("tok-bar").style.display = "flex";
   }
 
   // —— UI auth tabs ——
@@ -329,15 +421,13 @@
     if (pass.length < 4) { $("reg-err").textContent = "Пароль минимум 4 символа"; return; }
     var users = loadUsers();
     var key = login.toLowerCase();
-    if (users[key]) { $("reg-err").textContent = "Такой логин уже есть"; return; }
+    if (users[key]) { $("reg-err").textContent = "Такой логин уже есть — нажми «Вход»"; return; }
     var now = Date.now();
-    users[key] = {
+    users[key] = grantFull({
       login: login,
       pass: hash(pass + "::blyegpt"),
-      tokens: TOKENS_PER_HOUR,
-      tokenResetAt: now + HOUR_MS,
       created: now
-    };
+    });
     saveUsers(users);
     setSession({ login: login });
     enterApp();
@@ -350,10 +440,18 @@
     var users = loadUsers();
     var u = users[login.toLowerCase()];
     if (!u || u.pass !== hash(pass + "::blyegpt")) {
-      $("login-err").textContent = "Неверный логин или пароль";
+      $("login-err").textContent = "Неверный логин или пароль. Если первый раз — вкладка «Регистрация».";
       return;
     }
     u = ensureTokens(u);
+    // always show tokens after login — heal if 0/broken
+    if (num(u.tokens, 0) <= 0 && num(u.tokenResetAt, 0) <= Date.now()) {
+      grantFull(u);
+    }
+    // if still weird, force 100
+    if (num(u.tokens, -1) < 0 || u.tokens === "" || u.tokens == null) {
+      grantFull(u);
+    }
     persistUser(u);
     setSession({ login: u.login });
     enterApp();
@@ -362,6 +460,28 @@
   $("btn-logout").onclick = function () {
     setSession(null);
     location.reload();
+  };
+
+  // manual +100 (once per hour window if empty / broken)
+  $("btn-refill").onclick = function () {
+    var u = getUser();
+    if (!u) return;
+    u = ensureTokens(u);
+    if (num(u.tokens, 0) >= TOKENS_PER_HOUR) {
+      addSys("У тебя уже " + u.tokens + " токенов (максимум " + TOKENS_PER_HOUR + ").");
+      updateTokUI();
+      return;
+    }
+    // free refill if hour passed OR tokens broken
+    if (Date.now() >= num(u.tokenResetAt, 0) || num(u.tokens, 0) === 0) {
+      grantFull(u);
+      persistUser(u);
+      updateTokUI();
+      addSys("⚡ Начислено " + TOKENS_PER_HOUR + " бесплатных токенов!");
+    } else {
+      addSys("Ещё рано. Новые 100 через " + fmtCd(u.tokenResetAt - Date.now()) + ". Сейчас: " + u.tokens);
+      updateTokUI();
+    }
   };
 
   $("btn-settings").onclick = function () {
@@ -379,24 +499,42 @@
 
   function enterApp() {
     var u = getUser();
+    if (!u) {
+      // last resort guest
+      var g = grantFull({ login: "guest", pass: "", created: Date.now() });
+      persistUser(g);
+      setSession({ login: "guest" });
+      u = getUser();
+    }
     if (!u) return;
+    // force visible tokens
+    if (num(u.tokens, -1) < 0) {
+      grantFull(u);
+      persistUser(u);
+    }
     $("auth-view").classList.add("off");
     $("app-view").classList.add("on");
-    $("tok-pill").style.display = "";
+    $("tok-pill").style.display = "inline-block";
+    $("tok-bar").style.display = "flex";
     $("user-name").style.display = "";
     $("user-name").textContent = u.login;
     $("btn-logout").style.display = "";
     $("btn-settings").style.display = "";
+    $("btn-refill").style.display = "";
     updateTokUI();
     if (!$("chat").dataset.ready) {
       $("chat").dataset.ready = "1";
       addBot(
         "Привет, " + u.login + "! Я BlyeGPT.\n\n" +
         "✓ Бесплатно\n" +
-        "✓ 100 токенов каждый час (сейчас: " + u.tokens + ")\n" +
+        "✓ Токены сейчас: " + num(u.tokens, 0) + " / " + TOKENS_PER_HOUR + "\n" +
+        "✓ Каждый час снова 100 токенов\n" +
         "✓ 1 сообщение = 1 токен\n\n" +
-        "Спроси что угодно или напиши задачу."
+        "Если токены не видны сверху — жми кнопку «+100».\n" +
+        "Спроси что угодно!"
       );
+    } else {
+      updateTokUI();
     }
   }
 
@@ -513,10 +651,18 @@
     var u = getUser();
     if (!u) { location.reload(); return; }
     u = ensureTokens(u);
-    if (u.tokens < COST_PER_MSG) {
-      addSys("Токены кончились. Новые " + TOKENS_PER_HOUR + " через " + fmtCd(u.tokenResetAt - Date.now()) + " — бесплатно.");
-      updateTokUI();
-      return;
+    if (num(u.tokens, 0) < COST_PER_MSG) {
+      // auto free top-up if hour ended
+      if (Date.now() >= num(u.tokenResetAt, 0)) {
+        grantFull(u);
+        persistUser(u);
+        updateTokUI();
+        addSys("⚡ Час прошёл — снова " + TOKENS_PER_HOUR + " токенов!");
+      } else {
+        addSys("Токены: 0. Жми «+100» или подожди " + fmtCd(u.tokenResetAt - Date.now()) + ".");
+        updateTokUI();
+        return;
+      }
     }
     u.tokens -= COST_PER_MSG;
     persistUser(u);
