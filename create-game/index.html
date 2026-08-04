@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BlyeEngine — создать игру 2D / 3D | аналог Unity в браузере</title>
+  <meta name="description" content="Бесплатный игровой движок 2D и 3D в браузере. Создай игру как в Unity — без установки." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <style>
+    :root {
+      --bg:#0a0a0a; --surf:#12141a; --card:#1a1d26; --border:#333948;
+      --text:#f2f4f8; --muted:#9aa3b5; --y:#ffcc00; --yh:#ffe066;
+      --blue:#5b9dff; --ok:#3dd68c; --r:#ff6b6b; --radius:14px;
+      --font:"Segoe UI",system-ui,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+    a{color:var(--y)}
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+      padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(10,10,10,.92);
+      position:sticky;top:0;z-index:20
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900}
+    .logo{
+      width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--y),#ff8a00);color:#111;font-size:16px
+    }
+    .badge{font-size:10px;font-weight:900;background:var(--y);color:#111;padding:3px 8px;border-radius:999px}
+    .tabs{display:flex;gap:6px;flex-wrap:wrap}
+    .tabs button,.toolbtn,button.primary,button.ghost{
+      border:0;cursor:pointer;font-family:inherit;font-weight:700;border-radius:10px;
+      padding:8px 12px;font-size:13px
+    }
+    .tabs button{background:var(--card);color:var(--muted);border:1px solid var(--border)}
+    .tabs button.on{background:var(--y);color:#111;border-color:var(--y)}
+    button.primary{background:var(--y);color:#111}
+    button.primary:hover{background:var(--yh)}
+    button.ghost{background:var(--card);color:var(--text);border:1px solid var(--border)}
+    .layout{flex:1;display:grid;grid-template-columns:280px 1fr;min-height:0}
+    @media(max-width:900px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+    aside{
+      border-right:1px solid var(--border);background:var(--surf);padding:12px;
+      overflow:auto;max-height:100%
+    }
+    aside h3{margin:0 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .toolbtn{background:var(--card);color:var(--text);border:1px solid var(--border);text-align:left}
+    .toolbtn:hover,.toolbtn.on{border-color:var(--y);color:var(--y)}
+    .hint{font-size:12px;color:var(--muted);line-height:1.45;margin:0 0 12px}
+    .list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .item{
+      background:var(--card);border:1px solid var(--border);border-radius:10px;
+      padding:8px 10px;font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:center
+    }
+    .item button{padding:4px 8px;font-size:11px;border-radius:8px;border:0;background:#2a3140;color:#fff;cursor:pointer}
+    .item.active{border-color:var(--y)}
+    main{display:flex;flex-direction:column;min-height:0;min-width:0}
+    .bar{
+      display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 12px;
+      border-bottom:1px solid var(--border);background:#0e1016
+    }
+    .bar span{font-size:12px;color:var(--muted)}
+    .stage-wrap{flex:1;position:relative;min-height:320px;background:#0b0d12}
+    canvas#c2d, #c3d{width:100%;height:100%;display:block}
+    #view2d,#view3d{position:absolute;inset:0}
+    #view3d{display:none}
+    .overlay-help{
+      position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,.55);
+      border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--muted);max-width:280px
+    }
+    footer{padding:8px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+    label.row{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);margin-bottom:8px}
+    input,select{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font:inherit}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">◆</div>
+      <div>
+        <div>BlyeEngine <span class="badge">FREE</span></div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600">Создать игру · 2D / 3D · аналог Unity в браузере</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button type="button" class="on" id="tab2d">2D</button>
+      <button type="button" id="tab3d">3D</button>
+      <a class="ghost" href="../" style="text-decoration:none;display:inline-flex;align-items:center;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-weight:700;font-size:13px">← Портал</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <h3>Инструменты</h3>
+      <p class="hint" id="modeHint">2D: клик по сцене — поставить объект. WASD/стрелки — игрок в Play.</p>
+      <div class="tools" id="tools2d">
+        <button type="button" class="toolbtn on" data-tool="player">🟦 Игрок</button>
+        <button type="button" class="toolbtn" data-tool="platform">🟫 Платформа</button>
+        <button type="button" class="toolbtn" data-tool="enemy">🟥 Враг</button>
+        <button type="button" class="toolbtn" data-tool="coin">🟨 Монета</button>
+        <button type="button" class="toolbtn" data-tool="spawn">⭐ Старт</button>
+        <button type="button" class="toolbtn" data-tool="erase">🗑 Стереть</button>
+      </div>
+      <div class="tools" id="tools3d" style="display:none">
+        <button type="button" class="toolbtn on" data-tool3="box">📦 Куб</button>
+        <button type="button" class="toolbtn" data-tool3="sphere">⚪ Шар</button>
+        <button type="button" class="toolbtn" data-tool3="plane">▭ Пол</button>
+        <button type="button" class="toolbtn" data-tool3="player">🧍 Игрок</button>
+        <button type="button" class="toolbtn" data-tool3="light">💡 Свет</button>
+        <button type="button" class="toolbtn" data-tool3="erase">🗑 Удалить</button>
+      </div>
+
+      <h3>Свойства</h3>
+      <label class="row">Имя игры
+        <input id="gameName" value="Моя игра" />
+      </label>
+      <label class="row">Гравитация 2D
+        <input id="grav" type="number" value="0.55" step="0.05" min="0" max="2" />
+      </label>
+      <label class="row">Скорость игрока
+        <input id="speed" type="number" value="4.2" step="0.1" min="1" max="12" />
+      </label>
+
+      <h3>Объекты сцены</h3>
+      <div class="list" id="objList"></div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button type="button" class="primary" id="btnPlay">▶ Play</button>
+        <button type="button" class="ghost" id="btnStop">⏹ Stop (редактор)</button>
+        <button type="button" class="ghost" id="btnSave">💾 Сохранить</button>
+        <button type="button" class="ghost" id="btnLoad">📂 Загрузить</button>
+        <button type="button" class="ghost" id="btnClear">🧹 Очистить сцену</button>
+        <button type="button" class="ghost" id="btnExport">⬇ Экспорт JSON</button>
+      </div>
+      <p class="hint" style="margin-top:12px">Это упрощённый браузерный движок (как мини-Unity): сцена, объекты, Play. Не полноценный Unity Editor.</p>
+    </aside>
+
+    <main>
+      <div class="bar">
+        <button type="button" class="primary" id="btnPlay2">▶ Play</button>
+        <button type="button" class="ghost" id="btnStop2">Stop</button>
+        <span id="status">Режим: редактор 2D</span>
+        <span id="scoreUi" style="margin-left:auto;color:var(--y);font-weight:800"></span>
+      </div>
+      <div class="stage-wrap" id="stage">
+        <div id="view2d"><canvas id="c2d"></canvas></div>
+        <div id="view3d"></div>
+        <div class="overlay-help" id="help">
+          ЛКМ — поставить · ПКМ — удалить ближайший · Play — запуск · Space — прыжок (2D)
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    <span>BlyeEngine FREE · Blue Cat Portal</span>
+    <span><a href="../blyegpt/">BlyeGPT</a> · <a href="../image-to-3d/">Картинка→3D</a> · <a href="../">Портал</a></span>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js"></script>
+  <script>
+(function () {
+  "use strict";
+
+  var mode = "2d"; // 2d | 3d
+  var playing = false;
+  var tool2d = "platform";
+  var tool3d = "box";
+  var LS = "blyeengine_scene_v1";
+
+  var $ = function (id) { return document.getElementById(id); };
+  function setStatus(t) { $("status").textContent = t; }
+
+  // ——— 2D engine ———
+  var canvas = $("c2d");
+  var ctx = canvas.getContext("2d");
+  var objects2d = [];
+  var keys = {};
+  var score = 0;
+  var camX = 0;
+  var selectedId = null;
+
+  function uid() { return "o" + Math.random().toString(36).slice(2, 9); }
+
+  function default2d() {
+    objects2d = [
+      { id: uid(), type: "spawn", x: 80, y: 320, w: 24, h: 24 },
+      { id: uid(), type: "player", x: 80, y: 300, w: 28, h: 36, vx: 0, vy: 0, onGround: false },
+      { id: uid(), type: "platform", x: 40, y: 380, w: 220, h: 24 },
+      { id: uid(), type: "platform", x: 300, y: 320, w: 160, h: 24 },
+      { id: uid(), type: "platform", x: 520, y: 280, w: 180, h: 24 },
+      { id: uid(), type: "coin", x: 360, y: 280, w: 18, h: 18 },
+      { id: uid(), type: "coin", x: 580, y: 240, w: 18, h: 18 },
+      { id: uid(), type: "enemy", x: 400, y: 290, w: 30, h: 30, vx: 1.2, range: 60, baseX: 400 }
+    ];
+  }
+  default2d();
+
+  function resize() {
+    var wrap = $("stage");
+    var w = wrap.clientWidth || 800;
+    var h = wrap.clientHeight || 480;
+    canvas.width = w;
+    canvas.height = h;
+    if (renderer3) {
+      renderer3.setSize(w, h, false);
+      camera3.aspect = w / Math.max(h, 1);
+      camera3.updateProjectionMatrix();
+    }
+  }
+  window.addEventListener("resize", resize);
+
+  function colors(t) {
+    return ({
+      player: "#5b9dff",
+      platform: "#8b6914",
+      enemy: "#ff5a5a",
+      coin: "#ffcc00",
+      spawn: "#3dd68c"
+    })[t] || "#fff";
+  }
+
+  function draw2d() {
+    var w = canvas.width, h = canvas.height;
+    ctx.fillStyle = "#0b1020";
+    ctx.fillRect(0, 0, w, h);
+    // grid
+    ctx.strokeStyle = "rgba(255,255,255,0.04)";
+    ctx.lineWidth = 1;
+    for (var x = -((camX % 40) + 40); x < w; x += 40) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (var y = 0; y < h; y += 40) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+    objects2d.forEach(function (o) {
+      var sx = o.x - camX;
+      ctx.fillStyle = colors(o.type);
+      if (o.type === "coin") {
+        ctx.beginPath();
+        ctx.arc(sx + o.w / 2, o.y + o.h / 2, o.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (o.type === "spawn") {
+        ctx.globalAlpha = 0.7;
+        ctx.fillRect(sx, o.y, o.w, o.h);
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillRect(sx, o.y, o.w, o.h);
+      }
+      if (o.id === selectedId) {
+        ctx.strokeStyle = "#ffcc00";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(sx - 2, o.y - 2, o.w + 4, o.h + 4);
+      }
+    });
+    if (playing) {
+      ctx.fillStyle = "#ffcc00";
+      ctx.font = "bold 16px Segoe UI";
+      ctx.fillText("Монеты: " + score, 16, 28);
+    }
+  }
+
+  function getPlayer() {
+    for (var i = 0; i < objects2d.length; i++) if (objects2d[i].type === "player") return objects2d[i];
+    return null;
+  }
+
+  function rectHit(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  function step2d() {
+    if (!playing || mode !== "2d") return;
+    var p = getPlayer();
+    if (!p) return;
+    var grav = parseFloat($("grav").value) || 0.55;
+    var spd = parseFloat($("speed").value) || 4.2;
+    p.vx = 0;
+    if (keys["ArrowLeft"] || keys["a"] || keys["A"] || keys["ф"] || keys["Ф"]) p.vx = -spd;
+    if (keys["ArrowRight"] || keys["d"] || keys["D"] || keys["в"] || keys["В"]) p.vx = spd;
+    if ((keys["ArrowUp"] || keys["w"] || keys["W"] || keys[" "] || keys["ц"] || keys["Ц"]) && p.onGround) {
+      p.vy = -10.5;
+      p.onGround = false;
+    }
+    p.vy += grav;
+    p.x += p.vx;
+    // horizontal collide platforms
+    objects2d.forEach(function (o) {
+      if (o.type !== "platform") return;
+      if (rectHit(p, o)) {
+        if (p.vx > 0) p.x = o.x - p.w;
+        else if (p.vx < 0) p.x = o.x + o.w;
+      }
+    });
+    p.y += p.vy;
+    p.onGround = false;
+    objects2d.forEach(function (o) {
+      if (o.type !== "platform") return;
+      if (rectHit(p, o)) {
+        if (p.vy > 0) { p.y = o.y - p.h; p.vy = 0; p.onGround = true; }
+        else if (p.vy < 0) { p.y = o.y + o.h; p.vy = 0; }
+      }
+    });
+    // coins
+    objects2d = objects2d.filter(function (o) {
+      if (o.type === "coin" && rectHit(p, o)) { score++; return false; }
+      return true;
+    });
+    // enemies
+    objects2d.forEach(function (o) {
+      if (o.type !== "enemy") return;
+      o.baseX = o.baseX == null ? o.x : o.baseX;
+      o.x += o.vx || 1;
+      if (Math.abs(o.x - o.baseX) > (o.range || 50)) o.vx *= -1;
+      if (rectHit(p, o)) {
+        // hit — respawn
+        var sp = objects2d.find(function (x) { return x.type === "spawn"; });
+        if (sp) { p.x = sp.x; p.y = sp.y - 10; p.vx = 0; p.vy = 0; }
+        score = Math.max(0, score - 1);
+      }
+    });
+    // fall
+    if (p.y > canvas.height + 80) {
+      var sp2 = objects2d.find(function (x) { return x.type === "spawn"; });
+      if (sp2) { p.x = sp2.x; p.y = sp2.y - 10; p.vx = 0; p.vy = 0; }
+    }
+    camX = Math.max(0, p.x - canvas.width * 0.35);
+    $("scoreUi").textContent = "Монеты: " + score;
+  }
+
+  function place2d(mx, my) {
+    if (playing) return;
+    var x = mx + camX;
+    var y = my;
+    if (tool2d === "erase") {
+      var hit = null, best = 1e9;
+      objects2d.forEach(function (o) {
+        var cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+        var d = (cx - x) * (cx - x) + (cy - y) * (cy - y);
+        if (d < best && d < 40 * 40) { best = d; hit = o; }
+      });
+      if (hit && hit.type !== "player") objects2d = objects2d.filter(function (o) { return o.id !== hit.id; });
+      refreshList();
+      return;
+    }
+    var o = { id: uid(), type: tool2d, x: x - 15, y: y - 15, w: 30, h: 30 };
+    if (tool2d === "platform") { o.w = 120; o.h = 22; o.x = x - 60; o.y = y - 11; }
+    if (tool2d === "player") {
+      objects2d = objects2d.filter(function (z) { return z.type !== "player"; });
+      o.w = 28; o.h = 36; o.vx = 0; o.vy = 0; o.onGround = false;
+    }
+    if (tool2d === "spawn") {
+      objects2d = objects2d.filter(function (z) { return z.type !== "spawn"; });
+      o.w = 24; o.h = 24;
+    }
+    if (tool2d === "enemy") { o.vx = 1.2; o.range = 60; o.baseX = o.x; o.w = 30; o.h = 30; }
+    if (tool2d === "coin") { o.w = 18; o.h = 18; }
+    objects2d.push(o);
+    selectedId = o.id;
+    refreshList();
+  }
+
+  canvas.addEventListener("mousedown", function (e) {
+    if (mode !== "2d") return;
+    var r = canvas.getBoundingClientRect();
+    var mx = (e.clientX - r.left) * (canvas.width / r.width);
+    var my = (e.clientY - r.top) * (canvas.height / r.height);
+    if (e.button === 2) {
+      tool2d = "erase";
+      document.querySelectorAll("#tools2d .toolbtn").forEach(function (b) {
+        b.classList.toggle("on", b.getAttribute("data-tool") === "erase");
+      });
+    }
+    place2d(mx, my);
+  });
+  canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  window.addEventListener("keydown", function (e) { keys[e.key] = true; if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(e.key) >= 0) e.preventDefault(); });
+  window.addEventListener("keyup", function (e) { keys[e.key] = false; });
+
+  // tools 2d
+  document.querySelectorAll("#tools2d .toolbtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      tool2d = btn.getAttribute("data-tool");
+      document.querySelectorAll("#tools2d .toolbtn").forEach(function (b) { b.classList.remove("on"); });
+      btn.classList.add("on");
+    });
+  });
+
+  function refreshList() {
+    var box = $("objList");
+    box.innerHTML = "";
+    var list = mode === "2d" ? objects2d : objects3.map(function (m) {
+      return { id: m.userData.id, type: m.userData.kind, label: m.userData.kind };
+    });
+    list.forEach(function (o) {
+      var div = document.createElement("div");
+      div.className = "item" + (o.id === selectedId ? " active" : "");
+      div.innerHTML = "<span>" + (o.type || o.label) + "</span>";
+      var del = document.createElement("button");
+      del.textContent = "✕";
+      del.onclick = function () {
+        if (mode === "2d") {
+          if (o.type === "player") return;
+          objects2d = objects2d.filter(function (x) { return x.id !== o.id; });
+        } else {
+          remove3(o.id);
+        }
+        refreshList();
+      };
+      div.appendChild(del);
+      div.onclick = function () { selectedId = o.id; refreshList(); };
+      box.appendChild(div);
+    });
+  }
+
+  // ——— 3D engine (Three.js) ———
+  var view3 = $("view3d");
+  var scene3, camera3, renderer3, objects3 = [], player3 = null, clock3;
+  var raycaster = null, mouse = null;
+  var move3 = { f: 0, r: 0 };
+
+  function init3() {
+    if (scene3) return;
+    if (typeof THREE === "undefined") {
+      setStatus("Three.js не загрузился — нужен интернет");
+      return;
+    }
+    scene3 = new THREE.Scene();
+    scene3.background = new THREE.Color(0x0b1020);
+    camera3 = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
+    camera3.position.set(6, 5, 10);
+    camera3.lookAt(0, 0, 0);
+    renderer3 = new THREE.WebGLRenderer({ antialias: true });
+    renderer3.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    view3.appendChild(renderer3.domElement);
+    scene3.add(new THREE.AmbientLight(0xffffff, 0.45));
+    var sun = new THREE.DirectionalLight(0xffffff, 0.9);
+    sun.position.set(5, 10, 4);
+    scene3.add(sun);
+    scene3.add(new THREE.GridHelper(30, 30, 0x334, 0x1a2030));
+    // default floor
+    add3("plane", 0, 0, 0);
+    add3("player", 0, 1, 0);
+    add3("box", 2, 0.5, -2);
+    add3("sphere", -2, 0.6, 1);
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+    clock3 = new THREE.Clock();
+    renderer3.domElement.addEventListener("pointerdown", on3click);
+    resize();
+  }
+
+  function add3(kind, x, y, z) {
+    var mesh;
+    var mat = new THREE.MeshStandardMaterial({ color: 0x5b9dff, roughness: 0.55, metalness: 0.1 });
+    if (kind === "box") {
+      mat.color.set(0x6aa8ff);
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat);
+      mesh.position.set(x, y == null ? 0.5 : y, z);
+    } else if (kind === "sphere") {
+      mat.color.set(0xffcc00);
+      mesh = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 16), mat);
+      mesh.position.set(x, y == null ? 0.55 : y, z);
+    } else if (kind === "plane") {
+      mat.color.set(0x2a3344);
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(16, 0.25, 16), mat);
+      mesh.position.set(x, y == null ? -0.12 : y, z);
+    } else if (kind === "player") {
+      // remove old player
+      objects3.slice().forEach(function (m) {
+        if (m.userData.kind === "player") remove3(m.userData.id);
+      });
+      mat.color.set(0x3dd68c);
+      mesh = new THREE.Mesh(new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(0.35, 0.7, 6, 12) : new THREE.BoxGeometry(0.7, 1.4, 0.7), mat);
+      mesh.position.set(x, y == null ? 0.9 : y, z);
+      player3 = mesh;
+    } else if (kind === "light") {
+      var L = new THREE.PointLight(0xfff0c0, 1.2, 20);
+      L.position.set(x, y == null ? 3 : y, z);
+      L.userData = { id: uid(), kind: "light" };
+      scene3.add(L);
+      var helper = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff0c0 }));
+      helper.position.copy(L.position);
+      helper.userData = { id: L.userData.id, kind: "light", light: L };
+      scene3.add(helper);
+      objects3.push(helper);
+      refreshList();
+      return helper;
+    } else {
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat);
+      mesh.position.set(x, y || 0.5, z);
+    }
+    mesh.userData = { id: uid(), kind: kind };
+    if (kind === "player") player3 = mesh;
+    scene3.add(mesh);
+    objects3.push(mesh);
+    refreshList();
+    return mesh;
+  }
+
+  function remove3(id) {
+    objects3 = objects3.filter(function (m) {
+      if (m.userData.id !== id) return true;
+      scene3.remove(m);
+      if (m.userData.light) scene3.remove(m.userData.light);
+      if (m === player3) player3 = null;
+      return false;
+    });
+  }
+
+  function on3click(e) {
+    if (mode !== "3d" || !renderer3) return;
+    var r = renderer3.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    mouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera3);
+    if (tool3d === "erase") {
+      var hits = raycaster.intersectObjects(objects3, false);
+      if (hits[0]) remove3(hits[0].object.userData.id);
+      refreshList();
+      return;
+    }
+    // place on y=0 plane
+    var plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    var pt = new THREE.Vector3();
+    raycaster.ray.intersectPlane(plane, pt);
+    if (!pt) return;
+    if (playing) return;
+    add3(tool3d, pt.x, null, pt.z);
+  }
+
+  document.querySelectorAll("#tools3d .toolbtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      tool3d = btn.getAttribute("data-tool3");
+      document.querySelectorAll("#tools3d .toolbtn").forEach(function (b) { b.classList.remove("on"); });
+      btn.classList.add("on");
+    });
+  });
+
+  function step3d(dt) {
+    if (!playing || mode !== "3d" || !player3) return;
+    var spd = (parseFloat($("speed").value) || 4.2) * dt * 1.6;
+    var forward = new THREE.Vector3();
+    camera3.getWorldDirection(forward);
+    forward.y = 0; forward.normalize();
+    var right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+    if (keys["w"] || keys["W"] || keys["ц"] || keys["ArrowUp"]) player3.position.addScaledVector(forward, spd);
+    if (keys["s"] || keys["S"] || keys["ы"] || keys["ArrowDown"]) player3.position.addScaledVector(forward, -spd);
+    if (keys["a"] || keys["A"] || keys["ф"] || keys["ArrowLeft"]) player3.position.addScaledVector(right, -spd);
+    if (keys["d"] || keys["D"] || keys["в"] || keys["ArrowRight"]) player3.position.addScaledVector(right, spd);
+    // camera follow
+    var target = player3.position.clone().add(new THREE.Vector3(0, 3, 7));
+    camera3.position.lerp(target, 0.08);
+    camera3.lookAt(player3.position.x, player3.position.y + 0.5, player3.position.z);
+  }
+
+  // ——— mode switch ———
+  function setMode(m) {
+    mode = m;
+    playing = false;
+    $("tab2d").classList.toggle("on", m === "2d");
+    $("tab3d").classList.toggle("on", m === "3d");
+    $("view2d").style.display = m === "2d" ? "block" : "none";
+    $("view3d").style.display = m === "3d" ? "block" : "none";
+    $("tools2d").style.display = m === "2d" ? "grid" : "none";
+    $("tools3d").style.display = m === "3d" ? "grid" : "none";
+    $("modeHint").textContent = m === "2d"
+      ? "2D: клик — объект. Play: стрелки/WASD, Space — прыжок."
+      : "3D: клик по полу — объект. Play: WASD — ходить камерой за игроком.";
+    $("help").textContent = m === "2d"
+      ? "ЛКМ — поставить · Play — WASD/стрелки · Space — прыжок"
+      : "ЛКМ — поставить на пол · Play — WASD ходить";
+    setStatus("Режим: редактор " + m.toUpperCase());
+    $("scoreUi").textContent = "";
+    if (m === "3d") init3();
+    resize();
+    refreshList();
+  }
+  $("tab2d").onclick = function () { setMode("2d"); };
+  $("tab3d").onclick = function () { setMode("3d"); };
+
+  function play() {
+    playing = true;
+    score = 0;
+    if (mode === "2d") {
+      var p = getPlayer();
+      var sp = objects2d.find(function (x) { return x.type === "spawn"; });
+      if (p && sp) { p.x = sp.x; p.y = sp.y - 12; p.vx = 0; p.vy = 0; }
+      setStatus("▶ PLAY 2D — " + ($("gameName").value || "Игра"));
+    } else {
+      setStatus("▶ PLAY 3D — " + ($("gameName").value || "Игра"));
+      if (player3) {
+        camera3.position.set(player3.position.x, player3.position.y + 3, player3.position.z + 7);
+      }
+    }
+  }
+  function stop() {
+    playing = false;
+    setStatus("Режим: редактор " + mode.toUpperCase());
+    $("scoreUi").textContent = "";
+  }
+  $("btnPlay").onclick = $("btnPlay2").onclick = play;
+  $("btnStop").onclick = $("btnStop2").onclick = stop;
+
+  function serialize() {
+    return {
+      name: $("gameName").value,
+      grav: $("grav").value,
+      speed: $("speed").value,
+      objects2d: objects2d,
+      objects3: objects3.map(function (m) {
+        return { kind: m.userData.kind, x: m.position.x, y: m.position.y, z: m.position.z };
+      })
+    };
+  }
+  function applySave(data) {
+    if (!data) return;
+    if (data.name) $("gameName").value = data.name;
+    if (data.grav) $("grav").value = data.grav;
+    if (data.speed) $("speed").value = data.speed;
+    if (data.objects2d) objects2d = data.objects2d;
+    if (data.objects3 && scene3) {
+      objects3.slice().forEach(function (m) { remove3(m.userData.id); });
+      data.objects3.forEach(function (o) { add3(o.kind, o.x, o.y, o.z); });
+    }
+    refreshList();
+  }
+  $("btnSave").onclick = function () {
+    try {
+      localStorage.setItem(LS, JSON.stringify(serialize()));
+      setStatus("💾 Сохранено в браузере");
+    } catch (e) { setStatus("Не удалось сохранить"); }
+  };
+  $("btnLoad").onclick = function () {
+    try {
+      var d = JSON.parse(localStorage.getItem(LS) || "null");
+      if (!d) { setStatus("Нет сохранения"); return; }
+      applySave(d);
+      setStatus("📂 Загружено");
+    } catch (e) { setStatus("Ошибка загрузки"); }
+  };
+  $("btnClear").onclick = function () {
+    if (!confirm("Очистить сцену?")) return;
+    if (mode === "2d") default2d();
+    else if (scene3) {
+      objects3.slice().forEach(function (m) { remove3(m.userData.id); });
+      add3("plane", 0, 0, 0);
+      add3("player", 0, 1, 0);
+    }
+    refreshList();
+  };
+  $("btnExport").onclick = function () {
+    var blob = new Blob([JSON.stringify(serialize(), null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = ($("gameName").value || "game") + ".blyeengine.json";
+    a.click();
+  };
+
+  // loop
+  var last = performance.now();
+  function loop(now) {
+    requestAnimationFrame(loop);
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (mode === "2d") {
+      step2d();
+      draw2d();
+    } else if (scene3 && renderer3) {
+      step3d(dt);
+      renderer3.render(scene3, camera3);
+    }
+  }
+
+  resize();
+  refreshList();
+  requestAnimationFrame(loop);
+  setStatus("Режим: редактор 2D — поставь объекты и жми Play");
+})();
+  </script>
+</body>
+</html>
