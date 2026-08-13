@@ -60,6 +60,52 @@ window.GAME_META = {
       { who: "🧒 Соня, 9 лет", stars: 5, text: "Люблю прыгать на гумб! Флаг в конце — ура." }
     ]
   },
+  "chicken-gun": {
+    id: "chicken-gun",
+    title: "Chicken Gun",
+    emoji: "🐔",
+    genre: "Шутер",
+    rating: "4.6",
+    src: "minis/chicken-gun.html",
+    engine: "unity",
+    externalUrl: "https://www.crazygames.com/embed/chicken-cs",
+    desc: "Chicken Gun / Chicken CS — Unity в браузере. Есть и лёгкая версия на сайте.",
+    controls: { p1: "WASD — ходьба · Мышь — прицел · ЛКМ — огонь · R — заново", p2: "—", mobile: "Лучше с клавиатурой", goal: "Набери очки, не умри." },
+    reviews: [
+      { who: "🧒 Тима, 10 лет", stars: 5, text: "Курица стреляет — огонь!" },
+      { who: "📺 MemeShooter", stars: 4, text: "Коротко и весело. Моды в вкладке Моды." }
+    ]
+  },
+  "meme-neighbor": {
+    id: "meme-neighbor",
+    title: "Meme Neighbor",
+    emoji: "🏠",
+    genre: "Стелс",
+    rating: "4.5",
+    src: "minis/meme-neighbor.html",
+    engine: "unity",
+    externalUrl: "https://topgames.gg/hello-neighbor",
+    desc: "Meme / Hello Neighbor — веб. Плюс лёгкая версия на сайте.",
+    controls: { p1: "WASD / стрелки — ходить · R — заново", p2: "—", mobile: "Клавиатура", goal: "3 ключа и выход живым." },
+    reviews: [
+      { who: "🧒 Лера, 9 лет", stars: 5, text: "Сосед злой, ключи спрятаны!" }
+    ]
+  },
+  "five-night-memes": {
+    id: "five-night-memes",
+    title: "Five Night Memes",
+    emoji: "🌙",
+    genre: "Хоррор",
+    rating: "4.7",
+    src: "minis/five-night-memes.html",
+    engine: "unity",
+    externalUrl: "https://igroutka.ru/igry-fnaf/27965-fnaf-1.html",
+    desc: "Five Night / FNAF в браузере + лёгкая мем-версия на сайте.",
+    controls: { p1: "Кнопки дверей и камер на экране", p2: "—", mobile: "Тап по кнопкам", goal: "Не пусти мемов в офис до 6 AM." },
+    reviews: [
+      { who: "🧒 Гоша, 11 лет", stars: 5, text: "Миньон в дверях — я кричал." }
+    ]
+  },
   smeshariki: {
     id: "smeshariki",
     title: "Смешарики — Битва и Догонялки",

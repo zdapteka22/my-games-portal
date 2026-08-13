@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meme Neighbor</title>
+<style>
+  html,body{margin:0;height:100%;background:#1a1210;color:#fff;font-family:Segoe UI,sans-serif;overflow:hidden}
+  canvas{display:block;margin:0 auto;background:#2a2018}
+  #ui{position:fixed;left:10px;top:10px;z-index:2;max-width:70%}
+  a.back{position:fixed;right:10px;top:10px;z-index:2;color:#111;background:#ffcc00;padding:8px 12px;border-radius:10px;font-weight:800;text-decoration:none}
+  #msg{color:#ffcc00;font-weight:800}
+</style>
+</head>
+<body>
+<a class="back" href="../../play.html?id=meme-neighbor">← Портал</a>
+<div id="ui">🏠 <b>Meme Neighbor</b> · WASD · собери 3 ключа, не попадись<br><span id="msg">Ключи: 0/3</span></div>
+<canvas id="c" width="960" height="540"></canvas>
+<script src="../mods-data.js"></script>
+<script>
+const C=document.getElementById("c"),X=C.getContext("2d");
+const hard=portalModOn("mn-sprint")||portalModOn("all-mode-hard");
+const mask=portalModOn("mn-mask");
+const sonic=portalModOn("all-char-sonic");
+const keys={}; addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+const walls=[{x:200,y:80,w:20,h:380},{x:400,y:80,w:20,h:220},{x:400,y:380,w:20,h:80},{x:600,y:80,w:20,h:380},{x:80,y:240,w:720,h:20}];
+const p={x:80,y:80,got:0};
+const n={x:700,y:400,dir:1,see:0};
+const loot=[{x:120,y:420,ok:false},{x:520,y:120,ok:false},{x:820,y:460,ok:false}];
+let dead=false, win=false;
+function hit(x,y,r){ return walls.some(w=>x>w.x-r&&x<w.x+w.w+r&&y>w.y-r&&y<w.y+w.h+r); }
+function loop(){
+  const sp=sonic?3.6:2.6;
+  let nx=p.x,ny=p.y;
+  if(keys.a||keys.arrowleft)nx-=sp; if(keys.d||keys.arrowright)nx+=sp;
+  if(keys.w||keys.arrowup)ny-=sp; if(keys.s||keys.arrowdown)ny+=sp;
+  if(!hit(nx,p.y,12))p.x=nx; if(!hit(p.x,ny,12))p.y=ny;
+  p.x=Math.max(16,Math.min(944,p.x)); p.y=Math.max(16,Math.min(524,p.y));
+  n.x+=n.dir*(hard?2.4:1.5);
+  if(n.x>860||n.x<80)n.dir*=-1;
+  const vis=Math.hypot(p.x-n.x,p.y-n.y)<(mask?70:110) && Math.abs(p.y-n.y)<80;
+  if(vis) n.see++; else n.see=Math.max(0,n.see-1);
+  if(n.see>28) dead=true;
+  loot.forEach(k=>{ if(!k.ok && Math.hypot(p.x-k.x,p.y-k.y)<22){ k.ok=true; p.got++; } });
+  if(p.got>=3) win=true;
+  X.fillStyle="#2a2018"; X.fillRect(0,0,960,540);
+  X.fillStyle="#3d2c22"; walls.forEach(w=>X.fillRect(w.x,w.y,w.w,w.h));
+  loot.forEach(k=>{ if(!k.ok){ X.font="20px sans-serif"; X.fillText("🔑",k.x-8,k.y+6); } });
+  X.font="26px sans-serif"; X.fillText(sonic?"💨":"🧒", p.x-12, p.y+8);
+  X.fillText("😡", n.x-12, n.y+8);
+  if(vis){ X.fillStyle="rgba(255,0,0,.15)"; X.beginPath(); X.arc(n.x,n.y,mask?70:110,0,6.3); X.fill(); }
+  const el=document.getElementById("msg");
+  if(dead) el.textContent="ПОЙМАЛИ! Нажми R";
+  else if(win) el.textContent="СБЕЖАЛ! Все ключи твои.";
+  else el.textContent="Ключи: "+p.got+"/3"+(vis?" · ОН ТЕБЯ ВИДИТ":"");
+  if((dead||win) && keys.r){ p.x=80;p.y=80;p.got=0;dead=false;win=false;loot.forEach(k=>k.ok=false); }
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body></html>

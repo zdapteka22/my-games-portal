@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Five Night Memes</title>
+<style>
+  html,body{margin:0;height:100%;background:#0a0a0a;color:#ddd;font-family:Segoe UI,sans-serif;overflow:hidden}
+  #office{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,#2a2218,#0a0a0a);}
+  #desk{position:absolute;bottom:0;left:0;right:0;height:28%;background:#1a140e;border-top:6px solid #3a2a18}
+  button.d{position:absolute;bottom:32%;width:70px;height:90px;background:#222;color:#ffcc00;border:3px solid #555;font-weight:800;cursor:pointer}
+  #dl{left:8%} #dr{right:8%}
+  button.d.on{background:#4a0000;border-color:#f44}
+  #cams{position:absolute;right:12px;top:12px;display:grid;gap:6px}
+  #cams button{background:#111;color:#8f8;border:1px solid #3a3;padding:6px 10px;cursor:pointer;font-weight:700}
+  #cams button.sel{background:#163}
+  #view{position:absolute;left:18%;right:18%;top:10%;height:48%;background:#111;border:4px solid #333;display:flex;align-items:center;justify-content:center;font-size:64px}
+  #hud{position:absolute;left:12px;bottom:8px;font-weight:800}
+  a.back{position:absolute;left:12px;top:12px;z-index:3;color:#111;background:#ffcc00;padding:8px 12px;border-radius:10px;font-weight:800;text-decoration:none}
+  #end{display:none;position:absolute;inset:0;background:#000c;align-items:center;justify-content:center;flex-direction:column;font-size:2rem;z-index:5}
+</style>
+</head>
+<body>
+<a class="back" href="../../play.html?id=five-night-memes">← Портал</a>
+<div id="office">
+  <div id="view">📷 CAM</div>
+  <div id="desk"></div>
+  <button class="d" id="dl">ДВЕРЬ<br>Л</button>
+  <button class="d" id="dr">ДВЕРЬ<br>П</button>
+  <div id="cams">
+    <button data-c="0">CAM 1 Кухня</button>
+    <button data-c="1">CAM 2 Коридор</button>
+    <button data-c="2">CAM 3 Зал</button>
+  </div>
+  <div id="hud">1:00 AM · Энергия 100%</div>
+</div>
+<div id="end"></div>
+<script src="../mods-data.js"></script>
+<script>
+const hard=portalModOn("fn-night6")||portalModOn("all-mode-hard");
+const saveCam=portalModOn("fn-cam");
+const faces=["🤡","💛","🧽"];
+let cam=0, left=false, right=false, power=100, hour=1, t=0, dead=false;
+const pos=[0,0,0];
+const names=["Пенни","Миньон","Губка"];
+document.getElementById("dl").onclick=()=>{left=!left; document.getElementById("dl").classList.toggle("on",left)};
+document.getElementById("dr").onclick=()=>{right=!right; document.getElementById("dr").classList.toggle("on",right)};
+document.querySelectorAll("#cams button").forEach(b=>b.onclick=()=>{
+  cam=+b.dataset.c;
+  document.querySelectorAll("#cams button").forEach(x=>x.classList.toggle("sel",x===b));
+  drawCam();
+});
+function drawCam(){
+  const who=pos.map((p,i)=>p===cam?faces[i]:"").join(" ");
+  document.getElementById("view").textContent=who||"…пусто…";
+}
+function tick(){
+  if(dead) return;
+  t++;
+  if(t%60===0){
+    power-= (left?1:0)+(right?1:0)+(saveCam?0.2:0.5);
+    if(t%360===0) hour++;
+  }
+  if(t%90===0){
+    pos.forEach((_,i)=>{
+      if(Math.random()<(hard?0.55:0.32)) pos[i]=Math.min(4,pos[i]+1);
+    });
+  }
+  if(pos[0]>=4 && !left) lose(0);
+  if(pos[1]>=4 && !right) lose(1);
+  if(pos[2]>=4 && !(left&&right)) lose(2);
+  if(power<=0) lose(-1);
+  if(hour>=6){ win(); return; }
+  document.getElementById("hud").textContent=hour+":00 AM · Энергия "+Math.max(0,power|0)+"%";
+  drawCam();
+}
+function lose(i){
+  dead=true;
+  const el=document.getElementById("end");
+  el.style.display="flex";
+  el.textContent=i<0?"Свет сел…":("СКРИМЕР "+(names[i]||"")+" 😱");
+}
+function win(){
+  dead=true;
+  const el=document.getElementById("end");
+  el.style.display="flex";
+  el.textContent="6 AM — ты выжил!";
+}
+setInterval(tick,80);
+drawCam();
+</script>
+</body></html>

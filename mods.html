@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Моды — Портал любимых игр · Blue Cat</title>
+  <link rel="icon" href="images/blue-cat.svg" type="image/svg+xml">
+  <style>
+    :root { --bg:#0a0a0a; --card:#1c1c1c; --y:#ffcc00; --t:#fff; --m:#aaa; --b:#333; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:"Segoe UI",sans-serif; background:var(--bg); color:var(--t); min-height:100vh; }
+    header { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--b); background:#111; position:sticky; top:0; z-index:5; }
+    header a { color:#111; background:var(--y); padding:8px 14px; border-radius:999px; font-weight:800; text-decoration:none; }
+    h1 { font-size:1.25rem; }
+    .wrap { max-width:1100px; margin:0 auto; padding:18px 14px 48px; }
+    .sub { color:var(--m); margin:8px 0 16px; }
+    .filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+    .filters button { border:1px solid var(--b); background:#151515; color:#ddd; padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer; }
+    .filters button.on { background:var(--y); color:#111; border-color:var(--y); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
+    .card { background:var(--card); border:1px solid var(--b); border-radius:16px; padding:14px; }
+    .card h3 { font-size:1.05rem; margin:6px 0; }
+    .card p { color:var(--m); font-size:.92rem; min-height:2.6em; }
+    .tag { display:inline-block; font-size:11px; font-weight:800; background:#2a2a2a; padding:3px 8px; border-radius:999px; margin-right:4px; color:#ffdd77; }
+    .onoff { margin-top:10px; width:100%; min-height:40px; border:0; border-radius:12px; font-weight:800; cursor:pointer; }
+    .onoff.off { background:#2a2a2a; color:#ccc; }
+    .onoff.on { background:linear-gradient(135deg,#ffcc00,#ff9f1c); color:#2a1200; }
+    .games { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0; }
+    .games a { background:#161616; border:1px solid #333; color:#fff; text-decoration:none; padding:10px 14px; border-radius:12px; font-weight:800; }
+    .games a:hover { border-color:var(--y); color:var(--y); }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html">← Портал</a>
+    <h1>🧩 Моды на все игры</h1>
+  </header>
+  <div class="wrap">
+    <p class="sub">Нож, персонажи, режимы. Включи мод — он сохранится и подхватится в игре (веб, не Unity-клиент).</p>
+    <div class="games">
+      <a href="play.html?id=chicken-gun">🐔 Chicken Gun</a>
+      <a href="play.html?id=meme-neighbor">🏠 Meme Neighbor</a>
+      <a href="play.html?id=five-night-memes">🌙 Five Night Memes</a>
+      <a href="play.html?id=smeshariki">🟡 Смешарики</a>
+      <a href="play.html?id=mario">🍄 Марио</a>
+      <a href="play.html?id=snake">🐍 Змейка</a>
+    </div>
+    <div class="filters" id="filters">
+      <button data-c="all" class="on">Все</button>
+      <button data-c="knife">🔪 Нож</button>
+      <button data-c="character">👤 Персонажи</button>
+      <button data-c="mode">🎮 Режим</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <script src="games/mods-data.js"></script>
+  <script>
+    const names={knife:"Нож",character:"Персонаж",mode:"Режим"};
+    let cat="all";
+    function draw(){
+      const box=document.getElementById("grid");
+      box.innerHTML=(PORTAL_MODS.filter(m=>cat==="all"||m.cat===cat).map(m=>{
+        const on=portalModOn(m.id);
+        const g=m.games[0]==="*"?"все игры":m.games.join(", ");
+        return `<article class="card">
+          <span class="tag">${names[m.cat]||m.cat}</span><span class="tag">${g}</span>
+          <h3>${m.emoji} ${m.title}</h3>
+          <p>${m.desc}</p>
+          <button class="onoff ${on?"on":"off"}" data-id="${m.id}">${on?"✓ Включён":"Включить"}</button>
+        </article>`;
+      }).join(""));
+    }
+    document.getElementById("filters").onclick=e=>{
+      const b=e.target.closest("button"); if(!b) return;
+      cat=b.dataset.c; [...document.getElementById("filters").children].forEach(x=>x.classList.toggle("on",x===b));
+      draw();
+    };
+    document.getElementById("grid").onclick=e=>{
+      const b=e.target.closest("button.onoff"); if(!b) return;
+      portalModSet(b.dataset.id, !portalModOn(b.dataset.id));
+      draw();
+    };
+    draw();
+  </script>
+</body>
+</html>

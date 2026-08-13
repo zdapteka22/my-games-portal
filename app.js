@@ -60,6 +60,33 @@
       color: "#4caf50",
       builtin: true,
     },
+    {
+      id: "chicken-gun",
+      title: "Chicken Gun",
+      description: "Курица с пушкой: беги, целься мышью, отбивай волны. Веб-версия.",
+      url: "games/minis/chicken-gun.html",
+      emoji: "🐔",
+      color: "#8bc34a",
+      builtin: true,
+    },
+    {
+      id: "meme-neighbor",
+      title: "Meme Neighbor",
+      description: "Сосед-мем патрулирует дом. Укради ключи и не попадись!",
+      url: "games/minis/meme-neighbor.html",
+      emoji: "🏠",
+      color: "#e67e22",
+      builtin: true,
+    },
+    {
+      id: "five-night-memes",
+      title: "Five Night Memes",
+      description: "Пять ночей с мемами: двери, камеры, энергия. Доживи до 6 AM.",
+      url: "games/minis/five-night-memes.html",
+      emoji: "🌙",
+      color: "#6c3483",
+      builtin: true,
+    },
   ];
 
   const AI_NAMES = [

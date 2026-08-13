@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chicken Gun</title>
+<style>
+  html,body{margin:0;height:100%;background:#1a2a12;color:#fff;font-family:Segoe UI,sans-serif;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;background:#2d4a1e}
+  #ui{position:fixed;left:10px;top:10px;z-index:2;text-shadow:0 1px 0 #000}
+  #ui b{color:#ffcc00}
+  a.back{position:fixed;right:10px;top:10px;z-index:2;color:#111;background:#ffcc00;padding:8px 12px;border-radius:10px;font-weight:800;text-decoration:none}
+</style>
+</head>
+<body>
+<a class="back" href="../../play.html?id=chicken-gun">← Портал</a>
+<div id="ui">🐔 <b>Chicken Gun</b> · WASD + мышь · клик — стрелять<br><span id="hud">Очки 0 · Жизни 3</span></div>
+<canvas id="c"></canvas>
+<script src="../mods-data.js"></script>
+<script>
+const C=document.getElementById("c"),X=C.getContext("2d");
+let W,H; function fit(){W=C.width=innerWidth;H=C.height=innerHeight;} fit(); addEventListener("resize",fit);
+const rocket=portalModOn("cg-rocket"), dual=portalModOn("cg-dual"), minion=portalModOn("all-char-minion");
+const keys={}; addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+let mx=0,my=0,md=false;
+C.addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY});
+C.addEventListener("mousedown",()=>md=true); addEventListener("mouseup",()=>md=false);
+const p={x:200,y:200,hp:3,cd:0};
+let bullets=[], foes=[], score=0, t=0;
+function spawn(){ foes.push({x:Math.random()*W,y:Math.random()*H,hp:rocket?1:2,vx:(Math.random()-.5)*2,vy:(Math.random()-.5)*2}); }
+for(let i=0;i<8;i++) spawn();
+function loop(){
+  t++;
+  const sp=minion?4.2:3.4;
+  if(keys.w||keys.arrowup)p.y-=sp; if(keys.s||keys.arrowdown)p.y+=sp;
+  if(keys.a||keys.arrowleft)p.x-=sp; if(keys.d||keys.arrowright)p.x+=sp;
+  p.x=Math.max(20,Math.min(W-20,p.x)); p.y=Math.max(20,Math.min(H-20,p.y));
+  p.cd--;
+  if(md && p.cd<=0){
+    const a=Math.atan2(my-p.y,mx-p.x), n=dual?2:1;
+    for(let i=0;i<n;i++){
+      const off=(i-.5*(n-1))*0.12;
+      bullets.push({x:p.x,y:p.y,vx:Math.cos(a+off)*9,vy:Math.sin(a+off)*9,life:80});
+    }
+    p.cd=dual?8:14;
+  }
+  X.fillStyle="#2d4a1e"; X.fillRect(0,0,W,H);
+  for(let i=0;i<40;i++){ X.fillStyle="#3a5c28"; X.fillRect((i*97)%W,(i*53)%H,18,10); }
+  bullets=bullets.filter(b=>{ b.x+=b.vx;b.y+=b.vy;b.life--; X.fillStyle=rocket?"#ff6a00":"#ffe066"; X.beginPath();X.arc(b.x,b.y,rocket?6:3,0,6.3);X.fill(); return b.life>0; });
+  foes.forEach(f=>{
+    f.x+=f.vx; f.y+=f.vy;
+    if(f.x<0||f.x>W)f.vx*=-1; if(f.y<0||f.y>H)f.vy*=-1;
+    const dx=p.x-f.x,dy=p.y-f.y,d=Math.hypot(dx,dy)||1;
+    f.x+=dx/d*0.35; f.y+=dy/d*0.35;
+    X.fillStyle="#8b2500"; X.beginPath(); X.arc(f.x,f.y,16,0,6.3); X.fill();
+    X.fillStyle="#fff"; X.fillText("🦊",f.x-8,f.y+5);
+    bullets.forEach(b=>{ if(Math.hypot(b.x-f.x,b.y-f.y)<18){ f.hp--; b.life=0; score+=10; } });
+    if(d<22 && t%40===0){ p.hp--; }
+  });
+  foes=foes.filter(f=>f.hp>0);
+  if(foes.length<8) spawn();
+  X.font="28px sans-serif";
+  X.fillText(minion?"💛":"🐔", p.x-14, p.y+10);
+  X.strokeStyle="#ffcc00"; X.beginPath(); X.moveTo(p.x,p.y); X.lineTo(p.x+Math.cos(Math.atan2(my-p.y,mx-p.x))*28,p.y+Math.sin(Math.atan2(my-p.y,mx-p.x))*28); X.stroke();
+  document.getElementById("hud").textContent="Очки "+score+" · Жизни "+p.hp+(p.hp<=0?" · R заново":"");
+  if(p.hp<=0 && keys.r){ p.hp=3;score=0;p.x=W/2;p.y=H/2; }
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body></html>

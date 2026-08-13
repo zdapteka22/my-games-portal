@@ -315,7 +315,10 @@
       },
       tanks: { id: "tanks", title: "Танчики", emoji: "🪖", genre: "Аркада", src: "minis/tanks.html" },
       labyrinth: { id: "labyrinth", title: "Лабиринт", emoji: "🌀", genre: "Аркада", src: "minis/labyrinth.html" },
-      battle: { id: "battle", title: "Битва всех игр", emoji: "⚔️", genre: "Файтинг", src: "minis/battle-all.html" }
+      battle: { id: "battle", title: "Битва всех игр", emoji: "⚔️", genre: "Файтинг", src: "minis/battle-all.html" },
+      "chicken-gun": { id: "chicken-gun", title: "Chicken Gun", emoji: "🐔", genre: "Шутер", src: "minis/chicken-gun.html" },
+      "meme-neighbor": { id: "meme-neighbor", title: "Meme Neighbor", emoji: "🏠", genre: "Стелс", src: "minis/meme-neighbor.html" },
+      "five-night-memes": { id: "five-night-memes", title: "Five Night Memes", emoji: "🌙", genre: "Хоррор", src: "minis/five-night-memes.html" }
     };
     if (FALLBACK[gameId]) return Object.assign({ rating: "★", controls: {}, reviews: [] }, FALLBACK[gameId]);
 
@@ -411,6 +414,22 @@
     const wrap = document.getElementById("playWrap");
     const raw = document.getElementById("openRawBtn");
     const src = gameSrc();
+    const extGame = meta.externalUrl;
+    if (extGame && params.get("lite") !== "1" && (meta.engine === "unity" || params.get("web") === "1")) {
+      wrap.innerHTML =
+        '<div class="bc-frame-shell">' +
+          '<div class="bc-brand-bar">' +
+            '<img src="images/blue-cat.svg" alt="Blue Cat">' +
+            '<div class="bc-name">Blue Cat <span>Unity / веб</span></div>' +
+            (src ? '<a href="play.html?id=' + esc(meta.id) + '&lite=1" style="margin-left:auto;color:#111;background:#ffcc00;padding:6px 10px;border-radius:8px;font-weight:800;text-decoration:none">Лёгкая версия</a>' : '') +
+          '</div>' +
+          '<div class="bc-frame-crop">' +
+            '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(extGame) + '" ' +
+            'allow="fullscreen; gamepad; autoplay; clipboard-write" allowfullscreen></iframe>' +
+          '</div></div>';
+      if (raw) { raw.href = extGame; raw.hidden = false; raw.textContent = "↗ На весь экран"; }
+      return;
+    }
     // Локальные игры портала
     if (src) {
       wrap.innerHTML = '<iframe id="gameFrame" title="' + esc(meta.title) + '" src="' + esc(src) + '" allow="fullscreen; gamepad; autoplay; clipboard-write" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>';
