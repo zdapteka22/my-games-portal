@@ -2,98 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Five Night Nins Memes</title>
-<style>
-  *{box-sizing:border-box} html,body{margin:0;height:100%;background:#050505;color:#ddd;font-family:Segoe UI,sans-serif;overflow:hidden}
-  #app{position:absolute;inset:0}
-  #office{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 70%,#2a2214 0%,#0a0806 70%)}
-  #desk{position:absolute;left:0;right:0;bottom:0;height:26%;background:linear-gradient(#1c140e,#0e0a08);border-top:8px solid #3a2818}
-  .fan{position:absolute;left:50%;bottom:28%;transform:translateX(-50%);font-size:28px;opacity:.7}
-  .door{position:absolute;bottom:28%;width:72px;height:38%;background:#111;border:4px solid #333;color:#fc0;font-weight:900;cursor:pointer}
-  #L{left:6%} #R{right:6%}
-  .door.on{background:#3a0000;border-color:#f44;box-shadow:0 0 20px #f40}
-  #camBox{position:absolute;left:14%;right:14%;top:8%;height:52%;background:#0b0b0b;border:5px solid #222;display:none;align-items:center;justify-content:center;flex-direction:column}
-  #camBox.on{display:flex}
-  #camFace{font-size:86px}
-  #camName{margin-top:8px;color:#8f8;font-weight:800;letter-spacing:2px}
-  #static{position:absolute;inset:0;opacity:.12;pointer-events:none;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
-  #panel{position:absolute;right:10px;top:10px;display:grid;gap:6px}
-  #panel button,#tog{background:#101810;color:#9f9;border:1px solid #363;padding:8px 10px;font-weight:800;cursor:pointer}
-  #tog{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);background:#1a1a00;color:#fc0;border-color:#a80}
-  #hud{position:absolute;left:12px;bottom:8px;font-weight:800;text-shadow:0 2px 0 #000}
-  a.back{position:absolute;left:10px;top:10px;z-index:6;background:#fc0;color:#111;padding:7px 12px;border-radius:10px;font-weight:800;text-decoration:none}
-  #end{display:none;position:absolute;inset:0;background:#000;z-index:8;align-items:center;justify-content:center;flex-direction:column;font-size:2.2rem;text-align:center}
-  #scare{font-size:120px}
-</style>
+<meta http-equiv="refresh" content="0;url=../../play.html?id=five-night-memes">
+<title>Five Night Memes — Игроутка</title>
+<script>location.replace("../../play.html?id=five-night-memes");</script>
 </head>
 <body>
-<a class="back" href="../../index.html#classics">← Портал</a>
-<div id="app">
-  <div id="office">
-    <div class="fan">🌀</div>
-    <button class="door" id="L">ДВЕРЬ<br>ЛЕВ</button>
-    <button class="door" id="R">ДВЕРЬ<br>ПРАВ</button>
-    <div id="camBox"><div id="static"></div><div id="camFace">…</div><div id="camName">CAM 1</div></div>
-    <div id="panel">
-      <button data-c="0">CAM 1 Сцена</button>
-      <button data-c="1">CAM 2 Коридор</button>
-      <button data-c="2">CAM 3 Кухня</button>
-      <button data-c="3">CAM 4 Пират</button>
-    </div>
-    <button id="tog">КАМЕРЫ</button>
-    <div id="hud">12 AM · 100%</div>
-  </div>
-</div>
-<div id="end"><div id="scare"></div><div id="endT"></div></div>
-<script src="../mods-data.js"></script>
-<script>
-window.PORTAL_GAME_ID="five-night-memes";
-const hard=window.portalModOn&&(portalModOn("fn-night6","five-night-memes")||portalModOn("all-mode-hard","five-night-memes"));
-const save=window.portalModOn&&portalModOn("fn-cam","five-night-memes");
-const names=["Нини 🤡","Миньон 💛","Губка 🧽","Соник 💨"];
-const face=["🤡","💛","🧽","💨"];
-let cam=0, camsOn=false, L=false,R=false, pow=100, hour=0, t=0, dead=false;
-const pos=[0,0,0,0];
-const rooms=["Сцена","Коридор Л","Кухня","Пиратский залив"];
-document.getElementById("L").onclick=()=>{L=!L;document.getElementById("L").classList.toggle("on",L)};
-document.getElementById("R").onclick=()=>{R=!R;document.getElementById("R").classList.toggle("on",R)};
-document.getElementById("tog").onclick=()=>{camsOn=!camsOn;document.getElementById("camBox").classList.toggle("on",camsOn)};
-document.querySelectorAll("#panel button").forEach(b=>b.onclick=()=>{cam=+b.dataset.c;draw()});
-function draw(){
-  const here=pos.map((p,i)=>p===cam?face[i]+" "+names[i].split(" ")[0]:"").filter(Boolean);
-  document.getElementById("camFace").textContent=here[0]||"····";
-  document.getElementById("camName").textContent="CAM "+(cam+1)+" "+rooms[cam]+(here[0]?" · ДВИЖЕНИЕ":"");
-}
-function lose(i){
-  dead=true;
-  document.getElementById("end").style.display="flex";
-  document.getElementById("scare").textContent=i<0?"💡":face[i];
-  document.getElementById("endT").textContent=i<0?"Энергия 0%":("СКРИМЕР — "+names[i]);
-}
-function tick(){
-  if(dead) return;
-  t++;
-  if(t%50===0){
-    pow -= (L?0.8:0)+(R?0.8:0)+(camsOn?(save?0.15:0.45):0.05)+0.08;
-  }
-  if(t%400===0) hour++;
-  if(t%(hard?70:110)===0){
-    pos.forEach((p,i)=>{
-      if(Math.random()<(hard?0.62:0.34+i*0.05)) pos[i]=Math.min(5,pos[i]+1);
-    });
-  }
-  if(pos[0]>=5 && !L) return lose(0);
-  if(pos[1]>=5 && !L) return lose(1);
-  if(pos[2]>=5 && !R) return lose(2);
-  if(pos[3]>=5 && !R) return lose(3);
-  if(pow<=0) return lose(-1);
-  if(hour>=6){ dead=true; document.getElementById("end").style.display="flex"; document.getElementById("scare").textContent="☀️"; document.getElementById("endT").textContent="6 AM — ты выжил"; return; }
-  document.getElementById("hud").textContent=(hour===0?"12":hour)+" AM · "+Math.max(0,pow|0)+"%";
-  draw();
-}
-setInterval(tick,70);
-draw();
-</script>
+  <p><a href="../../play.html?id=five-night-memes">Открыть Five Night Memes с Игроутки</a></p>
 </body>
 </html>

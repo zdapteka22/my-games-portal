@@ -63,8 +63,8 @@
     {
       id: "chicken-gun",
       title: "Chicken Gun",
-      description: "Курица с пушкой: беги, целься мышью, отбивай волны. Веб-версия.",
-      url: "games/minis/chicken-gun.html",
+      description: "С Игроутки: стрельба по курицам. Не Unity.",
+      url: "play.html?id=chicken-gun",
       emoji: "🐔",
       color: "#8bc34a",
       builtin: true,
@@ -72,8 +72,8 @@
     {
       id: "meme-neighbor",
       title: "Meme Neighbor",
-      description: "Сосед-мем патрулирует дом. Укради ключи и не попадись!",
-      url: "games/minis/meme-neighbor.html",
+      description: "С Игроутки: Мой Дружелюбный Сосед. Не Unity.",
+      url: "play.html?id=meme-neighbor",
       emoji: "🏠",
       color: "#e67e22",
       builtin: true,
@@ -81,8 +81,8 @@
     {
       id: "five-night-memes",
       title: "Five Night Memes",
-      description: "Пять ночей с мемами: двери, камеры, энергия. Доживи до 6 AM.",
-      url: "games/minis/five-night-memes.html",
+      description: "С Игроутки: ФНАФ 1. Не Unity.",
+      url: "play.html?id=five-night-memes",
       emoji: "🌙",
       color: "#6c3483",
       builtin: true,

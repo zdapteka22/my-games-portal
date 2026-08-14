@@ -65,13 +65,14 @@ window.GAME_META = {
     title: "Chicken Gun",
     emoji: "🐔",
     genre: "Шутер",
-    rating: "4.6",
-    src: "minis/chicken-gun.html",
-    desc: "Настоящий Chicken Gun в браузере (Unity WebGL-порт). Курица, пушки, карта.",
-    controls: { p1: "WASD — ходьба · Мышь — прицел · ЛКМ — огонь · R — заново", p2: "—", mobile: "Лучше с клавиатурой", goal: "Набери очки, не умри." },
+    rating: "4.1",
+    src: null,
+    externalUrl: "https://igroutka.ru/igry-strelyalki/29247-classic-chicken-shooting.html",
+    desc: "С Игроутки, не Unity: «Стрельба по курицам» (Classic Chicken Shooting). Тир с курами, пистолет, время.",
+    controls: { p1: "Мышь — прицел и выстрел", p2: "—", mobile: "Только ПК на Игроутке", goal: "Подстрели кур, пока не кончилось время." },
     reviews: [
-      { who: "🧒 Тима, 10 лет", stars: 5, text: "Курица стреляет — огонь!" },
-      { who: "📺 MemeShooter", stars: 4, text: "Коротко и весело. Моды в вкладке Моды." }
+      { who: "🧒 Тима, 10 лет", stars: 5, text: "Куры летают, стрелять весело!" },
+      { who: "📺 Igroutka", stars: 4, text: "Открывается с Игроутки, не самодельная рисовалка." }
     ]
   },
   "meme-neighbor": {
@@ -79,12 +80,13 @@ window.GAME_META = {
     title: "Meme Neighbor",
     emoji: "🏠",
     genre: "Стелс",
-    rating: "4.5",
-    src: "minis/meme-neighbor.html",
-    desc: "Meme Neighbor в браузере: дом, сосед, ключ, молоток, батарейка. Стелс.",
-    controls: { p1: "WASD / стрелки — ходить · R — заново", p2: "—", mobile: "Клавиатура", goal: "3 ключа и выход живым." },
+    rating: "4.3",
+    src: null,
+    externalUrl: "https://igroutka.ru/igry-privet-sosed/45812-moy-druzhelyubnyy-sosed.html",
+    desc: "С Игроутки, не Unity: «Мой Дружелюбный Сосед» (My Friendly Neighbor). Проберись в дом и не попадись.",
+    controls: { p1: "WASD — ходить · Пробел — прыжок · Мышь — смотреть", p2: "—", mobile: "Тач на странице Игроутки", goal: "Собери предметы, сосед не должен тебя увидеть." },
     reviews: [
-      { who: "🧒 Лера, 9 лет", stars: 5, text: "Сосед злой, ключи спрятаны!" }
+      { who: "🧒 Лера, 9 лет", stars: 5, text: "Настоящий сосед с Игроутки, не квадратики." }
     ]
   },
   "five-night-memes": {
@@ -92,12 +94,13 @@ window.GAME_META = {
     title: "Five Night Memes",
     emoji: "🌙",
     genre: "Хоррор",
-    rating: "4.7",
-    src: "minis/five-night-memes.html",
-    desc: "Five Night Nins Memes — веб: камеры, двери, энергия, скримеры мемов.",
-    controls: { p1: "Кнопки дверей и камер на экране", p2: "—", mobile: "Тап по кнопкам", goal: "Не пусти мемов в офис до 6 AM." },
+    rating: "4.5",
+    src: null,
+    externalUrl: "https://igroutka.ru/igry-fnaf/27965-fnaf-1.html",
+    desc: "С Игроутки, не Unity: ФНАФ 1. Камеры, двери, энергия — пять ночей с Фредди.",
+    controls: { p1: "Мышь — камеры и двери (как на Игроутке)", p2: "—", mobile: "Тач, если Игроутка даёт", goal: "Доживи до 6 AM." },
     reviews: [
-      { who: "🧒 Гоша, 11 лет", stars: 5, text: "Миньон в дверях — я кричал." }
+      { who: "🧒 Гоша, 11 лет", stars: 5, text: "Это ФНАФ с Игроутки, не самодельные мемы." }
     ]
   },
   smeshariki: {
