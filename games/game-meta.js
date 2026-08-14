@@ -66,13 +66,11 @@ window.GAME_META = {
     emoji: "🐔",
     genre: "Шутер",
     rating: "4.6",
-    src: null,
-    engine: "unity",
-    externalUrl: "https://play.unity.com/en/games/9aa9480c-68e7-4879-9452-0bb51129d330/chicken-gun-online",
-    desc: "Chicken Gun Online на Unity Play (ChaloApps). Не демо-порт и не Игроутка.",
-    controls: { p1: "WASD — ходить · Мышь — прицел · ЛКМ — огонь", p2: "—", mobile: "Лучше ПК", goal: "Стреляй в мультиплеере." },
+    src: "minis/chicken-gun.html",
+    desc: "Наша веб-игра на портале. WASD, мышь, стрельба. Моды в вкладке Моды.",
+    controls: { p1: "WASD — ходьба · Мышь — прицел · ЛКМ — огонь · R — заново", p2: "—", mobile: "Клавиатура", goal: "Набери очки, не умри." },
     reviews: [
-      { who: "🧒 Тима, 10 лет", stars: 5, text: "Это тот Chicken Gun с Unity Play." }
+      { who: "🧒 Тима, 10 лет", stars: 5, text: "Курица стреляет — огонь!" }
     ]
   },
   "meme-neighbor": {
@@ -81,13 +79,11 @@ window.GAME_META = {
     emoji: "🏠",
     genre: "Стелс",
     rating: "4.5",
-    src: null,
-    engine: "unity",
-    externalUrl: "https://otama-studios.itch.io/hello-neighbor-alpha-1-online",
-    desc: "Hello Neighbor Alpha 1 — Unity, кнопка Run game. Не Игроутка.",
-    controls: { p1: "WASD — ходить · Мышь — смотреть · Пробел — прыжок · E — взять", p2: "—", mobile: "Нажми Run game на странице", goal: "Проберись в дом соседа." },
+    src: "minis/meme-neighbor.html",
+    desc: "Наша веб-игра: дом, сосед-мем, ключи. Не чужой сайт.",
+    controls: { p1: "WASD / стрелки — ходить · R — заново", p2: "—", mobile: "Клавиатура", goal: "3 ключа и выход живым." },
     reviews: [
-      { who: "🧒 Лера, 9 лет", stars: 5, text: "Сосед с itch/Unity, не мёртвая ссылка." }
+      { who: "🧒 Лера, 9 лет", stars: 5, text: "Сосед злой, ключи спрятаны!" }
     ]
   },
   "five-night-memes": {
@@ -95,14 +91,12 @@ window.GAME_META = {
     title: "Five Night Memes",
     emoji: "🌙",
     genre: "Хоррор",
-    rating: "4.6",
-    src: null,
-    engine: "unity",
-    externalUrl: "https://play.unity.com/en/games/9b450a99-8698-4f93-8353-069fbb8a543d/five-nights-at-freddys",
-    desc: "Five Nights at Freddy's на Unity Play. Не Игроутка.",
-    controls: { p1: "Мышь — камеры и двери", p2: "—", mobile: "Лучше ПК", goal: "Доживи до 6 AM." },
+    rating: "4.7",
+    src: "minis/five-night-memes.html",
+    desc: "Наша веб-игра: камеры, двери, энергия, скримеры мемов.",
+    controls: { p1: "Кнопки дверей и камер на экране", p2: "—", mobile: "Тап по кнопкам", goal: "Не пусти мемов в офис до 6 AM." },
     reviews: [
-      { who: "🧒 Гоша, 11 лет", stars: 5, text: "ФНАФ с Unity Play." }
+      { who: "🧒 Гоша, 11 лет", stars: 5, text: "Миньон в дверях — я кричал." }
     ]
   },
   smeshariki: {

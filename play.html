@@ -162,7 +162,7 @@
       .tab { padding: 10px 12px; font-size: 13px; }
     }
   </style>
-  <script src="games/game-meta.js?v=5"></script>
+  <script src="games/game-meta.js?v=6"></script>
   <script src="games/mods-data.js?v=2"></script>
   <script src="chat-shared.js"></script>
 </head>
@@ -328,9 +328,9 @@
       tanks: { id: "tanks", title: "Танчики", emoji: "🪖", genre: "Аркада", src: "minis/tanks.html" },
       labyrinth: { id: "labyrinth", title: "Лабиринт", emoji: "🌀", genre: "Аркада", src: "minis/labyrinth.html" },
       battle: { id: "battle", title: "Битва всех игр", emoji: "⚔️", genre: "Файтинг", src: "minis/battle-all.html" },
-      "chicken-gun": { id: "chicken-gun", title: "Chicken Gun", emoji: "🐔", genre: "Шутер", src: null, engine: "unity", externalUrl: "https://play.unity.com/en/games/9aa9480c-68e7-4879-9452-0bb51129d330/chicken-gun-online" },
-      "meme-neighbor": { id: "meme-neighbor", title: "Meme Neighbor", emoji: "🏠", genre: "Стелс", src: null, engine: "unity", externalUrl: "https://otama-studios.itch.io/hello-neighbor-alpha-1-online" },
-      "five-night-memes": { id: "five-night-memes", title: "Five Night Memes", emoji: "🌙", genre: "Хоррор", src: null, engine: "unity", externalUrl: "https://play.unity.com/en/games/9b450a99-8698-4f93-8353-069fbb8a543d/five-nights-at-freddys" }
+      "chicken-gun": { id: "chicken-gun", title: "Chicken Gun", emoji: "🐔", genre: "Шутер", src: "minis/chicken-gun.html" },
+      "meme-neighbor": { id: "meme-neighbor", title: "Meme Neighbor", emoji: "🏠", genre: "Стелс", src: "minis/meme-neighbor.html" },
+      "five-night-memes": { id: "five-night-memes", title: "Five Night Memes", emoji: "🌙", genre: "Хоррор", src: "minis/five-night-memes.html" }
     };
     if (FALLBACK[gameId]) return Object.assign({ rating: "★", controls: {}, reviews: [] }, FALLBACK[gameId]);
 
