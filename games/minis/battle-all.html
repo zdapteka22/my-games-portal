@@ -590,6 +590,10 @@
     marge: "../../images/heroes/marge.png",
     lisa: "../../images/heroes/lisa.png"
   };
+  Object.keys(IMG).forEach(function (k) {
+    var v = IMG[k];
+    if (typeof v === "string" && v.indexOf("/heroes/") >= 0 && v.indexOf("?") < 0) IMG[k] = v + "?v=orig2";
+  });
 
   /**
    * style: melee, shoot, dash, tank, bite, phase, snake, fire, dualfire,
