@@ -63,7 +63,7 @@
     {
       id: "chicken-gun",
       title: "Chicken Gun",
-      description: "С Игроутки: стрельба по курицам. Не Unity.",
+      description: "Unity WebGL. Не Игроутка.",
       url: "play.html?id=chicken-gun",
       emoji: "🐔",
       color: "#8bc34a",
@@ -72,7 +72,7 @@
     {
       id: "meme-neighbor",
       title: "Meme Neighbor",
-      description: "С Игроутки: Мой Дружелюбный Сосед. Не Unity.",
+      description: "Hello Neighbor Unity WebGL. Не Игроутка.",
       url: "play.html?id=meme-neighbor",
       emoji: "🏠",
       color: "#e67e22",
@@ -81,7 +81,7 @@
     {
       id: "five-night-memes",
       title: "Five Night Memes",
-      description: "С Игроутки: ФНАФ 1. Не Unity.",
+      description: "FNAF Unity WebGL. Не Игроутка.",
       url: "play.html?id=five-night-memes",
       emoji: "🌙",
       color: "#6c3483",

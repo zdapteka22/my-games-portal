@@ -65,14 +65,14 @@ window.GAME_META = {
     title: "Chicken Gun",
     emoji: "🐔",
     genre: "Шутер",
-    rating: "4.1",
+    rating: "4.6",
     src: null,
-    externalUrl: "https://igroutka.ru/igry-strelyalki/29247-classic-chicken-shooting.html",
-    desc: "С Игроутки, не Unity: «Стрельба по курицам» (Classic Chicken Shooting). Тир с курами, пистолет, время.",
-    controls: { p1: "Мышь — прицел и выстрел", p2: "—", mobile: "Только ПК на Игроутке", goal: "Подстрели кур, пока не кончилось время." },
+    engine: "unity",
+    externalUrl: "https://nonogamer9.github.io/cgwebglport/",
+    desc: "Chicken Gun — Unity WebGL в браузере. Не Игроутка.",
+    controls: { p1: "WASD — ходить · Мышь — прицел · ЛКМ — огонь", p2: "—", mobile: "Лучше ПК, Unity WebGL на телефоне тяжёлый", goal: "Стреляй и не умри." },
     reviews: [
-      { who: "🧒 Тима, 10 лет", stars: 5, text: "Куры летают, стрелять весело!" },
-      { who: "📺 Igroutka", stars: 4, text: "Открывается с Игроутки, не самодельная рисовалка." }
+      { who: "🧒 Тима, 10 лет", stars: 5, text: "Настоящий Chicken Gun в браузере!" }
     ]
   },
   "meme-neighbor": {
@@ -80,13 +80,14 @@ window.GAME_META = {
     title: "Meme Neighbor",
     emoji: "🏠",
     genre: "Стелс",
-    rating: "4.3",
+    rating: "4.5",
     src: null,
-    externalUrl: "https://igroutka.ru/igry-privet-sosed/45812-moy-druzhelyubnyy-sosed.html",
-    desc: "С Игроутки, не Unity: «Мой Дружелюбный Сосед» (My Friendly Neighbor). Проберись в дом и не попадись.",
-    controls: { p1: "WASD — ходить · Пробел — прыжок · Мышь — смотреть", p2: "—", mobile: "Тач на странице Игроутки", goal: "Собери предметы, сосед не должен тебя увидеть." },
+    engine: "unity",
+    externalUrl: "https://html-classic.itch.zone/html/4028599/Catch%20Update%20hello%20neighbor%20alpha%201/index.html",
+    desc: "Hello Neighbor Alpha 1 — Unity WebGL. Не Игроутка.",
+    controls: { p1: "WASD — ходить · Мышь — смотреть · Пробел — прыжок · E — взять", p2: "—", mobile: "Лучше ПК", goal: "Проберись в дом соседа." },
     reviews: [
-      { who: "🧒 Лера, 9 лет", stars: 5, text: "Настоящий сосед с Игроутки, не квадратики." }
+      { who: "🧒 Лера, 9 лет", stars: 5, text: "Сосед как в Unity, не сайт Игроутки." }
     ]
   },
   "five-night-memes": {
@@ -94,13 +95,14 @@ window.GAME_META = {
     title: "Five Night Memes",
     emoji: "🌙",
     genre: "Хоррор",
-    rating: "4.5",
+    rating: "4.6",
     src: null,
-    externalUrl: "https://igroutka.ru/igry-fnaf/27965-fnaf-1.html",
-    desc: "С Игроутки, не Unity: ФНАФ 1. Камеры, двери, энергия — пять ночей с Фредди.",
-    controls: { p1: "Мышь — камеры и двери (как на Игроутке)", p2: "—", mobile: "Тач, если Игроутка даёт", goal: "Доживи до 6 AM." },
+    engine: "unity",
+    externalUrl: "https://oneguygames.github.io/FNAFTEST/",
+    desc: "Five Nights at Freddy's — Unity WebGL. Не Игроутка.",
+    controls: { p1: "Мышь — камеры и двери", p2: "—", mobile: "Лучше ПК", goal: "Доживи до 6 AM." },
     reviews: [
-      { who: "🧒 Гоша, 11 лет", stars: 5, text: "Это ФНАФ с Игроутки, не самодельные мемы." }
+      { who: "🧒 Гоша, 11 лет", stars: 5, text: "ФНАФ из Unity, не Игроутка." }
     ]
   },
   smeshariki: {
