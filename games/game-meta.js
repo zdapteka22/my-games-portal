@@ -68,11 +68,11 @@ window.GAME_META = {
     rating: "4.6",
     src: null,
     engine: "unity",
-    externalUrl: "https://nonogamer9.github.io/cgwebglport/",
-    desc: "Chicken Gun — Unity WebGL в браузере. Не Игроутка.",
-    controls: { p1: "WASD — ходить · Мышь — прицел · ЛКМ — огонь", p2: "—", mobile: "Лучше ПК, Unity WebGL на телефоне тяжёлый", goal: "Стреляй и не умри." },
+    externalUrl: "https://play.unity.com/en/games/9aa9480c-68e7-4879-9452-0bb51129d330/chicken-gun-online",
+    desc: "Chicken Gun Online на Unity Play (ChaloApps). Не демо-порт и не Игроутка.",
+    controls: { p1: "WASD — ходить · Мышь — прицел · ЛКМ — огонь", p2: "—", mobile: "Лучше ПК", goal: "Стреляй в мультиплеере." },
     reviews: [
-      { who: "🧒 Тима, 10 лет", stars: 5, text: "Настоящий Chicken Gun в браузере!" }
+      { who: "🧒 Тима, 10 лет", stars: 5, text: "Это тот Chicken Gun с Unity Play." }
     ]
   },
   "meme-neighbor": {
@@ -83,11 +83,11 @@ window.GAME_META = {
     rating: "4.5",
     src: null,
     engine: "unity",
-    externalUrl: "https://html-classic.itch.zone/html/4028599/Catch%20Update%20hello%20neighbor%20alpha%201/index.html",
-    desc: "Hello Neighbor Alpha 1 — Unity WebGL. Не Игроутка.",
-    controls: { p1: "WASD — ходить · Мышь — смотреть · Пробел — прыжок · E — взять", p2: "—", mobile: "Лучше ПК", goal: "Проберись в дом соседа." },
+    externalUrl: "https://otama-studios.itch.io/hello-neighbor-alpha-1-online",
+    desc: "Hello Neighbor Alpha 1 — Unity, кнопка Run game. Не Игроутка.",
+    controls: { p1: "WASD — ходить · Мышь — смотреть · Пробел — прыжок · E — взять", p2: "—", mobile: "Нажми Run game на странице", goal: "Проберись в дом соседа." },
     reviews: [
-      { who: "🧒 Лера, 9 лет", stars: 5, text: "Сосед как в Unity, не сайт Игроутки." }
+      { who: "🧒 Лера, 9 лет", stars: 5, text: "Сосед с itch/Unity, не мёртвая ссылка." }
     ]
   },
   "five-night-memes": {
@@ -98,11 +98,11 @@ window.GAME_META = {
     rating: "4.6",
     src: null,
     engine: "unity",
-    externalUrl: "https://oneguygames.github.io/FNAFTEST/",
-    desc: "Five Nights at Freddy's — Unity WebGL. Не Игроутка.",
+    externalUrl: "https://play.unity.com/en/games/9b450a99-8698-4f93-8353-069fbb8a543d/five-nights-at-freddys",
+    desc: "Five Nights at Freddy's на Unity Play. Не Игроутка.",
     controls: { p1: "Мышь — камеры и двери", p2: "—", mobile: "Лучше ПК", goal: "Доживи до 6 AM." },
     reviews: [
-      { who: "🧒 Гоша, 11 лет", stars: 5, text: "ФНАФ из Unity, не Игроутка." }
+      { who: "🧒 Гоша, 11 лет", stars: 5, text: "ФНАФ с Unity Play." }
     ]
   },
   smeshariki: {
