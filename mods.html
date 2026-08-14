@@ -14,9 +14,11 @@
     h1 { font-size:1.25rem; }
     .wrap { max-width:1100px; margin:0 auto; padding:18px 14px 48px; }
     .sub { color:var(--m); margin:8px 0 16px; }
-    .filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
-    .filters button { border:1px solid var(--b); background:#151515; color:#ddd; padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer; }
-    .filters button.on { background:var(--y); color:#111; border-color:var(--y); }
+    .filters, .games { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+    .filters button, .games button {
+      border:1px solid var(--b); background:#151515; color:#ddd; padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer;
+    }
+    .filters button.on, .games button.on { background:var(--y); color:#111; border-color:var(--y); }
     .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
     .card { background:var(--card); border:1px solid var(--b); border-radius:16px; padding:14px; }
     .card h3 { font-size:1.05rem; margin:6px 0; }
@@ -25,26 +27,19 @@
     .onoff { margin-top:10px; width:100%; min-height:40px; border:0; border-radius:12px; font-weight:800; cursor:pointer; }
     .onoff.off { background:#2a2a2a; color:#ccc; }
     .onoff.on { background:linear-gradient(135deg,#ffcc00,#ff9f1c); color:#2a1200; }
-    .games { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0; }
-    .games a { background:#161616; border:1px solid #333; color:#fff; text-decoration:none; padding:10px 14px; border-radius:12px; font-weight:800; }
-    .games a:hover { border-color:var(--y); color:var(--y); }
+    .play-link { display:inline-block; margin-top:4px; color:var(--y); font-weight:800; text-decoration:none; }
+    .empty { color:var(--m); padding:24px 4px; }
   </style>
 </head>
 <body>
   <header>
     <a href="index.html">← Портал</a>
-    <h1>🧩 Моды на все игры</h1>
+    <h1>🧩 Моды</h1>
   </header>
   <div class="wrap">
-    <p class="sub">Нож, персонажи, режимы. Включи мод — он сохранится и подхватится в игре (веб, не Unity-клиент).</p>
-    <div class="games">
-      <a href="play.html?id=chicken-gun">🐔 Chicken Gun</a>
-      <a href="play.html?id=meme-neighbor">🏠 Meme Neighbor</a>
-      <a href="play.html?id=five-night-memes">🌙 Five Night Memes</a>
-      <a href="play.html?id=smeshariki">🟡 Смешарики</a>
-      <a href="play.html?id=mario">🍄 Марио</a>
-      <a href="play.html?id=snake">🐍 Змейка</a>
-    </div>
+    <p class="sub">Сначала выбери игру. Включение мода только для неё — в другие игры он не попадёт. Кнопка «Включить» не запускает игру.</p>
+    <div class="games" id="games"></div>
+    <p id="gameHint" class="sub"></p>
     <div class="filters" id="filters">
       <button data-c="all" class="on">Все</button>
       <button data-c="knife">🔪 Нож</button>
@@ -57,27 +52,57 @@
   <script>
     const names={knife:"Нож",character:"Персонаж",mode:"Режим"};
     let cat="all";
+    let gameId="";
+    try { gameId = new URLSearchParams(location.search).get("id") || ""; } catch(e) {}
+
+    const gamesBox=document.getElementById("games");
+    gamesBox.innerHTML=(PORTAL_MOD_GAMES||[]).map(g=>
+      `<button type="button" data-id="${g.id}" class="${g.id===gameId?"on":""}">${g.title}</button>`
+    ).join("");
+
     function draw(){
+      const hint=document.getElementById("gameHint");
       const box=document.getElementById("grid");
-      box.innerHTML=(PORTAL_MODS.filter(m=>cat==="all"||m.cat===cat).map(m=>{
-        const on=portalModOn(m.id);
-        const g=m.games[0]==="*"?"все игры":m.games.join(", ");
+      if(!gameId){
+        hint.textContent="Выбери игру сверху — моды включаются только в ней.";
+        box.innerHTML="";
+        return;
+      }
+      const title=(PORTAL_MOD_GAMES.find(g=>g.id===gameId)||{}).title||gameId;
+      hint.innerHTML="Моды для <b>"+title+"</b>. <a class='play-link' href='play.html?id="+encodeURIComponent(gameId)+"#mods'>Открыть вкладку Моды в игре →</a>";
+      const list=portalModsForGame(gameId).filter(m=>cat==="all"||m.cat===cat);
+      if(!list.length){
+        box.innerHTML="<p class='empty'>Для этой игры в этом разделе модов нет.</p>";
+        return;
+      }
+      box.innerHTML=list.map(m=>{
+        const on=portalModOn(m.id, gameId);
         return `<article class="card">
-          <span class="tag">${names[m.cat]||m.cat}</span><span class="tag">${g}</span>
+          <span class="tag">${names[m.cat]||m.cat}</span>
           <h3>${m.emoji} ${m.title}</h3>
           <p>${m.desc}</p>
-          <button class="onoff ${on?"on":"off"}" data-id="${m.id}">${on?"✓ Включён":"Включить"}</button>
+          <button type="button" class="onoff ${on?"on":"off"}" data-id="${m.id}">${on?"✓ Включён в этой игре":"Включить только здесь"}</button>
         </article>`;
-      }).join(""));
+      }).join("");
     }
+
+    gamesBox.onclick=e=>{
+      const b=e.target.closest("button[data-id]"); if(!b) return;
+      gameId=b.dataset.id;
+      [...gamesBox.children].forEach(x=>x.classList.toggle("on",x===b));
+      const u=new URL(location.href);
+      u.searchParams.set("id", gameId);
+      history.replaceState(null,"",u);
+      draw();
+    };
     document.getElementById("filters").onclick=e=>{
       const b=e.target.closest("button"); if(!b) return;
       cat=b.dataset.c; [...document.getElementById("filters").children].forEach(x=>x.classList.toggle("on",x===b));
       draw();
     };
     document.getElementById("grid").onclick=e=>{
-      const b=e.target.closest("button.onoff"); if(!b) return;
-      portalModSet(b.dataset.id, !portalModOn(b.dataset.id));
+      const b=e.target.closest("button.onoff"); if(!b||!gameId) return;
+      portalModSet(b.dataset.id, !portalModOn(b.dataset.id, gameId), gameId);
       draw();
     };
     draw();

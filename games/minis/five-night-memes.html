@@ -48,8 +48,9 @@
 <div id="end"><div id="scare"></div><div id="endT"></div></div>
 <script src="../mods-data.js"></script>
 <script>
-const hard=window.portalModOn&&(portalModOn("fn-night6")||portalModOn("all-mode-hard"));
-const save=window.portalModOn&&portalModOn("fn-cam");
+window.PORTAL_GAME_ID="five-night-memes";
+const hard=window.portalModOn&&(portalModOn("fn-night6","five-night-memes")||portalModOn("all-mode-hard","five-night-memes"));
+const save=window.portalModOn&&portalModOn("fn-cam","five-night-memes");
 const names=["Нини 🤡","Миньон 💛","Губка 🧽","Соник 💨"];
 const face=["🤡","💛","🧽","💨"];
 let cam=0, camsOn=false, L=false,R=false, pow=100, hour=0, t=0, dead=false;

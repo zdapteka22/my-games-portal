@@ -23,11 +23,12 @@
 <canvas id="cv"></canvas>
 <script src="../mods-data.js"></script>
 <script>
+window.PORTAL_GAME_ID="meme-neighbor";
 const C=document.getElementById("cv"),X=C.getContext("2d");
 let W,H; function fit(){W=C.width=innerWidth;H=C.height=innerHeight} fit(); addEventListener("resize",fit);
-const hard=window.portalModOn&&(portalModOn("mn-sprint")||portalModOn("all-mode-hard"));
-const mask=window.portalModOn&&portalModOn("mn-mask");
-const sonic=window.portalModOn&&portalModOn("all-char-sonic");
+const hard=window.portalModOn&&(portalModOn("mn-sprint","meme-neighbor")||portalModOn("all-mode-hard","meme-neighbor"));
+const mask=window.portalModOn&&portalModOn("mn-mask","meme-neighbor");
+const sonic=window.portalModOn&&portalModOn("all-char-sonic","meme-neighbor");
 const K={}; addEventListener("keydown",e=>K[e.code]=true); addEventListener("keyup",e=>K[e.code]=false);
 
 const TILE=48;

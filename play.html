@@ -163,6 +163,7 @@
     }
   </style>
   <script src="games/game-meta.js?v=3"></script>
+  <script src="games/mods-data.js?v=2"></script>
   <script src="chat-shared.js"></script>
 </head>
 <body>
@@ -177,6 +178,7 @@
   </div>
   <div class="tabs" role="tablist">
     <button type="button" class="tab active" data-tab="play">🎮 Играть</button>
+    <button type="button" class="tab" data-tab="mods">🧩 Моды</button>
     <button type="button" class="tab" data-tab="desc">📖 Описание</button>
     <button type="button" class="tab" data-tab="chat">💬 Чат игры</button>
     <button type="button" class="tab" data-tab="reviews">⭐ Отзывы</button>
@@ -191,6 +193,16 @@
       <button type="button" class="btn btn-go" id="reloadBtn">↻ Заново</button>
       <a class="btn btn-sec" id="openRawBtn" href="#" target="_blank" rel="noopener">↗ На весь экран</a>
       <a class="btn btn-sec" href="index.html">Каталог</a>
+    </div>
+  </div>
+
+  <div id="panel-mods" class="panel">
+    <div class="content">
+      <div class="card">
+        <h2>🧩 Моды этой игры</h2>
+        <p class="hint">Включение только для текущей игры. Другие игры не меняются. Игра не перезапускается, пока не нажмёшь «Применить».</p>
+        <div id="modsList" class="ctrl-grid" style="margin-top:12px"></div>
+      </div>
     </div>
   </div>
 
@@ -356,6 +368,7 @@
   }
 
   let meta = resolveMeta();
+  window.PORTAL_GAME_ID = meta.id || gameId;
 
   function stars(n) {
     n = Math.max(0, Math.min(5, Number(n) || 0));
@@ -655,8 +668,50 @@
     } catch (_) {}
   }
 
+  function renderMods() {
+    const box = document.getElementById("modsList");
+    if (!box) return;
+    if (!window.portalModsForGame) {
+      box.innerHTML = "<p class='hint'>Список модов не загрузился.</p>";
+      return;
+    }
+    const gid = meta.id || gameId;
+    const list = portalModsForGame(gid);
+    if (!list.length) {
+      box.innerHTML = "<p class='hint'>Для этой игры модов пока нет.</p>";
+      return;
+    }
+    const names = { knife: "Нож", character: "Персонаж", mode: "Режим" };
+    box.innerHTML = list.map(function (m) {
+      const on = portalModOn(m.id, gid);
+      return "<div class='card' style='margin:0'>" +
+        "<b>" + esc(m.emoji + " " + m.title) + "</b>" +
+        "<span class='hint' style='display:block;margin:4px 0 8px'>" + esc((names[m.cat] || m.cat) + " · " + m.desc) + "</span>" +
+        "<button type='button' class='btn " + (on ? "btn-go" : "btn-sec") + " mod-toggle' data-id='" + esc(m.id) + "'>" +
+        (on ? "✓ Включён — только здесь" : "Включить в этой игре") +
+        "</button></div>";
+    }).join("") +
+      "<p class='hint' id='modsApplyHint'>После включения нажми «Применить», чтобы игра подхватила мод.</p>" +
+      "<button type='button' class='btn btn-go' id='modsApplyBtn'>Применить моды и перезагрузить игру</button>";
+  }
+
+  document.getElementById("modsList")?.addEventListener("click", function (e) {
+    const b = e.target.closest(".mod-toggle");
+    if (!b) return;
+    const gid = meta.id || gameId;
+    portalModSet(b.dataset.id, !portalModOn(b.dataset.id, gid), gid);
+    renderMods();
+  });
+  document.getElementById("panel-mods")?.addEventListener("click", function (e) {
+    if (e.target.id !== "modsApplyBtn") return;
+    mountPlay();
+    const hint = document.getElementById("modsApplyHint");
+    if (hint) hint.textContent = "✓ Моды применены в этой игре. Вкладка «Играть» обновлена.";
+  });
+
   fillHeader();
   mountPlay();
+  renderMods();
   renderControls();
   renderReviews();
   if (chatHint) chatHint.textContent = "Чат только для «" + (meta.title || gameId) + "». Общий для всех, если облако работает.";
@@ -673,7 +728,7 @@
 
   // open tab from hash #reviews / #chat
   const hash = (location.hash || "").replace("#", "");
-  if (hash && ["play", "desc", "chat", "reviews", "controls"].indexOf(hash) >= 0) {
+  if (hash && ["play", "mods", "desc", "chat", "reviews", "controls"].indexOf(hash) >= 0) {
     const btn = document.querySelector('.tab[data-tab="' + hash + '"]');
     if (btn) btn.click();
   }
