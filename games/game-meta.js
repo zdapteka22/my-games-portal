@@ -67,9 +67,7 @@ window.GAME_META = {
     genre: "Шутер",
     rating: "4.6",
     src: "minis/chicken-gun.html",
-    engine: "unity",
-    externalUrl: "https://www.crazygames.com/embed/chicken-cs",
-    desc: "Chicken Gun / Chicken CS — Unity в браузере. Есть и лёгкая версия на сайте.",
+    desc: "Настоящий Chicken Gun в браузере (Unity WebGL-порт). Курица, пушки, карта.",
     controls: { p1: "WASD — ходьба · Мышь — прицел · ЛКМ — огонь · R — заново", p2: "—", mobile: "Лучше с клавиатурой", goal: "Набери очки, не умри." },
     reviews: [
       { who: "🧒 Тима, 10 лет", stars: 5, text: "Курица стреляет — огонь!" },
@@ -83,9 +81,7 @@ window.GAME_META = {
     genre: "Стелс",
     rating: "4.5",
     src: "minis/meme-neighbor.html",
-    engine: "unity",
-    externalUrl: "https://topgames.gg/hello-neighbor",
-    desc: "Meme / Hello Neighbor — веб. Плюс лёгкая версия на сайте.",
+    desc: "Meme Neighbor в браузере: дом, сосед, ключ, молоток, батарейка. Стелс.",
     controls: { p1: "WASD / стрелки — ходить · R — заново", p2: "—", mobile: "Клавиатура", goal: "3 ключа и выход живым." },
     reviews: [
       { who: "🧒 Лера, 9 лет", stars: 5, text: "Сосед злой, ключи спрятаны!" }
@@ -98,9 +94,7 @@ window.GAME_META = {
     genre: "Хоррор",
     rating: "4.7",
     src: "minis/five-night-memes.html",
-    engine: "unity",
-    externalUrl: "https://igroutka.ru/igry-fnaf/27965-fnaf-1.html",
-    desc: "Five Night / FNAF в браузере + лёгкая мем-версия на сайте.",
+    desc: "Five Night Nins Memes — веб: камеры, двери, энергия, скримеры мемов.",
     controls: { p1: "Кнопки дверей и камер на экране", p2: "—", mobile: "Тап по кнопкам", goal: "Не пусти мемов в офис до 6 AM." },
     reviews: [
       { who: "🧒 Гоша, 11 лет", stars: 5, text: "Миньон в дверях — я кричал." }
