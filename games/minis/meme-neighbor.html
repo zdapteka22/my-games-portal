@@ -5,33 +5,38 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Meme Neighbor</title>
 <style>
-  html,body{margin:0;height:100%;background:#0c0a09;color:#eee;font-family:Segoe UI,sans-serif;overflow:hidden}
+  html,body{margin:0;height:100%;background:#0c0a09;color:#eee;font-family:Segoe UI,sans-serif;overflow:hidden;touch-action:none}
   #cv{display:block;width:100%;height:100%}
-  #hud{position:fixed;left:12px;top:10px;z-index:3;text-shadow:0 2px 0 #000;pointer-events:none}
-  #hud b{color:#ffcc00}
-  #inv{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:3}
-  #inv span{width:48px;height:48px;border:2px solid #664;background:#1a1410;display:grid;place-items:center;font-size:22px;border-radius:8px}
-  a.back{position:fixed;right:10px;top:10px;z-index:4;background:#ffcc00;color:#111;padding:8px 12px;border-radius:10px;font-weight:800;text-decoration:none}
-  #flash{position:fixed;inset:0;pointer-events:none;z-index:5}
+  #hud{position:fixed;left:12px;top:10px;z-index:3;background:rgba(0,0,0,.55);padding:10px 14px;border-radius:10px;border:1px solid #443;pointer-events:none;max-width:min(90vw,320px)}
+  #hud b{color:#ffcc00;font-size:16px}
+  #hud #st{font-size:13px;line-height:1.35;color:#ccc;margin-top:4px;display:block}
+  #inv{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:3}
+  #inv span{width:54px;height:54px;border:2px solid #775;background:#1a1410;display:grid;place-items:center;font-size:26px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+  #inv span.got{border-color:#fc0;background:#2a2010}
+  a.back{position:fixed;right:10px;top:10px;z-index:4;background:#ffcc00;color:#111;padding:8px 14px;border-radius:10px;font-weight:800;text-decoration:none;font-size:14px}
+  #tip{position:fixed;right:10px;bottom:80px;z-index:4;background:rgba(0,0,0,.65);border:1px solid #444;color:#aaa;font-size:11px;padding:6px 10px;border-radius:8px;max-width:160px;line-height:1.3}
+  #touch{position:fixed;right:16px;bottom:16px;width:110px;height:110px;z-index:4;display:none}
+  @media(max-width:900px){#touch{display:block}}
 </style>
 </head>
 <body>
 <a class="back" href="../../play.html?id=meme-neighbor">&#8592; Портал</a>
-<div id="hud"><b>MEME NEIGHBOR</b><br><span id="st">Собери ключ, молоток и батарейку. Выйди в дверь.</span></div>
-<div id="inv"><span id="i0">&middot;</span><span id="i1">&middot;</span><span id="i2">&middot;</span></div>
-<div id="flash"></div>
+<div id="hud"><b>MEME NEIGHBOR</b><span id="st">WASD — ходить. Собери ключ, молоток, батарейку. Выйди в дверь.</span></div>
+<div id="tip">Мини-версия. Полная игра — APK.</div>
+<div id="inv"><span id="i0" title="Ключ">&#x1F511;</span><span id="i1" title="Молоток">&#x1F528;</span><span id="i2" title="Батарейка">&#x1F50B;</span></div>
 <canvas id="cv"></canvas>
 <script src="../mods-data.js"></script>
 <script>
 window.PORTAL_GAME_ID="meme-neighbor";
 const C=document.getElementById("cv"),X=C.getContext("2d");
-let W,H; function fit(){W=C.width=innerWidth;H=C.height=innerHeight} fit(); addEventListener("resize",fit);
+let W,H,TILE=48;
+function fit(){W=C.width=innerWidth;H=C.height=innerHeight;TILE=Math.max(36,Math.min(72,Math.floor(Math.min(W/22,H/16)*0.92)))}
+fit(); addEventListener("resize",fit);
 const hard=window.portalModOn&&(portalModOn("mn-sprint","meme-neighbor")||portalModOn("all-mode-hard","meme-neighbor"));
 const mask=window.portalModOn&&portalModOn("mn-mask","meme-neighbor");
 const sonic=window.portalModOn&&portalModOn("all-char-sonic","meme-neighbor");
 const K={}; addEventListener("keydown",e=>K[e.code]=true); addEventListener("keyup",e=>K[e.code]=false);
 
-const TILE=48;
 const MAP=[
 "####################",
 "#........#....K....#",
@@ -48,75 +53,115 @@ const MAP=[
 "#.....#.N..#...E...#",
 "####################"
 ];
-const Hm=MAP.length, Wm=MAP[0].length;
+const Hm=MAP.length,Wm=MAP[0].length;
 const walls=new Set();
-let px=2,py=7, items={K:false,M:false,B:false};
+let px=2,py=7,items={K:false,M:false,B:false};
 const loot=[];
-let nx=10,ny=12, nPath=1, nAlert=0, caught=false, won=false, tick=0;
-for(let y=0;y<Hm;y++) for(let x=0;x<Wm;x++){
+let nx=10,ny=12,nPath=1,nAlert=0,caught=false,won=false,tick=0;
+for(let y=0;y<Hm;y++)for(let x=0;x<Wm;x++){
   const c=MAP[y][x];
-  if(c==="#") walls.add(x+","+y);
+  if(c==="#")walls.add(x+","+y);
   if(c==="P"){px=x+.5;py=y+.5}
   if(c==="N"){nx=x+.5;ny=y+.5}
-  if(c==="K") loot.push({x:x+.5,y:y+.5,id:"K",g:"\u{1F511}"});
-  if(c==="M") loot.push({x:x+.5,y:y+.5,id:"M",g:"\u{1F528}"});
-  if(c==="B") loot.push({x:x+.5,y:y+.5,id:"B",g:"\u{1F50B}"});
+  if(c==="K")loot.push({x:x+.5,y:y+.5,id:"K",g:"\u{1F511}",c:"#fc0"});
+  if(c==="M")loot.push({x:x+.5,y:y+.5,id:"M",g:"\u{1F528}",c:"#aaa"});
+  if(c==="B")loot.push({x:x+.5,y:y+.5,id:"B",g:"\u{1F50B}",c:"#4f4"});
 }
 
 function blocked(x,y){return walls.has((x|0)+","+(y|0))}
 function canSee(){
-  const dx=px-nx, dy=py-ny, d=Math.hypot(dx,dy);
-  if(d>(mask?5.2:8.5)) return false;
+  const dx=px-nx,dy=py-ny,d=Math.hypot(dx,dy);
+  if(d>(mask?5.2:8.5))return false;
   const s=Math.ceil(d*4);
-  for(let i=1;i<s;i++){ if(blocked(nx+dx*i/s, ny+dy*i/s)) return false; }
+  for(let i=1;i<s;i++)if(blocked(nx+dx*i/s,ny+dy*i/s))return false;
   return true;
+}
+
+function drawTile(sx,sy,c,x,y){
+  if(c==="#"){
+    const g=X.createLinearGradient(sx,sy,sx+TILE,sy+TILE);
+    g.addColorStop(0,"#4a3528");g.addColorStop(1,"#2a1e16");
+    X.fillStyle=g;X.fillRect(sx,sy,TILE,TILE);
+    X.strokeStyle="#1a1008";X.lineWidth=2;X.strokeRect(sx+2,sy+2,TILE-4,TILE-4);
+  }else{
+    X.fillStyle=(x+y)%2?"#2e2218":"#261a12";X.fillRect(sx,sy,TILE,TILE);
+    X.fillStyle="rgba(0,0,0,.06)";X.fillRect(sx,sy+TILE-3,TILE,3);
+    if(c==="E"){
+      X.fillStyle="#5a3a20";X.fillRect(sx+TILE*.15,sy+TILE*.12,TILE*.7,TILE*.78);
+      X.fillStyle="#8a6020";X.fillRect(sx+TILE*.22,sy+TILE*.2,TILE*.56,TILE*.5);
+      X.font=(TILE*.45)+"px sans-serif";X.fillText("\u{1F6AA}",sx+TILE*.28,sy+TILE*.72);
+    }
+    if(c==="H"){
+      X.fillStyle="#6a5040";X.fillRect(sx+TILE*.2,sy+TILE*.35,TILE*.6,TILE*.45);
+      X.fillStyle="#3a2820";X.fillRect(sx+TILE*.25,sy+TILE*.42,TILE*.5,TILE*.3);
+    }
+  }
 }
 
 function loop(){
   requestAnimationFrame(loop);
   tick++;
   if(!caught&&!won){
-    let vx=0,vy=0, sp=sonic?0.09:0.065;
-    if(K.KeyA||K.ArrowLeft)vx-=1; if(K.KeyD||K.ArrowRight)vx+=1;
-    if(K.KeyW||K.ArrowUp)vy-=1; if(K.KeyS||K.ArrowDown)vy+=1;
-    const l=Math.hypot(vx,vy)||1; vx=vx/l*sp; vy=vy/l*sp;
-    if(!blocked(px+vx,py)) px+=vx;
-    if(!blocked(px,py+vy)) py+=vy;
-    loot.forEach(it=>{ if(!items[it.id] && Math.hypot(px-it.x,py-it.y)<.45) items[it.id]=true; });
-    if(items.K&&items.M&&items.B && px>16 && py>11) won=true;
+    let vx=0,vy=0,sp=sonic?0.09:0.065;
+    if(K.KeyA||K.ArrowLeft)vx-=1;if(K.KeyD||K.ArrowRight)vx+=1;
+    if(K.KeyW||K.ArrowUp)vy-=1;if(K.KeyS||K.ArrowDown)vy+=1;
+    const l=Math.hypot(vx,vy)||1;vx=vx/l*sp;vy=vy/l*sp;
+    if(!blocked(px+vx,py))px+=vx;
+    if(!blocked(px,py+vy))py+=vy;
+    loot.forEach(it=>{if(!items[it.id]&&Math.hypot(px-it.x,py-it.y)<.45)items[it.id]=true});
+    if(items.K&&items.M&&items.B&&px>16&&py>11)won=true;
     const nsp=(hard?0.055:0.032)+(nAlert>0?0.04:0);
-    if(canSee()){ nAlert=90; const a=Math.atan2(py-ny,px-nx); nx+=Math.cos(a)*nsp; ny+=Math.sin(a)*nsp; }
-    else {
-      nAlert=Math.max(0,nAlert-1);
-      nx+=nPath*nsp; if(blocked(nx+.3,ny)||blocked(nx-.3,ny)||nx<2||nx>18) nPath*=-1;
+    if(canSee()){nAlert=90;const a=Math.atan2(py-ny,px-nx);nx+=Math.cos(a)*nsp;ny+=Math.sin(a)*nsp}
+    else{nAlert=Math.max(0,nAlert-1);nx+=nPath*nsp;if(blocked(nx+.3,ny)||blocked(nx-.3,ny)||nx<2||nx>18)nPath*=-1}
+    if(Math.hypot(px-nx,py-ny)<.55)caught=true;
+  }
+  if((caught||won)&&K.KeyR)location.reload();
+
+  const mapW=Wm*TILE,mapH=Hm*TILE;
+  const camx=Math.max(0,Math.min(mapW-W,px*TILE-W/2));
+  const camy=Math.max(0,Math.min(mapH-H,py*TILE-H/2));
+  const offX=(W-mapW)/2,offY=(H-mapH)/2;
+  const ox=offX>0?offX:0,oy=offY>0?offY:0;
+  const cx=offX>0?0:camx,cy=offY>0?0:camy;
+
+  X.fillStyle="#0a0806";X.fillRect(0,0,W,H);
+  for(let y=0;y<Hm;y++)for(let x=0;x<Wm;x++){
+    const sx=x*TILE-cx+ox,sy=y*TILE-cy+oy;
+    if(sx<-TILE||sy<-TILE||sx>W+TILE||sy>H+TILE)continue;
+    drawTile(sx,sy,MAP[y][x],x,y);
+  }
+  loot.forEach(it=>{
+    if(!items[it.id]){
+      const sx=it.x*TILE-cx+ox,sy=it.y*TILE-cy+oy;
+      X.font=(TILE*.55)+"px sans-serif";
+      X.shadowColor=it.c;X.shadowBlur=12;
+      X.fillText(it.g,sx-TILE*.2,sy+TILE*.15);
+      X.shadowBlur=0;
     }
-    if(Math.hypot(px-nx,py-ny)<.55) caught=true;
+  });
+  const psx=px*TILE-cx+ox,psy=py*TILE-cy+oy;
+  const nsx=nx*TILE-cx+ox,nsy=ny*TILE-cy+oy;
+  X.font=(TILE*.7)+"px sans-serif";
+  X.fillText(sonic?"\u{1F4A8}":"\u{1F9E2}",psx-TILE*.35,psy+TILE*.2);
+  X.fillText(nAlert?"\u{1F92C}":"\u{1F621}",nsx-TILE*.35,nsy+TILE*.2);
+  if(canSee()){
+    X.fillStyle="rgba(255,30,0,.15)";X.beginPath();
+    X.arc(nsx,nsy,TILE*2.5,0,7);X.fill();
+    X.strokeStyle="rgba(255,80,0,.4)";X.lineWidth=3;X.stroke();
   }
-  if((caught||won)&&K.KeyR){ location.reload(); }
+  if(won){X.fillStyle="rgba(0,80,0,.35)";X.fillRect(0,0,W,H)}
+  if(caught){X.fillStyle="rgba(120,0,0,.4)";X.fillRect(0,0,W,H)}
 
-  const camx=px*TILE-W/2, camy=py*TILE-H/2;
-  X.fillStyle="#1a100c"; X.fillRect(0,0,W,H);
-  for(let y=0;y<Hm;y++) for(let x=0;x<Wm;x++){
-    const sx=x*TILE-camx, sy=y*TILE-camy;
-    const c=MAP[y][x];
-    if(c==="#"){ X.fillStyle="#3a2a22"; X.fillRect(sx,sy,TILE,TILE); X.fillStyle="#2a1c16"; X.fillRect(sx+4,sy+4,TILE-8,TILE-8); }
-    else { X.fillStyle=(x+y)%2?"#2c2118":"#261c14"; X.fillRect(sx,sy,TILE,TILE); }
-    if(c==="E"){ X.fillStyle="#4a3020"; X.fillRect(sx+8,sy+4,TILE-16,TILE-8); X.fillStyle="#c9a227"; X.fillText("\u{1F6AA}",sx+12,sy+32); }
-    if(c==="H"){ X.fillStyle="#5a4030"; X.fillRect(sx+10,sy+18,28,22); }
-  }
-  loot.forEach(it=>{ if(!items[it.id]){ X.font="28px sans-serif"; X.fillText(it.g, it.x*TILE-camx-12, it.y*TILE-camy+10); } });
-  X.font="34px sans-serif";
-  X.fillText(sonic?"\u{1F4A8}":"\u{1F9E2}", px*TILE-camx-16, py*TILE-camy+12);
-  X.fillText(nAlert?"\u{1F92C}":"\u{1F621}", nx*TILE-camx-16, ny*TILE-camy+12);
-  if(canSee()){ X.fillStyle="rgba(255,40,0,.12)"; X.beginPath(); X.arc(nx*TILE-camx,ny*TILE-camy, 140,0,7); X.fill(); }
-
-  document.getElementById("i0").textContent=items.K?"\u{1F511}":"\u00b7";
-  document.getElementById("i1").textContent=items.M?"\u{1F528}":"\u00b7";
-  document.getElementById("i2").textContent=items.B?"\u{1F50B}":"\u00b7";
+  ["i0","i1","i2"].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    const keys=["K","M","B"];
+    el.classList.toggle("got",items[keys[i]]);
+    el.style.opacity=items[keys[i]]?"1":".35";
+  });
   const st=document.getElementById("st");
-  if(caught) st.textContent="ПОЙМАЛИ! R — заново";
-  else if(won) st.textContent="СБЕЖАЛ ИЗ ДОМА!";
-  else st.textContent=canSee()?"ОН ТЕБЯ ВИДИТ!":"Собери ключ, молоток, батарейку \u2192 дверь \u{1F6AA}";
+  if(caught)st.textContent="ПОЙМАЛИ! Нажми R — заново";
+  else if(won)st.textContent="СБЕЖАЛ ИЗ ДОМА!";
+  else st.textContent=canSee()?"\u26A0 ОН ТЕБЯ ВИДИТ! Беги!":"Собери 3 предмета \u2192 дверь справа внизу";
 }
 loop();
 </script>
