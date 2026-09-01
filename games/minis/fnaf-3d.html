@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>FNAF 3D</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Segoe UI,sans-serif;color:#ddd}
+  #c{display:block;width:100%;height:100%}
+  #ui{position:fixed;inset:0;pointer-events:none;z-index:2}
+  #hud{position:fixed;left:12px;top:12px;font-weight:800;font-size:15px;text-shadow:0 2px 6px #000}
+  #hud b{color:#fc0}
+  a.back{position:fixed;right:12px;top:12px;z-index:10;pointer-events:auto;background:#fc0;color:#111;padding:8px 14px;border-radius:10px;font-weight:800;text-decoration:none;font-size:14px}
+  #doors{position:fixed;bottom:18%;left:0;right:0;display:flex;justify-content:space-between;padding:0 4%;pointer-events:none}
+  .door{pointer-events:auto;width:72px;height:120px;background:rgba(30,30,30,.75);border:3px solid #555;border-radius:8px;color:#fc0;font-weight:900;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
+  .door.on{background:rgba(80,10,10,.85);border-color:#f44;box-shadow:0 0 24px #f40}
+  .door span{font-size:28px}
+  #cams{position:fixed;right:12px;top:52px;display:grid;gap:6px;pointer-events:auto}
+  #cams button{background:#0a140a;color:#9f9;border:1px solid #363;padding:8px 10px;font-weight:800;cursor:pointer;font-size:11px;text-align:left}
+  #cams button.on{background:#1a301a;border-color:#6c6}
+  #tog{position:fixed;left:50%;bottom:8%;transform:translateX(-50%);pointer-events:auto;background:#1a1a00;color:#fc0;border:2px solid #a80;padding:12px 24px;font-weight:900;border-radius:8px;cursor:pointer}
+  #tablet{position:fixed;inset:10% 12% 22%;background:#050505;border:6px solid #222;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:5;pointer-events:none}
+  #tablet.on{display:flex}
+  #tabFace{font-size:min(20vw,100px)}
+  #tabName{color:#6f6;font-weight:800;margin-top:10px;font-size:14px}
+  #end{position:fixed;inset:0;background:#000;z-index:20;display:none;align-items:center;justify-content:center;flex-direction:column;font-size:2rem;text-align:center}
+  #scare{font-size:min(28vw,140px);animation:sh .07s infinite}
+  @keyframes sh{50%{transform:scale(1.08)}}
+  #tip{position:fixed;left:12px;bottom:12px;font-size:11px;color:#888;max-width:220px;line-height:1.3}
+</style>
+</head>
+<body>
+<a class="back" href="../../play.html?id=fnaf-3d">&#8592; Портал</a>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="hud"><b id="clk">12 AM</b> &middot; &#x26A1; <span id="pow">100</span>%</div>
+  <div id="tablet"><div id="tabFace">&#x00b7;&#x00b7;&#x00b7;</div><div id="tabName">CAM 1</div></div>
+  <div id="doors">
+    <button class="door" id="dL"><span>&#x1F6AA;</span>ЛЕВ</button>
+    <button class="door" id="dR"><span>&#x1F6AA;</span>ПРАВ</button>
+  </div>
+  <div id="cams">
+    <button data-c="0" class="on">CAM 1 Сцена</button>
+    <button data-c="1">CAM 2 Коридор</button>
+    <button data-c="2">CAM 3 Кухня</button>
+    <button data-c="3">CAM 4 Подсобка</button>
+  </div>
+  <button id="tog">&#x1F4F7; КАМЕРЫ</button>
+  <div id="tip">3D мини-версия в браузере. Полная — APK ~246 МБ.</div>
+</div>
+<div id="end"><div id="scare"></div><div id="endT"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const canvas=document.getElementById("c");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080604);
+scene.fog=new THREE.Fog(0x080604,4,22);
+const camera=new THREE.PerspectiveCamera(70,1,.1,100);
+camera.position.set(0,1.6,0);
+const office=new THREE.Group();
+scene.add(office);
+const matWall=new THREE.MeshLambertMaterial({color:0x3a2e22});
+const matFloor=new THREE.MeshLambertMaterial({color:0x1a1410});
+const matDesk=new THREE.MeshLambertMaterial({color:0x2a1e14});
+[[-3,1.5,0,0.2,3,6],[-3,1.5,-3,6,3,0.2],[3,1.5,-3,6,3,0.2],[0,3,-3,6,0.2,6]].forEach(([x,y,z,w,h,d])=>{
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),matWall); m.position.set(x,y,z); office.add(m);
+});
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(12,10),matFloor); floor.rotation.x=-Math.PI/2; floor.position.y=0; office.add(floor);
+const desk=new THREE.Mesh(new THREE.BoxGeometry(2.2,.15,1),matDesk); desk.position.set(0,.85,-1.2); office.add(desk);
+const fan=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.5,8),new THREE.MeshBasicMaterial({color:0x888}));
+fan.position.set(0,1.5,-1); office.add(fan);
+scene.add(new THREE.AmbientLight(0x332211,.6));
+const lamp=new THREE.PointLight(0xffaa44,.9,12); lamp.position.set(0,2.5,-1); scene.add(lamp);
+const bearGeo=new THREE.BoxGeometry(.5,1.2,.4);
+const bearMat=new THREE.MeshLambertMaterial({color:0x5a3018});
+const bears=[];
+const names=["Фредди","Бонни","Чика","Фокси"];
+const faces=["\u{1F43B}","\u{1F430}","\u{1F414}","\u{1F98A}"];
+for(let i=0;i<4;i++){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(bearGeo,bearMat); body.position.y=.6; g.add(body);
+  const eye=new THREE.Mesh(new THREE.SphereGeometry(.06),new THREE.MeshBasicMaterial({color:0xffff00}));
+  eye.position.set(.12,.9,.22); g.add(eye);
+  const eye2=eye.clone(); eye2.position.x=-.12; g.add(eye2);
+  g.visible=false; scene.add(g); bears.push({mesh:g,pos:0,cam:i});
+}
+let camOn=false,camIdx=0,L=false,R=false,pow=100,hour=0,t=0,dead=false;
+const rooms=["Сцена","Коридор","Кухня","Подсобка"];
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
+resize(); addEventListener("resize",resize);
+document.getElementById("dL").onclick=()=>{L=!L;document.getElementById("dL").classList.toggle("on",L)};
+document.getElementById("dR").onclick=()=>{R=!R;document.getElementById("dR").classList.toggle("on",R)};
+document.getElementById("tog").onclick=()=>{camOn=!camOn;document.getElementById("tablet").classList.toggle("on",camOn)};
+document.querySelectorAll("#cams button").forEach(b=>b.onclick=()=>{camIdx=+b.dataset.c;document.querySelectorAll("#cams button").forEach(x=>x.classList.toggle("on",+x.dataset.c===camIdx))});
+function lose(i){
+  dead=true; document.getElementById("end").style.display="flex";
+  document.getElementById("scare").textContent=i<0?"\u{1F4A1}":faces[i];
+  document.getElementById("endT").textContent=i<0?"Энергия 0%!":("СКРИМЕР — "+names[i]);
+}
+function tick(){
+  if(dead)return;
+  t++;
+  if(t%50===0)pow-=(L?.8:0)+(R?.8:0)+(camOn?.4:.05)+.08;
+  if(t%400===0)hour++;
+  if(t%90===0)bears.forEach((b,i)=>{if(Math.random()<.38+i*.06)b.pos=Math.min(5,b.pos+1)});
+  if(bears[0].pos>=5&&!L)return lose(0);
+  if(bears[1].pos>=5&&!L)return lose(1);
+  if(bears[2].pos>=5&&!R)return lose(2);
+  if(bears[3].pos>=5&&!R)return lose(3);
+  if(pow<=0)return lose(-1);
+  if(hour>=6){dead=true;document.getElementById("end").style.display="flex";document.getElementById("scare").textContent="\u2600\uFE0F";document.getElementById("endT").textContent="6 AM — выжил!";return;}
+  document.getElementById("clk").textContent=(hour===0?"12":hour)+" AM";
+  document.getElementById("pow").textContent=Math.max(0,pow|0);
+  const here=bears.find(b=>b.pos===camIdx&&b.cam===camIdx);
+  document.getElementById("tabFace").textContent=here?faces[here.cam]:"\u00b7\u00b7\u00b7";
+  document.getElementById("tabName").textContent="CAM "+(camIdx+1)+" — "+rooms[camIdx]+(here?" \u00b7 ДВИЖЕНИЕ":"");
+}
+setInterval(tick,70);
+function anim(){
+  requestAnimationFrame(anim);
+  if(!camOn){
+    camera.position.set(0,1.6,0); camera.rotation.set(0,0,0);
+    bears.forEach((b,i)=>{
+      b.mesh.visible=b.pos>=4;
+      if(b.pos>=4){b.mesh.position.set(i<2?-2.5:2.5,0,-2.8);b.mesh.rotation.y=Math.sin(t*.05+i)*.3}
+      else b.mesh.visible=false;
+    });
+  }else{
+    camera.position.set(0,2,2); camera.lookAt(0,1,-2);
+    bears.forEach(b=>{
+      const show=b.pos===camIdx;
+      b.mesh.visible=show;
+      if(show){b.mesh.position.set(0,.5,-3);b.mesh.rotation.y=Math.sin(t*.08)*.5}
+    });
+  }
+  fan.rotation.z+=.15;
+  renderer.render(scene,camera);
+}
+anim();
+</script>
+</body>
+</html>

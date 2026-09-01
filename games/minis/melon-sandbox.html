@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Melon Sandbox 2D</title>
+<style>
+  html,body{margin:0;height:100%;background:#1a2418;color:#eee;font-family:Segoe UI,sans-serif;overflow:hidden;touch-action:none}
+  #cv{display:block;width:100%;height:100%}
+  #bar{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px;background:linear-gradient(0deg,rgba(0,0,0,.85),transparent)}
+  #bar button{border:0;border-radius:12px;padding:12px 14px;font-weight:800;font-size:13px;cursor:pointer;min-width:72px}
+  .sp{background:#2d5a28;color:#fff}.sp.bomb{background:#8b2020}.sp.clear{background:#333;color:#ccc}
+  #hud{position:fixed;left:10px;top:10px;z-index:5;background:rgba(0,0,0,.6);padding:10px 14px;border-radius:10px;border:1px solid #3a5a30;font-size:13px;line-height:1.4;max-width:min(90vw,280px)}
+  #hud b{color:#7cfc7c}
+  a.back{position:fixed;right:10px;top:10px;z-index:6;background:#7cfc7c;color:#102010;padding:8px 14px;border-radius:10px;font-weight:800;text-decoration:none;font-size:14px}
+</style>
+</head>
+<body>
+<a class="back" href="../../play.html?id=melon-sandbox">&#8592; Портал</a>
+<div id="hud"><b>MELON SANDBOX</b><br>Клик — поставить · Тяни мышью · Бомба взрывает</div>
+<canvas id="cv"></canvas>
+<div id="bar">
+  <button class="sp" data-t="melon">&#x1F349; Дыня</button>
+  <button class="sp" data-t="box">&#x1F4E6; Ящик</button>
+  <button class="sp" data-t="man">&#x1F9D1; Чел</button>
+  <button class="sp bomb" data-t="bomb">&#x1F4A3; Бомба</button>
+  <button class="sp clear" id="clear">&#x1F5D1; Очистить</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+const {Engine,Render,Runner,World,Bodies,Body,Composite,Constraint,Mouse,MouseConstraint,Events}=Matter;
+const C=document.getElementById("cv");
+let W,H,engine,render,runner,world,mc,tool="melon";
+function fit(){W=C.width=innerWidth;H=C.height=innerHeight;if(render){render.options.width=W;render.options.height=H;Render.lookAt(render,{min:{x:0,y:0},max:{x:W,y:H}})}}
+fit(); addEventListener("resize",fit);
+
+engine=Engine.create({gravity:{y:1.1}});
+world=engine.world;
+render=Render.create({canvas:C,engine,options:{width:W,height:H,wireframes:false,background:"#2a3d22"}});
+const ground=Bodies.rectangle(W/2,H-70,W*2,80,{isStatic:true,render:{fillStyle:"#3d2e1a"}});
+const wallL=Bodies.rectangle(-20,H/2,40,H*2,{isStatic:true,render:{fillStyle:"#2a2018"}});
+const wallR=Bodies.rectangle(W+20,H/2,40,H*2,{isStatic:true,render:{fillStyle:"#2a2018"}});
+World.add(world,[ground,wallL,wallR]);
+
+const mouse=Mouse.create(render.canvas);
+mc=MouseConstraint.create(engine,{mouse,constraint:{stiffness:.15,render:{visible:false}}});
+World.add(world,mc);
+render.mouse=mouse;
+
+function melon(x,y){
+  const r=22+Math.random()*10;
+  return Bodies.circle(x,y,r,{restitution:.35,friction:.4,density:.002,
+    render:{fillStyle:"#3cb043",strokeStyle:"#1a6020",lineWidth:2}});
+}
+function box(x,y){
+  return Bodies.rectangle(x,y,44,44,{restitution:.2,friction:.5,chamfer:{radius:4},
+    render:{fillStyle:"#8b6914",strokeStyle:"#4a3810",lineWidth:2}});
+}
+function man(x,y){
+  const torso=Bodies.rectangle(x,y,18,34,{render:{fillStyle:"#e8c4a0"}});
+  const head=Bodies.circle(x,y-28,12,{render:{fillStyle:"#f5d0b0"}});
+  const legL=Bodies.rectangle(x-8,y+24,8,22,{render:{fillStyle:"#334"}});
+  const legR=Bodies.rectangle(x+8,y+24,8,22,{render:{fillStyle:"#334"}});
+  const armL=Bodies.rectangle(x-18,y-4,20,7,{render:{fillStyle:"#e8c4a0"}});
+  const armR=Bodies.rectangle(x+18,y-4,20,7,{render:{fillStyle:"#e8c4a0"}});
+  const g=Composite.create({bodies:[torso,head,legL,legR,armL,armR]});
+  Composite.addConstraint(g,torso,head,0,.4,{pointA:{x:0,y:-17},pointB:{x:0,y:0}});
+  Composite.addConstraint(g,torso,legL,0,.5,{pointA:{x:-6,y:17},pointB:{x:0,y:-11}});
+  Composite.addConstraint(g,torso,legR,0,.5,{pointA:{x:6,y:17},pointB:{x:0,y:-11}});
+  Composite.addConstraint(g,torso,armL,0,.4,{pointA:{x:-9,y:-8},pointB:{x:10,y:0}});
+  Composite.addConstraint(g,torso,armR,0,.4,{pointA:{x:9,y:-8},pointB:{x:-10,y:0}});
+  return g;
+}
+function bomb(x,y){
+  const b=Bodies.circle(x,y,16,{isStatic:true,render:{fillStyle:"#222",strokeStyle:"#f44",lineWidth:3}});
+  b.label="bomb"; return b;
+}
+function explode(x,y){
+  Composite.allBodies(world).forEach(b=>{
+    if(b.isStatic&&b.label!=="bomb")return;
+    const dx=b.position.x-x,dy=b.position.y-y,d=Math.hypot(dx,dy)||1;
+    if(d<180) Body.applyForce(b,b.position,{x:dx/d*.08,y:dy/d*.08});
+  });
+}
+
+document.querySelectorAll("#bar .sp[data-t]").forEach(btn=>{
+  btn.onclick=()=>{tool=btn.dataset.t;document.querySelectorAll("#bar .sp[data-t]").forEach(b=>b.style.outline=b===btn?"3px solid #7cfc7c":"none")};
+});
+document.getElementById("clear").onclick=()=>{
+  Composite.allBodies(world).filter(b=>!b.isStatic).forEach(b=>World.remove(world,b));
+  Composite.allComposites(world).forEach(c=>World.remove(world,c));
+};
+
+Events.on(mc,"mouseup",()=>{
+  const p=mouse.position;
+  if(p.y>H-90)return;
+  if(tool==="melon") World.add(world,melon(p.x,p.y));
+  else if(tool==="box") World.add(world,box(p.x,p.y));
+  else if(tool==="man") World.add(world,man(p.x,p.y));
+  else if(tool==="bomb"){
+    const b=bomb(p.x,p.y);
+    World.add(world,b);
+    setTimeout(()=>{explode(p.x,p.y);World.remove(world,b)},600);
+  }
+});
+
+for(let i=0;i<5;i++) World.add(world,melon(120+i*90,H-120));
+Render.run(render);
+runner=Runner.create();
+Runner.run(runner,engine);
+document.querySelector("#bar .sp[data-t=melon]").click();
+</script>
+</body>
+</html>

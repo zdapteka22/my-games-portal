@@ -99,6 +99,28 @@ window.GAME_META = {
       { who: "🧒 Гоша, 11 лет", stars: 5, text: "Миньон в дверях — я кричал." }
     ]
   },
+  "fnaf-3d": {
+    id: "fnaf-3d",
+    title: "FNAF 3D",
+    emoji: "🐻",
+    genre: "Хоррор 3D",
+    rating: "4.8",
+    src: "minis/fnaf-3d.html",
+    desc: "3D офис пиццерии в браузере: камеры, двери, аниматроники. Полная версия — APK.",
+    controls: { p1: "Кнопки дверей · КАМЕРЫ · выбор CAM", p2: "—", mobile: "Тап по кнопкам", goal: "Доживи до 6 AM." },
+    reviews: [{ who: "🧒 Миша, 12 лет", stars: 5, text: "3D страшно! Фредди лезет в дверь." }]
+  },
+  "melon-sandbox": {
+    id: "melon-sandbox",
+    title: "Melon Sandbox 2D",
+    emoji: "🍉",
+    genre: "Песочница",
+    rating: "4.7",
+    src: "minis/melon-sandbox.html",
+    desc: "2D физика: дыни, ящики, человечки, бомбы. Тяни объекты мышью.",
+    controls: { p1: "Кнопки внизу — спавн · Мышь — таскать · Бомба — взрыв", p2: "—", mobile: "Тап + перетаскивание", goal: "Экспериментируй с физикой!" },
+    reviews: [{ who: "🧒 Вова, 10 лет", stars: 5, text: "Бомба разносит дыни — кайф!" }]
+  },
   smeshariki: {
     id: "smeshariki",
     title: "Смешарики — Битва и Догонялки",

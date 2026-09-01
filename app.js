@@ -90,8 +90,8 @@
     {
       id: "fnaf3d",
       title: "FNAF 3D",
-      description: "3D пиццерия, аниматроники — APK на Android.",
-      url: "android.html#fnaf3d",
+      description: "3D пиццерия в браузере + полный APK.",
+      url: "play.html?id=fnaf-3d",
       emoji: "🐻",
       color: "#8b0000",
       builtin: true,
@@ -99,8 +99,8 @@
     {
       id: "melon-sandbox",
       title: "Melon Sandbox 2D",
-      description: "2D песочница — APK на Android.",
-      url: "android.html#melon",
+      description: "2D песочница с физикой — в браузере и APK.",
+      url: "play.html?id=melon-sandbox",
       emoji: "🍉",
       color: "#2e7d32",
       builtin: true,
