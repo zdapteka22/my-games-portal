@@ -16,9 +16,9 @@
 </style>
 </head>
 <body>
-<a class="back" href="../../index.html#classics">тЖР ╨Я╨╛╤А╤В╨░╨╗</a>
-<div id="hud"><b>MEME NEIGHBOR</b><br><span id="st">╨б╨╛╨▒╨╡╤А╨╕ ╨║╨╗╤О╤З, ╨╝╨╛╨╗╨╛╤В╨╛╨║ ╨╕ ╨▒╨░╤В╨░╤А╨╡╨╣╨║╤Г. ╨Т╤Л╨╣╨┤╨╕ ╨▓ ╨┤╨▓╨╡╤А╤М.</span></div>
-<div id="inv"><span id="i0">┬╖</span><span id="i1">┬╖</span><span id="i2">┬╖</span></div>
+<a class="back" href="../../play.html?id=meme-neighbor">&#8592; Портал</a>
+<div id="hud"><b>MEME NEIGHBOR</b><br><span id="st">Собери ключ, молоток и батарейку. Выйди в дверь.</span></div>
+<div id="inv"><span id="i0">&middot;</span><span id="i1">&middot;</span><span id="i2">&middot;</span></div>
 <div id="flash"></div>
 <canvas id="cv"></canvas>
 <script src="../mods-data.js"></script>
@@ -58,9 +58,9 @@ for(let y=0;y<Hm;y++) for(let x=0;x<Wm;x++){
   if(c==="#") walls.add(x+","+y);
   if(c==="P"){px=x+.5;py=y+.5}
   if(c==="N"){nx=x+.5;ny=y+.5}
-  if(c==="K") loot.push({x:x+.5,y:y+.5,id:"K",g:"ЁЯФС"});
-  if(c==="M") loot.push({x:x+.5,y:y+.5,id:"M",g:"ЁЯФи"});
-  if(c==="B") loot.push({x:x+.5,y:y+.5,id:"B",g:"ЁЯФЛ"});
+  if(c==="K") loot.push({x:x+.5,y:y+.5,id:"K",g:"\u{1F511}"});
+  if(c==="M") loot.push({x:x+.5,y:y+.5,id:"M",g:"\u{1F528}"});
+  if(c==="B") loot.push({x:x+.5,y:y+.5,id:"B",g:"\u{1F50B}"});
 }
 
 function blocked(x,y){return walls.has((x|0)+","+(y|0))}
@@ -101,22 +101,22 @@ function loop(){
     const c=MAP[y][x];
     if(c==="#"){ X.fillStyle="#3a2a22"; X.fillRect(sx,sy,TILE,TILE); X.fillStyle="#2a1c16"; X.fillRect(sx+4,sy+4,TILE-8,TILE-8); }
     else { X.fillStyle=(x+y)%2?"#2c2118":"#261c14"; X.fillRect(sx,sy,TILE,TILE); }
-    if(c==="E"){ X.fillStyle="#4a3020"; X.fillRect(sx+8,sy+4,TILE-16,TILE-8); X.fillStyle="#c9a227"; X.fillText("ЁЯЪк",sx+12,sy+32); }
+    if(c==="E"){ X.fillStyle="#4a3020"; X.fillRect(sx+8,sy+4,TILE-16,TILE-8); X.fillStyle="#c9a227"; X.fillText("\u{1F6AA}",sx+12,sy+32); }
     if(c==="H"){ X.fillStyle="#5a4030"; X.fillRect(sx+10,sy+18,28,22); }
   }
   loot.forEach(it=>{ if(!items[it.id]){ X.font="28px sans-serif"; X.fillText(it.g, it.x*TILE-camx-12, it.y*TILE-camy+10); } });
   X.font="34px sans-serif";
-  X.fillText(sonic?"ЁЯТи":"ЁЯзТ", px*TILE-camx-16, py*TILE-camy+12);
-  X.fillText(nAlert?"ЁЯдм":"ЁЯШб", nx*TILE-camx-16, ny*TILE-camy+12);
+  X.fillText(sonic?"\u{1F4A8}":"\u{1F9E2}", px*TILE-camx-16, py*TILE-camy+12);
+  X.fillText(nAlert?"\u{1F92C}":"\u{1F621}", nx*TILE-camx-16, ny*TILE-camy+12);
   if(canSee()){ X.fillStyle="rgba(255,40,0,.12)"; X.beginPath(); X.arc(nx*TILE-camx,ny*TILE-camy, 140,0,7); X.fill(); }
 
-  document.getElementById("i0").textContent=items.K?"ЁЯФС":"┬╖";
-  document.getElementById("i1").textContent=items.M?"ЁЯФи":"┬╖";
-  document.getElementById("i2").textContent=items.B?"ЁЯФЛ":"┬╖";
+  document.getElementById("i0").textContent=items.K?"\u{1F511}":"\u00b7";
+  document.getElementById("i1").textContent=items.M?"\u{1F528}":"\u00b7";
+  document.getElementById("i2").textContent=items.B?"\u{1F50B}":"\u00b7";
   const st=document.getElementById("st");
-  if(caught) st.textContent="╨Я╨Ю╨Щ╨Ь╨Р╨Ы╨Ш! R тАФ ╨╖╨░╨╜╨╛╨▓╨╛";
-  else if(won) st.textContent="╨б╨С╨Х╨Ц╨Р╨Ы ╨Ш╨Ч ╨Ф╨Ю╨Ь╨Р!";
-  else st.textContent=canSee()?"╨Ю╨Э ╨в╨Х╨С╨п ╨Т╨Ш╨Ф╨Ш╨в!":"╨б╨╛╨▒╨╡╤А╨╕ ╨║╨╗╤О╤З, ╨╝╨╛╨╗╨╛╤В╨╛╨║, ╨▒╨░╤В╨░╤А╨╡╨╣╨║╤Г тЖТ ╨┤╨▓╨╡╤А╤М ЁЯЪк";
+  if(caught) st.textContent="ПОЙМАЛИ! R — заново";
+  else if(won) st.textContent="СБЕЖАЛ ИЗ ДОМА!";
+  else st.textContent=canSee()?"ОН ТЕБЯ ВИДИТ!":"Собери ключ, молоток, батарейку \u2192 дверь \u{1F6AA}";
 }
 loop();
 </script>

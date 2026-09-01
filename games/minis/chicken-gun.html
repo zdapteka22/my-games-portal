@@ -12,8 +12,8 @@
 </style>
 </head>
 <body>
-<a class="back" href="../../play.html?id=chicken-gun">тЖР ╨Я╨╛╤А╤В╨░╨╗</a>
-<div id="ui">ЁЯРФ <b>Chicken Gun</b> ┬╖ WASD + ╨╝╤Л╤И╤М ┬╖ ╨║╨╗╨╕╨║ тАФ ╤Б╤В╤А╨╡╨╗╤П╤В╤М<br><span id="hud">╨Ю╤З╨║╨╕ 0 ┬╖ ╨Ц╨╕╨╖╨╜╨╕ 3</span></div>
+<a class="back" href="../../play.html?id=chicken-gun">&#8592; Портал</a>
+<div id="ui">&#x1F414; <b>Chicken Gun</b> &middot; WASD + мышь &middot; клик — стрелять<br><span id="hud">Очки 0 &middot; Жизни 3</span></div>
 <canvas id="c"></canvas>
 <script src="../mods-data.js"></script>
 <script>
@@ -53,16 +53,16 @@ function loop(){
     const dx=p.x-f.x,dy=p.y-f.y,d=Math.hypot(dx,dy)||1;
     f.x+=dx/d*0.35; f.y+=dy/d*0.35;
     X.fillStyle="#8b2500"; X.beginPath(); X.arc(f.x,f.y,16,0,6.3); X.fill();
-    X.fillStyle="#fff"; X.fillText("ЁЯжК",f.x-8,f.y+5);
+    X.fillStyle="#fff"; X.fillText("\u{1F986}",f.x-8,f.y+5);
     bullets.forEach(b=>{ if(Math.hypot(b.x-f.x,b.y-f.y)<18){ f.hp--; b.life=0; score+=10; } });
     if(d<22 && t%40===0){ p.hp--; }
   });
   foes=foes.filter(f=>f.hp>0);
   if(foes.length<8) spawn();
   X.font="28px sans-serif";
-  X.fillText(minion?"ЁЯТЫ":"ЁЯРФ", p.x-14, p.y+10);
+  X.fillText(minion?"\u{1F49B}":"\u{1F414}", p.x-14, p.y+10);
   X.strokeStyle="#ffcc00"; X.beginPath(); X.moveTo(p.x,p.y); X.lineTo(p.x+Math.cos(Math.atan2(my-p.y,mx-p.x))*28,p.y+Math.sin(Math.atan2(my-p.y,mx-p.x))*28); X.stroke();
-  document.getElementById("hud").textContent="╨Ю╤З╨║╨╕ "+score+" ┬╖ ╨Ц╨╕╨╖╨╜╨╕ "+p.hp+(p.hp<=0?" ┬╖ R ╨╖╨░╨╜╨╛╨▓╨╛":"");
+  document.getElementById("hud").textContent="Очки "+score+" \u00b7 Жизни "+p.hp+(p.hp<=0?" \u00b7 R заново":"");
   if(p.hp<=0 && keys.r){ p.hp=3;score=0;p.x=W/2;p.y=H/2; }
   requestAnimationFrame(loop);
 }
