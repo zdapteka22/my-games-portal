@@ -3375,6 +3375,61 @@
           emoji: "⚔️",
           bg: "linear-gradient(145deg,#3b1a5c,#1a0a20)",
           builtin: true
+        },
+        {
+          id: "chicken-gun",
+          title: "Chicken Gun",
+          genre: "Шутер · курица · chicken gun",
+          rating: "4.9",
+          url: "play.html?id=chicken-gun",
+          emoji: "🐔",
+          bg: "linear-gradient(145deg,#3a5c20,#1a2a10)",
+          keywords: "chicken gun курица курочка стрелялка шутер gun",
+          builtin: true
+        },
+        {
+          id: "meme-neighbor",
+          title: "Meme Neighbor",
+          genre: "Стелс · сосед · мем",
+          rating: "4.8",
+          url: "play.html?id=meme-neighbor",
+          emoji: "🏠",
+          bg: "linear-gradient(145deg,#4a2a18,#1a1008)",
+          keywords: "meme neighbor сосед мем сосед-мем ключи побег",
+          builtin: true
+        },
+        {
+          id: "five-night-memes",
+          title: "Five Night Memes",
+          genre: "Хоррор · FNAF · мемы",
+          rating: "4.8",
+          url: "play.html?id=five-night-memes",
+          emoji: "🌙",
+          bg: "linear-gradient(145deg,#1a0a20,#000)",
+          keywords: "five nights fnaf фнаф мемы ночь камеры двери скример",
+          builtin: true
+        },
+        {
+          id: "fnaf3d",
+          title: "FNAF 3D",
+          genre: "APK Android · 3D · аниматроники",
+          rating: "4.9",
+          url: "android.html#fnaf3d",
+          emoji: "🐻",
+          bg: "linear-gradient(145deg,#2a0a0a,#0a0a20)",
+          keywords: "fnaf 3d фнаф фредди аниматроники пиццерия apk телефон android",
+          builtin: true
+        },
+        {
+          id: "melon-sandbox",
+          title: "Melon Sandbox 2D",
+          genre: "APK Android · песочница",
+          rating: "4.7",
+          url: "android.html#melon",
+          emoji: "🍉",
+          bg: "linear-gradient(145deg,#1a3a20,#0a2010)",
+          keywords: "melon sandbox песочница дыня melon playground apk телефон",
+          builtin: true
         }
       ];
     }
@@ -3867,7 +3922,7 @@
       const all = allGamesList();
       if (!q) return all.slice(0, 12);
       return all.filter(g => {
-        const hay = [g.title, g.genre, g.emoji, g.id, g.source || ""].join(" ").toLowerCase();
+        const hay = [g.title, g.genre, g.emoji, g.id, g.source || "", g.keywords || ""].join(" ").toLowerCase();
         return hay.includes(q) || q.split(/\s+/).every(w => hay.includes(w));
       }).slice(0, 40);
     }

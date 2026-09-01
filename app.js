@@ -87,6 +87,24 @@
       color: "#6c3483",
       builtin: true,
     },
+    {
+      id: "fnaf3d",
+      title: "FNAF 3D",
+      description: "3D пиццерия, аниматроники — APK на Android.",
+      url: "android.html#fnaf3d",
+      emoji: "🐻",
+      color: "#8b0000",
+      builtin: true,
+    },
+    {
+      id: "melon-sandbox",
+      title: "Melon Sandbox 2D",
+      description: "2D песочница — APK на Android.",
+      url: "android.html#melon",
+      emoji: "🍉",
+      color: "#2e7d32",
+      builtin: true,
+    },
   ];
 
   const AI_NAMES = [
