@@ -64,11 +64,11 @@ function man(x,y){
   const armL=Bodies.rectangle(x-18,y-4,20,7,{render:{fillStyle:"#e8c4a0"}});
   const armR=Bodies.rectangle(x+18,y-4,20,7,{render:{fillStyle:"#e8c4a0"}});
   const g=Composite.create({bodies:[torso,head,legL,legR,armL,armR]});
-  Composite.addConstraint(g,torso,head,0,.4,{pointA:{x:0,y:-17},pointB:{x:0,y:0}});
-  Composite.addConstraint(g,torso,legL,0,.5,{pointA:{x:-6,y:17},pointB:{x:0,y:-11}});
-  Composite.addConstraint(g,torso,legR,0,.5,{pointA:{x:6,y:17},pointB:{x:0,y:-11}});
-  Composite.addConstraint(g,torso,armL,0,.4,{pointA:{x:-9,y:-8},pointB:{x:10,y:0}});
-  Composite.addConstraint(g,torso,armR,0,.4,{pointA:{x:9,y:-8},pointB:{x:-10,y:0}});
+  Composite.add(g,Constraint.create({bodyA:torso,bodyB:head,pointA:{x:0,y:-17},pointB:{x:0,y:0},length:2,stiffness:.6}));
+  Composite.add(g,Constraint.create({bodyA:torso,bodyB:legL,pointA:{x:-6,y:17},pointB:{x:0,y:-11},length:4,stiffness:.5}));
+  Composite.add(g,Constraint.create({bodyA:torso,bodyB:legR,pointA:{x:6,y:17},pointB:{x:0,y:-11},length:4,stiffness:.5}));
+  Composite.add(g,Constraint.create({bodyA:torso,bodyB:armL,pointA:{x:-9,y:-8},pointB:{x:10,y:0},length:6,stiffness:.4}));
+  Composite.add(g,Constraint.create({bodyA:torso,bodyB:armR,pointA:{x:9,y:-8},pointB:{x:-10,y:0},length:6,stiffness:.4}));
   return g;
 }
 function bomb(x,y){
